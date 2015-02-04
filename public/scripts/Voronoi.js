@@ -2,6 +2,10 @@
 define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Noise) {
     var vec2 = Crafty.math.Vector2D;
 
+    var close = function(v1, v2) {
+        return Math.abs(v1.x - v2.x) < .001 && Math.abs(v1.y - v2.y) < .001;
+    }
+
     var generatePoints = function(width, height, density) {
         var gridSize = new vec2(width / density, height / density);
         var gridDimensions = new vec2(Math.floor(width / gridSize.x), Math.floor(height / gridSize.y));
@@ -16,13 +20,67 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
                 points[y * gridDimensions.x + x] = point;
             }
         }
-        return points;
+        return { size: gridSize,
+            dimensions: gridDimensions,
+            points: points };
+    }
+
+    var annotateElevation = function(data, diagram) {
+        var noiseGen = new Noise();
+        noiseGen.seed(Math.random());
+
+        var dimensions = data.dimensions;
+        var size = data.size;
+        var points = data.points;
+        for(var x = 0; x < dimensions.x; x++) {
+            for(var y = 0; y < dimensions.y; y++) {
+                var elevation = noiseGen.perlin2(x / dimensions.x, y / dimensions.y);
+                var point = data.points[y * dimensions.x + x];
+                diagram.cells[point.voronoiId].elevation = elevation;
+            }
+        }
     }
 
     var draw = function(e) {
         if(e.type == 'canvas') {
-            var points = this._points;
-            var edges = this._diagram.edges;
+            var points = this._points.points;
+            var diagram = this._diagram;
+            var edges = diagram.edges;
+            var cells = diagram.cells;
+
+            for(var i = 0; i < cells.length; i++) {
+                var cell = cells[i];
+                var elevation = cell.elevation;
+                var red = 0;
+                var blue = 0;
+                var green = Math.floor((elevation + 1)/2 * 255);
+                var halfEdges = cell.halfedges;
+
+                e.ctx.beginPath();
+                e.ctx.fillStyle = 'rgb(' + red + ',' + green + ',' + blue + ')';
+
+                var prevPoint = null;
+                if(halfEdges[0].edge.va == halfEdges[1].edge.va ||
+                   halfEdges[0].edge.va == halfEdges[1].edge.vb) {
+                    prevPoint = halfEdges[0].edge.va;
+                } else {
+                    prevPoint = halfEdges[0].edge.vb;
+                }
+                e.ctx.moveTo(prevPoint.x, prevPoint.y);
+
+                for(var j = 1; j < halfEdges.length; j++) {
+                    var edge = halfEdges[j].edge;
+                    if(close(prevPoint, edge.vb)) {
+                        e.ctx.lineTo(edge.va.x, edge.va.y);
+                        prevPoint = edge.va;
+                    } else {
+                        e.ctx.lineTo(edge.vb.x, edge.vb.y);
+                        prevPoint = edge.vb;
+                    }
+                }
+                e.ctx.closePath();
+                e.ctx.fill();
+            }
 
             e.ctx.beginPath();
             e.ctx.fillStyle = 'black';
@@ -68,9 +126,9 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
             }
 
             this._points = generatePoints(this.w, this.h, density);
-            this._diagram = v.compute(this._points,
+            this._diagram = v.compute(this._points.points,
                     {xl: this.x, xr: this.x + this.w, yt: this.y, yb: this.y + this.h});
-            console.log(this._diagram);
+            annotateElevation(this._points, this._diagram);
             return this;
         }
     });

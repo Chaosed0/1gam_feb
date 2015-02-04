@@ -8,7 +8,7 @@ require.config({
     require: "../bower_components/requirejs/require",
     simplify: "../bower_components/simplify-js/simplify",
     voronoi: "../bower_components/Javascript-Voronoi/rhill-voronoi-core",
-    noise: "../bower_components/noisejs/index.js",
+    noise: "../bower_components/noisejs/index",
     util: "./Util"
   },
   packages: [
