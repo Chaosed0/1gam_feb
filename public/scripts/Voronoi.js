@@ -26,19 +26,64 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
     }
 
     var annotateElevation = function(data, diagram) {
-        var noiseGen = new Noise();
-        noiseGen.seed(Math.random());
+        var numOctaves = 16;
+        var octaves = new Array(numOctaves);
+        for(var i = 0; i < numOctaves; i++) {
+            var octave = new Noise();
+            octave.seed(Math.random());
+            octaves[i] = octave;
+        }
+
+        var range = {min: 0, max: 0};
 
         var dimensions = data.dimensions;
         var size = data.size;
         var points = data.points;
         for(var x = 0; x < dimensions.x; x++) {
             for(var y = 0; y < dimensions.y; y++) {
-                var elevation = noiseGen.perlin2(x / dimensions.x, y / dimensions.y);
+                var elevation = 0;
                 var point = data.points[y * dimensions.x + x];
+                for(var i = 0; i < numOctaves; i++) {
+                    var frequency = Math.pow(2, i);
+                    elevation += octaves[i].perlin2(x / frequency, y / frequency);
+                }
                 diagram.cells[point.voronoiId].elevation = elevation;
+
+                if(range.min > elevation) {
+                    range.min = elevation;
+                }
+                if(range.max < elevation) {
+                    range.max = elevation;
+                }
             }
         }
+
+        return range;
+    }
+
+    var elevationToColor = function(elevation, range) {
+        var red, green, blue;
+        var waterLine = range.min + (range.max - range.min)/2.0;
+        var mountainLine = waterLine + (range.max - range.min) / 4.0;
+
+        if(elevation < waterLine) {
+            var scale = (elevation - range.min) / (waterLine - range.min);
+            red = Math.floor(scale * 100);
+            green = Math.floor(scale * 100);
+            blue = 255;
+        } else if(elevation >= waterLine && elevation < mountainLine) {
+            var scale = (elevation - waterLine) / (mountainLine - waterLine);
+            red = Math.floor((1 - scale) * 200);
+            green = 200;
+            blue = 0;
+        } else {
+            var scale = (elevation - mountainLine) / (range.max - mountainLine);
+            red = Math.floor(scale * 200);
+            green = 200;
+            blue = Math.floor(scale * 200);
+        }
+
+        return {r: red, g: green, b: blue};
     }
 
     var draw = function(e) {
@@ -51,13 +96,13 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
             for(var i = 0; i < cells.length; i++) {
                 var cell = cells[i];
                 var elevation = cell.elevation;
-                var red = 0;
-                var blue = 0;
-                var green = Math.floor((elevation + 1)/2 * 255);
                 var halfEdges = cell.halfedges;
+                var color = elevationToColor(elevation, this._elevationRange);
+                var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
 
                 e.ctx.beginPath();
-                e.ctx.fillStyle = 'rgb(' + red + ',' + green + ',' + blue + ')';
+                e.ctx.fillStyle = textColor;
+                e.ctx.strokeStyle = textColor;
 
                 var prevPoint = null;
                 if(halfEdges[0].edge.va == halfEdges[1].edge.va ||
@@ -80,30 +125,43 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
                 }
                 e.ctx.closePath();
                 e.ctx.fill();
+                e.ctx.stroke();
+
+                if(this._drawElevations) {
+                    e.ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
+                    e.ctx.font = "8px";
+                    e.ctx.textAlign = 'center';
+                    e.ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
+                }
             }
 
-            e.ctx.beginPath();
-            e.ctx.fillStyle = 'black';
-            for(var i = 0; i < points.length; i++) {
-                var point = points[i];
-                e.ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+            if(this._drawSites) {
+                e.ctx.beginPath();
+                e.ctx.fillStyle = 'black';
+                for(var i = 0; i < points.length; i++) {
+                    var point = points[i];
+                    e.ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+                }
+                e.ctx.fill();
             }
-            e.ctx.fill();
 
-            e.ctx.beginPath();
-            e.ctx.strokeStyle = 'red';
-            for(var i = 0; i < edges.length; i++) {
-                var edge = edges[i];
-                e.ctx.moveTo(edge.va.x, edge.va.y);
-                e.ctx.lineTo(edge.vb.x, edge.vb.y);
+            if(this._drawEdges) {
+                e.ctx.beginPath();
+                e.ctx.strokeStyle = 'red';
+                for(var i = 0; i < edges.length; i++) {
+                    var edge = edges[i];
+                    e.ctx.moveTo(edge.va.x, edge.va.y);
+                    e.ctx.lineTo(edge.vb.x, edge.vb.y);
+                }
+                e.ctx.stroke();
             }
-            e.ctx.stroke();
         }
     }
 
     Crafty.c("Voronoi", {
         _points: [],
         _diagram: [],
+        _elevationRange: {min: 0, max: 0},
         ready: false,
 
         init: function() {
@@ -128,7 +186,7 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
             this._points = generatePoints(this.w, this.h, density);
             this._diagram = v.compute(this._points.points,
                     {xl: this.x, xr: this.x + this.w, yt: this.y, yb: this.y + this.h});
-            annotateElevation(this._points, this._diagram);
+            this._elevationRange = annotateElevation(this._points, this._diagram);
             return this;
         }
     });
