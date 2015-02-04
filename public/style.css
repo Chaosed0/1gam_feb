@@ -1,5 +1,8 @@
 
+body, html {
+    margin: 0;
+    padding: 0;
+}
+
 #game {
-    float:left;
-    margin: 0px;
 }
