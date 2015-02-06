@@ -1,5 +1,5 @@
 
-define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Noise) {
+define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voronoi, Noise, PriorityQueue) {
     var vec2 = Crafty.math.Vector2D;
 
     var close = function(v1, v2) {
@@ -44,10 +44,11 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
                 var elevation = 0;
                 var point = data.points[y * dimensions.x + x];
                 for(var i = 0; i < numOctaves; i++) {
-                    var frequency = Math.pow(2, i);
+                    var frequency = Math.pow(5, i);
                     elevation += octaves[i].perlin2(x / frequency, y / frequency);
                 }
-                diagram.cells[point.voronoiId].elevation = elevation;
+                point.elevation = elevation;
+                //diagram.cells[point.voronoiId].elevation = elevation;
 
                 if(range.min > elevation) {
                     range.min = elevation;
@@ -64,7 +65,7 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
     var elevationToColor = function(elevation, range) {
         var red, green, blue;
         var waterLine = range.min + (range.max - range.min)/2.0;
-        var mountainLine = waterLine + (range.max - range.min) / 4.0;
+        var mountainLine = waterLine + (range.max - range.min) / 8.0;
 
         if(elevation < waterLine) {
             var scale = (elevation - range.min) / (waterLine - range.min);
@@ -86,16 +87,89 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
         return {r: red, g: green, b: blue};
     }
 
+    var generateRivers = function(data, diagram, waterLine, numRivers) {
+        var prioq = new PriorityQueue({
+            comparator: function(a, b) {
+                return b.elevation - a.elevation;
+            }
+        });
+
+        for(var i = 0; i < data.points.length; i++) {
+            prioq.queue(data.points[i]);
+        }
+
+        var rivers = [];
+
+        while(rivers.length < numRivers) {
+            if(prioq.length <= 0) {
+                console.log("WE RAN OUT OF RIVER CANDIDATES!?");
+                break;
+            }
+
+            var point = prioq.dequeue();
+            var skip = false;
+
+            for(var j = 0; j < rivers.length && !skip; j++) {
+                var rel = {x: rivers[j][0].x - point.x,
+                           y: rivers[j][0].y - point.y};
+                if(Math.abs(rel.x) + Math.abs(rel.y) < 50) {
+                    skip = true;
+                }
+            }
+
+            if(skip) {
+                continue;
+            }
+
+            var cell = diagram.cells[point.voronoiId];
+            var elevation = point.elevation;
+            var river = [point];
+
+            while(elevation > waterLine) {
+                var halfEdges = cell.halfedges;
+                var nextPoint = halfEdges[0].edge.rSite;
+                if(halfEdges[0].edge.rSite === point) {
+                    nextPoint = halfEdges[0].edge.lSite;
+                }
+                for(var j = 0; j < halfEdges.length; j++) {
+                    var thisPoint = halfEdges[j].edge.rSite;
+                    if(halfEdges[j].edge.rSite === point) {
+                        thisPoint = halfEdges[j].edge.lSite;
+                    }
+                    if(thisPoint) {
+                        var thisElevation = thisPoint.elevation;
+                        var gradient = elevation - thisElevation;
+                        if(elevation - nextPoint.elevation < gradient) {
+                            nextPoint = thisPoint;
+                        }
+                    }
+                }
+
+                if(nextPoint.elevation > point.elevation) {
+                    break;
+                }
+                point = nextPoint;
+                cell = diagram.cells[point.voronoiId];
+                elevation = point.elevation;
+                river.push(point);
+            }
+
+            rivers.push(river);
+        }
+
+        return rivers;
+    }
+
     var draw = function(e) {
         if(e.type == 'canvas') {
-            var points = this._points.points;
+            var points = this._pointdata.points;
             var diagram = this._diagram;
             var edges = diagram.edges;
             var cells = diagram.cells;
 
             for(var i = 0; i < cells.length; i++) {
                 var cell = cells[i];
-                var elevation = cell.elevation;
+                var elevation = cell.site.elevation;
                 var halfEdges = cell.halfedges;
                 var color = elevationToColor(elevation, this._elevationRange);
                 var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
@@ -135,6 +209,19 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
                 }
             }
 
+            for(var i = 0; i < this._rivers.length; i++) {
+                var river = this._rivers[i];
+                
+                e.ctx.beginPath();
+                e.ctx.strokeStyle = '#0000FF';
+                e.ctx.moveTo(river[0].x, river[0].y);
+                for(var j = 1; j < river.length; j++) {
+                    var point = river[j];
+                    e.ctx.lineTo(point.x, point.y);
+                }
+                e.ctx.stroke();
+            }
+
             if(this._drawSites) {
                 e.ctx.beginPath();
                 e.ctx.fillStyle = 'black';
@@ -159,7 +246,7 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
     }
 
     Crafty.c("Voronoi", {
-        _points: [],
+        _pointdata: [],
         _diagram: [],
         _elevationRange: {min: 0, max: 0},
         ready: false,
@@ -183,10 +270,13 @@ define(['crafty', 'util', 'voronoi', 'noise'], function(Crafty, u, Voronoi, Nois
                 return;
             }
 
-            this._points = generatePoints(this.w, this.h, density);
-            this._diagram = v.compute(this._points.points,
+            this._pointdata = generatePoints(this.w, this.h, density);
+            this._diagram = v.compute(this._pointdata.points,
                     {xl: this.x, xr: this.x + this.w, yt: this.y, yb: this.y + this.h});
-            this._elevationRange = annotateElevation(this._points, this._diagram);
+            this._elevationRange = annotateElevation(this._pointdata, this._diagram);
+            console.log(this._diagram);
+            this._rivers = generateRivers(this._pointdata, this._diagram,
+                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, 50);
             return this;
         }
     });

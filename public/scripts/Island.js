@@ -1,5 +1,5 @@
 
-define(['crafty', 'Util', 'simplify'], function(Crafty, u, simplify) {
+define(['crafty', 'util', 'simplify'], function(Crafty, u, simplify) {
     var vec2 = Crafty.math.Vector2D;
 
     var generateIsland = function(radius, iterations, randomness, decay) {
