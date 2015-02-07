@@ -1,9 +1,9 @@
 
 define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrain) {
-    var elevationColorMap = {
+    const elevationColorMap = {
         water: [
-            {chance: 0.4, color: { r: 0, g: 0, b: 200}},
-            {chance: 0.4, color: { r: 30, g: 30, b: 230}},
+            {chance: 0.5, color: { r: 0, g: 0, b: 200}},
+            {chance: 0.3, color: { r: 30, g: 30, b: 230}},
             {chance: 0.2, color: { r: 50, g: 70, b: 250}},
         ], ground: [
             {chance: 0.25, color: { r: 150, g: 230, b: 50}},
@@ -48,39 +48,60 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
 
     var draw = function(e) {
         if(e.type == 'canvas') {
-            var points = this._terrain.getPointData().points;
+            var pointData = this._terrain.getPointData();
             var diagram = this._terrain.getDiagram();
             var rivers = this._terrain.getRivers();
+            var points = pointData.points;
             var edges = diagram.edges;
             var cells = diagram.cells;
 
-            for(var i = 0; i < cells.length; i++) {
-                var cell = cells[i];
-                var elevation = cell.site.elevation;
-                var halfEdges = cell.halfedges;
-                var color = elevationToColor(elevation, this._elevationRange, this._terrainpercents);
-                var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
+            //Cull on viewport bounds
+            var vprops = {
+                x: -Crafty.viewport._x,
+                y: -Crafty.viewport._y,
+                w: Crafty.viewport._width,
+                h: Crafty.viewport._height,
+                scale: Crafty.viewport._scale
+            };
+            var bounds = {
+                bx: Math.max(Math.floor(vprops.x / pointData.size.x) - 2, 0),
+                by: Math.max(Math.floor(vprops.y / pointData.size.y) - 2, 0),
+                ex: Math.min(Math.floor((vprops.x + vprops.w / vprops.scale) / pointData.size.x) + 2,
+                        pointData.dimensions.x),
+                ey: Math.min(Math.floor((vprops.y + vprops.h / vprops.scale) / pointData.size.y) + 2,
+                        pointData.dimensions.y)
+            };
 
-                e.ctx.beginPath();
-                e.ctx.fillStyle = textColor;
-                e.ctx.strokeStyle = textColor;
+            for(var y = bounds.by; y < bounds.ey; y++) {
+                for(var x = bounds.bx; x < bounds.ex; x++) {
+                    var point = points[y * pointData.dimensions.x + x];
+                    var cell = cells[point.voronoiId];
+                    var elevation = cell.site.elevation;
+                    var halfEdges = cell.halfedges;
+                    var color = this._cellcolors[cell.site.voronoiId];
+                    var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
 
-                var point = halfEdges[0].getStartpoint();
-                e.ctx.moveTo(point.x, point.y);
+                    e.ctx.beginPath();
+                    e.ctx.fillStyle = textColor;
+                    e.ctx.strokeStyle = textColor;
 
-                for(var j = 1; j < halfEdges.length; j++) {
-                    point = halfEdges[j].getStartpoint();
-                    e.ctx.lineTo(point.x, point.y);
-                }
-                e.ctx.closePath();
-                e.ctx.fill();
-                e.ctx.stroke();
+                    var point = halfEdges[0].getStartpoint();
+                    e.ctx.moveTo(point.x, point.y);
 
-                if(this._drawElevations) {
-                    e.ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
-                    e.ctx.font = "8px";
-                    e.ctx.textAlign = 'center';
-                    e.ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
+                    for(var j = 1; j < halfEdges.length; j++) {
+                        point = halfEdges[j].getStartpoint();
+                        e.ctx.lineTo(point.x, point.y);
+                    }
+                    e.ctx.closePath();
+                    e.ctx.fill();
+                    e.ctx.stroke();
+
+                    if(this._drawElevations) {
+                        e.ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
+                        e.ctx.font = "8px";
+                        e.ctx.textAlign = 'center';
+                        e.ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
+                    }
                 }
             }
 
@@ -132,6 +153,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         _drawSites: false,
         _drawElevations: false,
         _terrainpercents: null,
+        _cellcolors: {},
         ready: false,
 
         init: function() {
@@ -153,6 +175,12 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
             }
             this._terrain = terrain;
             this._elevationRange = this._terrain.getElevationRange();
+
+            var points = terrain.getPointData().points;
+            for(var i = 0; i < points.length; i++) {
+                var color = elevationToColor(points[i].elevation, this._elevationRange, this._terrainpercents);
+                this._cellcolors[points[i].voronoiId] = color;
+            }
             return this;
         }
     });
