@@ -102,8 +102,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
         while(rivers.length < numRivers) {
             if(prioq.length <= 0) {
-                console.log("WE RAN OUT OF RIVER CANDIDATES!?");
-                break;
+                throw "WE RAN OUT OF RIVER CANDIDATES!?";
             }
 
             var point = prioq.dequeue();
@@ -157,16 +156,16 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 //We have the site now, but we need to find the path
                 // around the cell borders
                 var j = halfedge;
-                while(Math.abs(j - nextHalfedge) > 1) {
+                while(j != nextHalfedge) {
                     var vertex;
                     if(nextHalfedge - halfedge < halfEdges.length - nextHalfedge + halfedge) {
                         // CW
+                        vertex = halfEdges[j].getEndpoint();
                         j = (j+1)%halfEdges.length;
-                        vertex = halfEdges[j].getEndpoint()
                     } else {
                         // CCW
+                        vertex = halfEdges[j].getStartpoint();
                         j = (halfEdges.length + j - 1) % halfEdges.length;
-                        vertex = halfEdges[j].getStartpoint()
                     }
                     river.push(vertex);
                 }
@@ -239,16 +238,19 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             for(var i = 0; i < this._rivers.length; i++) {
                 var river = this._rivers[i];
                 
+                e.ctx.save();
                 e.ctx.beginPath();
                 e.ctx.strokeStyle = '#0000FF';
-                e.ctx.lineWidth = 2;
+                e.ctx.lineWidth = 3;
+                e.ctx.lineCap = 'round';
+                e.ctx.lineJoin = 'round';
                 e.ctx.moveTo(river[0].x, river[0].y);
                 for(var j = 1; j < river.length; j++) {
                     var point = river[j];
                     e.ctx.lineTo(point.x, point.y);
                 }
                 e.ctx.stroke();
-                e.ctx.lineWidth = 1;
+                e.ctx.restore();
             }
 
             if(this._drawSites) {
@@ -261,7 +263,6 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 e.ctx.fill();
             }
 
-            this._drawEdges = true;
             if(this._drawEdges) {
                 e.ctx.beginPath();
                 e.ctx.strokeStyle = 'red';
@@ -306,7 +307,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             this._elevationRange = annotateElevation(this._pointdata, this._diagram);
             console.log(this._diagram);
             this._rivers = generateRivers(this._pointdata, this._diagram,
-                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, 1);
+                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, 10);
             return this;
         }
     });
