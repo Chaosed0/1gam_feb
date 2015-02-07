@@ -1,36 +1,49 @@
 
 define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrain) {
-    var elevationColorMap = [
-        {chance: 0.3, color: { r: 0, g: 0, b: 200}},
-        {chance: 0.2, color: { r: 30, g: 30, b: 230}},
-        {chance: 0.1, color: { r: 50, g: 70, b: 250}},
-        {chance: 0.05, color: { r: 150, g: 230, b: 50}},
-        {chance: 0.05, color: { r: 125, g: 215, b: 50}},
-        {chance: 0.05, color: { r: 100, g: 200, b: 50}},
-        {chance: 0.05, color: { r: 100, g: 180, b: 50}},
-        {chance: 0.1, color: { r: 170, g: 170, b: 170}},
-        {chance: 0.1, color: { r: 200, g: 200, b: 210}},
-    ];
+    var elevationColorMap = {
+        water: [
+            {chance: 0.4, color: { r: 0, g: 0, b: 200}},
+            {chance: 0.4, color: { r: 30, g: 30, b: 230}},
+            {chance: 0.2, color: { r: 50, g: 70, b: 250}},
+        ], ground: [
+            {chance: 0.25, color: { r: 150, g: 230, b: 50}},
+            {chance: 0.25, color: { r: 125, g: 215, b: 50}},
+            {chance: 0.25, color: { r: 100, g: 200, b: 50}},
+            {chance: 0.25, color: { r: 100, g: 180, b: 50}},
+        ], mountain: [
+            {chance: 0.5, color: { r: 170, g: 170, b: 170}},
+            {chance: 0.5, color: { r: 200, g: 200, b: 210}},
+        ]
+    };
     const colorVariation = 5;
-    const waterPercent = 0.6;
-    const mountainPercent = 0.2;
 
-    var elevationToColor = function(elevation, range) {
+    var elevationToColor = function(elevation, range, terrainPercentages) {
+        var curSubpercent = 0;
         var curLimit = 0;
         var normalizeElevation = (elevation - range.min) / (range.max - range.min);
-        for(var i = 0; i < elevationColorMap.length; i++) {
-            var curMap = elevationColorMap[i];
-            curLimit += curMap.chance;
-            if(normalizeElevation < curLimit) {
-                color = {r: Math.floor(curMap.color.r + u.getRandom(colorVariation)),
+        for(var type in elevationColorMap) {
+            if(type in terrainPercentages) {
+                curSubpercent = terrainPercentages[type];
+            } else if('other' in terrainPercentages) {
+                curSubpercent = terrainPercentages['other'];
+            } else {
+                throw 'Couldn\'t find terrain type ' + type;
+            }
+            var typeColorMap = elevationColorMap[type];
+
+            for(var i = 0; i < typeColorMap.length; i++) {
+                var curMap = typeColorMap[i];
+                curLimit += curSubpercent * curMap.chance;
+                if(normalizeElevation < curLimit) {
+                    color = {r: Math.floor(curMap.color.r + u.getRandom(colorVariation)),
                              g: Math.floor(curMap.color.g + u.getRandom(colorVariation)),
                              b: Math.floor(curMap.color.b + u.getRandom(colorVariation))};
-                return color;
+                    return color;
+                }
             }
         }
 
-        //Return the last color
-        return elevationColorMap[elevationColorMap.length-1].color;
+        return {r: 0, g: 0, b: 0};
     }
 
     var draw = function(e) {
@@ -45,7 +58,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                 var cell = cells[i];
                 var elevation = cell.site.elevation;
                 var halfEdges = cell.halfedges;
-                var color = elevationToColor(elevation, this._elevationRange);
+                var color = elevationToColor(elevation, this._elevationRange, this._terrainpercents);
                 var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
 
                 e.ctx.beginPath();
@@ -112,12 +125,13 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         }
     }
 
-    Crafty.c("Terrain", {
+    Crafty.c("TerrainVisualizer", {
         _terrain: null,
         _elevationRange: {min: 0, max: 0},
         _drawEdges: false,
         _drawSites: false,
         _drawElevations: false,
+        _terrainpercents: null,
         ready: false,
 
         init: function() {
@@ -131,9 +145,13 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
             this.trigger("Invalidate");
         },
 
-        terrain: function(density) {
-            this._terrain = new VoronoiTerrain();
-            this._terrain.generateTerrain(this.w, this.h, density, waterPercent);
+        terrainvisualizer: function(terrain, waterPercent, groundPercent) {
+            this._terrainpercents = {
+                water: waterPercent,
+                ground: groundPercent,
+                other: 1 - waterPercent - groundPercent
+            }
+            this._terrain = terrain;
             this._elevationRange = this._terrain.getElevationRange();
             return this;
         }
