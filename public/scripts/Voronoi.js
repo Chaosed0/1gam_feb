@@ -76,10 +76,10 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             var scale = (elevation - waterLine) / (mountainLine - waterLine);
             red = Math.floor((1 - scale) * 200);
             green = 200;
-            blue = 0;
+            blue = Math.floor((1 - scale) * 150);
         } else {
             var scale = (elevation - mountainLine) / (range.max - mountainLine);
-            red = Math.floor(scale * 200);
+            red = Math.floor(scale * 150);
             green = 200;
             blue = Math.floor(scale * 200);
         }
@@ -123,11 +123,13 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
             var cell = diagram.cells[point.voronoiId];
             var elevation = point.elevation;
-            var river = [point];
+            var halfedge = Math.floor(u.getRandom(cell.halfedges.length));
+            var river = [];
 
             while(elevation > waterLine) {
                 var halfEdges = cell.halfedges;
                 var nextPoint = halfEdges[0].edge.rSite;
+                var nextHalfedge = 0;
                 if(halfEdges[0].edge.rSite === point) {
                     nextPoint = halfEdges[0].edge.lSite;
                 }
@@ -141,20 +143,56 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                         var gradient = elevation - thisElevation;
                         if(elevation - nextPoint.elevation < gradient) {
                             nextPoint = thisPoint;
+                            nextHalfedge = j;
                         }
                     }
                 }
 
+                //If the next-lowest elevation actually goes up,
+                // we're stuck in a valley; erode it
                 if(nextPoint.elevation > point.elevation) {
-                    break;
+                    nextPoint.elevation = point.elevation - 0.01;
                 }
+
+                //We have the site now, but we need to find the path
+                // around the cell borders
+                var j = halfedge;
+                while(Math.abs(j - nextHalfedge) > 1) {
+                    var vertex = halfEdges[j].getEndpoint();
+                    console.log(halfEdges[j].getStartpoint(), vertex);
+                    if(nextHalfedge - halfedge < halfEdges.length - nextHalfedge + halfedge) {
+                        // CW
+                        j = (j+1)%halfEdges.length;
+                    } else {
+                        // CCW
+                        j = (halfEdges.length + j - 1) % halfEdges.length;
+                    }
+                    river.push(vertex);
+                }
+
                 point = nextPoint;
                 cell = diagram.cells[point.voronoiId];
                 elevation = point.elevation;
-                river.push(point);
+                
+                //Now, we have to find the dual halfedge on the next site
+                // since nextHalfedge was the halfedge on the previous cell
+                var foundDual = false;
+                for(var j = 0; j < cell.halfedges.length; j++) {
+                    if(cell.halfedges[j].edge === halfEdges[nextHalfedge].edge) {
+                        foundDual = true;
+                        halfedge = j;
+                        break;
+                    } 
+                }
+
+                if(!foundDual) {
+                    throw "DUAL EDGE NOT FOUND";
+                }
             }
 
-            rivers.push(river);
+            if(river.length > 0) {
+                rivers.push(river);
+            }
         }
 
         return rivers;
@@ -178,24 +216,12 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 e.ctx.fillStyle = textColor;
                 e.ctx.strokeStyle = textColor;
 
-                var prevPoint = null;
-                if(halfEdges[0].edge.va == halfEdges[1].edge.va ||
-                   halfEdges[0].edge.va == halfEdges[1].edge.vb) {
-                    prevPoint = halfEdges[0].edge.va;
-                } else {
-                    prevPoint = halfEdges[0].edge.vb;
-                }
-                e.ctx.moveTo(prevPoint.x, prevPoint.y);
+                var point = halfEdges[0].getStartpoint();
+                e.ctx.moveTo(point.x, point.y);
 
                 for(var j = 1; j < halfEdges.length; j++) {
-                    var edge = halfEdges[j].edge;
-                    if(close(prevPoint, edge.vb)) {
-                        e.ctx.lineTo(edge.va.x, edge.va.y);
-                        prevPoint = edge.va;
-                    } else {
-                        e.ctx.lineTo(edge.vb.x, edge.vb.y);
-                        prevPoint = edge.vb;
-                    }
+                    point = halfEdges[j].getStartpoint();
+                    e.ctx.lineTo(point.x, point.y);
                 }
                 e.ctx.closePath();
                 e.ctx.fill();
@@ -276,7 +302,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             this._elevationRange = annotateElevation(this._pointdata, this._diagram);
             console.log(this._diagram);
             this._rivers = generateRivers(this._pointdata, this._diagram,
-                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, 50);
+                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, 1);
             return this;
         }
     });
