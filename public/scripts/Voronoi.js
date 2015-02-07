@@ -1,6 +1,10 @@
 
 define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voronoi, Noise, PriorityQueue) {
     var vec2 = Crafty.math.Vector2D;
+    const waterPercent = 0.5;
+    const groundPercent = 0.25;
+    const numRivers = 10;
+    const riverTooClose = 4;
 
     var close = function(v1, v2) {
         return Math.abs(v1.x - v2.x) < .001 && Math.abs(v1.y - v2.y) < .001;
@@ -64,8 +68,8 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
     var elevationToColor = function(elevation, range) {
         var red, green, blue;
-        var waterLine = range.min + (range.max - range.min)/2.0;
-        var mountainLine = waterLine + (range.max - range.min) / 8.0;
+        var waterLine = range.min + (range.max - range.min) * waterPercent;
+        var mountainLine = waterLine + (range.max - range.min) * groundPercent;
 
         if(elevation < waterLine) {
             var scale = (elevation - range.min) / (waterLine - range.min);
@@ -103,6 +107,8 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
         while(rivers.length < numRivers) {
             if(prioq.length <= 0) {
+                // Uh oh, that's really bad - either the map is too small or the
+                // close-spawn avoidance is acting up too much
                 throw "WE RAN OUT OF RIVER CANDIDATES!?";
             }
 
@@ -114,7 +120,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 var p1 = {x: rivers[j][0].x / data.size.x, y: rivers[j][0].y / data.size.y};
                 var p2 = {x: point.x / data.size.x, y: point.y / data.size.y};
                 var rel = {x: p2.x - p1.x, y: p2.y - p1.y};
-                if(Math.abs(rel.x) + Math.abs(rel.y) < 4) {
+                if(Math.abs(rel.x) + Math.abs(rel.y) < riverTooClose) {
                     skip = true;
                 }
             }
@@ -310,7 +316,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             this._elevationRange = annotateElevation(this._pointdata, this._diagram);
             console.log(this._diagram);
             this._rivers = generateRivers(this._pointdata, this._diagram,
-                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, 10);
+                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, numRivers);
             return this;
         }
     });
