@@ -1,7 +1,7 @@
 
 define(['crafty', 'jquery',
     './Island',
-    './Voronoi',
+    './Terrain',
 ], function(Crafty, $) {
     var self = this;
     var map;
@@ -14,9 +14,9 @@ define(['crafty', 'jquery',
                         
     Crafty.scene("Main", function () {
         var islandRadius = Math.min(width, height);
-        var island = Crafty.e("2D, Canvas, Voronoi")
+        var island = Crafty.e("2D, Canvas, Terrain")
             .attr({x: 0, y: 0, w: width, h: height})
-            .voronoi(20);
+            .terrain(30);
     });
 
     Crafty.scene("Load", function() {
