@@ -3,18 +3,19 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     var vec2 = Crafty.math.Vector2D;
 
     var elevationColorMap = [
-        {chance: 0.2, color: { r: 0, g: 0, b: 200}},
+        {chance: 0.3, color: { r: 0, g: 0, b: 200}},
         {chance: 0.2, color: { r: 30, g: 30, b: 230}},
         {chance: 0.1, color: { r: 50, g: 70, b: 250}},
         {chance: 0.05, color: { r: 150, g: 230, b: 50}},
         {chance: 0.05, color: { r: 125, g: 215, b: 50}},
-        {chance: 0.1, color: { r: 100, g: 200, b: 50}},
-        {chance: 0.1, color: { r: 100, g: 180, b: 50}},
+        {chance: 0.05, color: { r: 100, g: 200, b: 50}},
+        {chance: 0.05, color: { r: 100, g: 180, b: 50}},
         {chance: 0.1, color: { r: 170, g: 170, b: 170}},
         {chance: 0.1, color: { r: 200, g: 200, b: 210}},
     ];
     const colorVariation = 5;
-    const waterPercent = 0.5;
+    const waterPercent = 0.6;
+    const mountainPercent = 0.2;
 
     const numRivers = 10;
     const riverTooClose = 4;
