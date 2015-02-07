@@ -95,6 +95,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         });
 
         for(var i = 0; i < data.points.length; i++) {
+            //We'll need the point index for later
             prioq.queue(data.points[i]);
         }
 
@@ -108,10 +109,12 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             var point = prioq.dequeue();
             var skip = false;
 
+            // Don't spawn rivers too close to each other
             for(var j = 0; j < rivers.length && !skip; j++) {
-                var rel = {x: rivers[j][0].x - point.x,
-                           y: rivers[j][0].y - point.y};
-                if(Math.abs(rel.x) + Math.abs(rel.y) < 50) {
+                var p1 = {x: rivers[j][0].x / data.size.x, y: rivers[j][0].y / data.size.y};
+                var p2 = {x: point.x / data.size.x, y: point.y / data.size.y};
+                var rel = {x: p2.x - p1.x, y: p2.y - p1.y};
+                if(Math.abs(rel.x) + Math.abs(rel.y) < 4) {
                     skip = true;
                 }
             }
