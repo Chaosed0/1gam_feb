@@ -1,8 +1,21 @@
 
 define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voronoi, Noise, PriorityQueue) {
     var vec2 = Crafty.math.Vector2D;
+
+    var elevationColorMap = [
+        {chance: 0.2, color: { r: 0, g: 0, b: 200}},
+        {chance: 0.2, color: { r: 30, g: 30, b: 230}},
+        {chance: 0.1, color: { r: 50, g: 70, b: 250}},
+        {chance: 0.05, color: { r: 150, g: 230, b: 50}},
+        {chance: 0.05, color: { r: 125, g: 215, b: 50}},
+        {chance: 0.1, color: { r: 100, g: 200, b: 50}},
+        {chance: 0.1, color: { r: 100, g: 180, b: 50}},
+        {chance: 0.1, color: { r: 170, g: 170, b: 170}},
+        {chance: 0.1, color: { r: 200, g: 200, b: 210}},
+    ];
+    const colorVariation = 5;
     const waterPercent = 0.5;
-    const groundPercent = 0.25;
+
     const numRivers = 10;
     const riverTooClose = 4;
 
@@ -67,28 +80,21 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     }
 
     var elevationToColor = function(elevation, range) {
-        var red, green, blue;
-        var waterLine = range.min + (range.max - range.min) * waterPercent;
-        var mountainLine = waterLine + (range.max - range.min) * groundPercent;
-
-        if(elevation < waterLine) {
-            var scale = (elevation - range.min) / (waterLine - range.min);
-            red = Math.floor(scale * 100);
-            green = Math.floor(scale * 100);
-            blue = 255;
-        } else if(elevation >= waterLine && elevation < mountainLine) {
-            var scale = (elevation - waterLine) / (mountainLine - waterLine);
-            red = Math.floor((1 - scale) * 200);
-            green = 200;
-            blue = Math.floor((1 - scale) * 150);
-        } else {
-            var scale = (elevation - mountainLine) / (range.max - mountainLine);
-            red = Math.floor(scale * 150);
-            green = 200;
-            blue = Math.floor(scale * 200);
+        var curLimit = 0;
+        var normalizeElevation = (elevation - range.min) / (range.max - range.min);
+        for(var i = 0; i < elevationColorMap.length; i++) {
+            var curMap = elevationColorMap[i];
+            curLimit += curMap.chance;
+            if(normalizeElevation < curLimit) {
+                color = {r: Math.floor(curMap.color.r + u.getRandom(colorVariation)),
+                             g: Math.floor(curMap.color.g + u.getRandom(colorVariation)),
+                             b: Math.floor(curMap.color.b + u.getRandom(colorVariation))};
+                return color;
+            }
         }
 
-        return {r: red, g: green, b: blue};
+        //Return the last color
+        return elevationColorMap[elevationColorMap.length-1].color;
     }
 
     var generateRivers = function(data, diagram, waterLine, numRivers) {
@@ -289,6 +295,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         _pointdata: [],
         _diagram: [],
         _elevationRange: {min: 0, max: 0},
+        _waterLine: 0,
         ready: false,
 
         init: function() {
@@ -303,20 +310,20 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         },
 
         voronoi: function(density) {
-            var v = new Voronoi();
-
-            if (!v) {
+            if (!Voronoi) {
                 console.log("Couldn't find Javascript-Voronoi");
                 return;
             }
+
+            var v = new Voronoi();
 
             this._pointdata = generatePoints(this.w, this.h, density);
             this._diagram = v.compute(this._pointdata.points,
                     {xl: this.x, xr: this.x + this.w, yt: this.y, yb: this.y + this.h});
             this._elevationRange = annotateElevation(this._pointdata, this._diagram);
-            console.log(this._diagram);
-            this._rivers = generateRivers(this._pointdata, this._diagram,
-                    this._elevationRange.min + (this._elevationRange.max - this._elevationRange.min) / 2.0, numRivers);
+            this._waterLine = this._elevationRange.min +
+                (this._elevationRange.max - this._elevationRange.min) * waterPercent;
+            this._rivers = generateRivers(this._pointdata, this._diagram, this._waterLine, numRivers);
             return this;
         }
     });
