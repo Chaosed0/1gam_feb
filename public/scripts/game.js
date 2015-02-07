@@ -16,7 +16,7 @@ define(['crafty', 'jquery',
         var islandRadius = Math.min(width, height);
         var island = Crafty.e("2D, Canvas, Voronoi")
             .attr({x: 0, y: 0, w: width, h: height})
-            .voronoi(30);
+            .voronoi(20);
     });
 
     Crafty.scene("Load", function() {

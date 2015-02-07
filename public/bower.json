@@ -23,6 +23,7 @@
     "simplify-js": "https://github.com/mourner/simplify-js.git",
     "Javascript-Voronoi": "/home/chaosed0/Code/Javascript-Voronoi/",
     "noisejs": "*",
-    "js-priority-queue": "~0.1.1"
+    "js-priority-queue": "~0.1.1",
+    "seedrandom": "~2.3.11"
   }
 }

@@ -158,14 +158,15 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 // around the cell borders
                 var j = halfedge;
                 while(Math.abs(j - nextHalfedge) > 1) {
-                    var vertex = halfEdges[j].getEndpoint();
-                    console.log(halfEdges[j].getStartpoint(), vertex);
+                    var vertex;
                     if(nextHalfedge - halfedge < halfEdges.length - nextHalfedge + halfedge) {
                         // CW
                         j = (j+1)%halfEdges.length;
+                        vertex = halfEdges[j].getEndpoint()
                     } else {
                         // CCW
                         j = (halfEdges.length + j - 1) % halfEdges.length;
+                        vertex = halfEdges[j].getStartpoint()
                     }
                     river.push(vertex);
                 }
@@ -240,12 +241,14 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 
                 e.ctx.beginPath();
                 e.ctx.strokeStyle = '#0000FF';
+                e.ctx.lineWidth = 2;
                 e.ctx.moveTo(river[0].x, river[0].y);
                 for(var j = 1; j < river.length; j++) {
                     var point = river[j];
                     e.ctx.lineTo(point.x, point.y);
                 }
                 e.ctx.stroke();
+                e.ctx.lineWidth = 1;
             }
 
             if(this._drawSites) {
@@ -258,6 +261,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 e.ctx.fill();
             }
 
+            this._drawEdges = true;
             if(this._drawEdges) {
                 e.ctx.beginPath();
                 e.ctx.strokeStyle = 'red';
