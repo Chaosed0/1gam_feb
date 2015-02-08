@@ -48,11 +48,37 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
 
     var draw = function(e) {
         if(e.type == 'canvas') {
-            drawto(e.ctx, this);
+            e.ctx.drawImage(this._prerender, this.x, this.y);
+
+            if(this._selectedcell) {
+                var halfedges = this._selectedcell.halfedges;
+                e.ctx.save();
+                e.ctx.beginPath();
+                e.ctx.strokeStyle = 'black';
+                e.ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                e.ctx.lineWidth = 3;
+                e.ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
+                for(var i = 1; i < halfedges.length; i++) {
+                    var point = halfedges[i].getStartpoint();
+                    e.ctx.lineTo(point.x, point.y);
+                }
+                e.ctx.closePath();
+                e.ctx.fill();
+                e.ctx.stroke();
+                e.ctx.restore();
+            }
+
+            //Always draw the minimap in the bottom-right
+            if(this._drawMinimap) {
+                e.ctx.drawImage(this._prerender,
+                        -Crafty.viewport.x + Crafty.viewport.width * 3/4,
+                        -Crafty.viewport.y + Crafty.viewport.height * 3/4,
+                        Crafty.viewport.width * 1/4, Crafty.viewport.height * 1/4);
+            }
         }
     }
 
-    var drawto = function(ctx, vis, cull) {
+    var drawto = function(ctx, vis) {
         var pointData = vis._terrain.getPointData();
         var diagram = vis._terrain.getDiagram();
         var rivers = vis._terrain.getRivers();
@@ -60,54 +86,34 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         var edges = diagram.edges;
         var cells = diagram.cells;
 
-        //Cull on viewport bounds
-        var vprops = {
-            x: -Crafty.viewport._x,
-            y: -Crafty.viewport._y,
-            w: Crafty.viewport._width,
-            h: Crafty.viewport._height,
-            scale: Crafty.viewport._scale
-        };
-        var bounds = {
-            bx: cull ? Math.max(Math.floor(vprops.x / pointData.size.x) - 2, 0) : 0,
-            by: cull ? Math.max(Math.floor(vprops.y / pointData.size.y) - 2, 0) : 0,
-            ex: cull ? Math.min(Math.floor((vprops.x + vprops.w / vprops.scale) / pointData.size.x) + 2,
-                    pointData.dimensions.x) : pointData.dimensions.x,
-            ey: cull ? Math.min(Math.floor((vprops.y + vprops.h / vprops.scale) / pointData.size.y) + 2,
-                    pointData.dimensions.y) : pointData.dimensions.y
-        };
-
         ctx.save();
-        for(var y = bounds.by; y < bounds.ey; y++) {
-            for(var x = bounds.bx; x < bounds.ex; x++) {
-                var point = points[y * pointData.dimensions.x + x];
-                var cell = cells[point.voronoiId];
-                var elevation = cell.site.elevation;
-                var halfEdges = cell.halfedges;
-                var color = vis._cellcolors[cell.site.voronoiId];
-                var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
+        for(var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            var elevation = cell.site.elevation;
+            var halfEdges = cell.halfedges;
+            var color = vis._cellcolors[cell.site.voronoiId];
+            var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
 
-                ctx.beginPath();
-                ctx.fillStyle = textColor;
-                ctx.strokeStyle = textColor;
+            ctx.beginPath();
+            ctx.fillStyle = textColor;
+            ctx.strokeStyle = textColor;
 
-                var point = halfEdges[0].getStartpoint();
-                ctx.moveTo(point.x, point.y);
+            var point = halfEdges[0].getStartpoint();
+            ctx.moveTo(point.x, point.y);
 
-                for(var j = 1; j < halfEdges.length; j++) {
-                    point = halfEdges[j].getStartpoint();
-                    ctx.lineTo(point.x, point.y);
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+            for(var j = 1; j < halfEdges.length; j++) {
+                point = halfEdges[j].getStartpoint();
+                ctx.lineTo(point.x, point.y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
 
-                if(vis._drawElevations) {
-                    ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
-                    ctx.font = "8px";
-                    ctx.textAlign = 'center';
-                    ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
-                }
+            if(vis._drawElevations) {
+                ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
+                ctx.font = "8px";
+                ctx.textAlign = 'center';
+                ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
             }
         }
         ctx.restore();
@@ -154,31 +160,6 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
             ctx.stroke();
             ctx.restore();
         }
-
-        if(vis._selectedcell) {
-            var halfedges = vis._selectedcell.halfedges;
-            ctx.save();
-            ctx.beginPath();
-            ctx.strokeStyle = 'black';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-            ctx.lineWidth = 3;
-            ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
-            for(var i = 1; i < halfedges.length; i++) {
-                var point = halfedges[i].getStartpoint();
-                ctx.lineTo(point.x, point.y);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            ctx.restore();
-        }
-
-        if(vis._drawMinimap && vis._minimap) {
-            ctx.drawImage(vis._minimap,
-                    -Crafty.viewport.x + Crafty.viewport.width * 3/4,
-                    -Crafty.viewport.y + Crafty.viewport.height * 3/4,
-                    Crafty.viewport.width * 1/4, Crafty.viewport.height * 1/4);
-        }
     }
 
     var mousedown = function(e) {
@@ -198,12 +179,11 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         _drawEdges: false,
         _drawSites: false,
         _drawElevations: false,
-        _drawMinimap: false,
         _terrainpercents: null,
         _cellcolors: {},
         _selectedcell: null,
         _mousedownpos: null,
-        _minimap: null,
+        _prerender: null,
         ready: false,
 
         init: function() {
@@ -236,11 +216,11 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                 this._cellcolors[points[i].voronoiId] = color;
             }
 
-            this._minimap = document.createElement('canvas');
-            this._minimap.width = this.w;
-            this._minimap.height = this.h;
-            var minimapctx = this._minimap.getContext('2d');
-            drawto(minimapctx, this, false);
+            this._prerender = document.createElement('canvas');
+            this._prerender.width = this.w;
+            this._prerender.height = this.h;
+            var prerenderctx = this._prerender.getContext('2d');
+            drawto(prerenderctx, this, false);
             this._drawMinimap = true;
             return this;
         }
