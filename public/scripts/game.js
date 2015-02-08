@@ -19,7 +19,6 @@ define(['crafty', 'jquery', './VoronoiTerrain',
                         
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
-        var islandRadius = Math.min(width, height);
         var island = Crafty.e("2D, Canvas, TerrainVisualizer, CameraControls, Mouse")
             .attr({x: 0, y: 0, w: width * terrainMult, h: height * terrainMult})
             .terrainvisualizer(terrain, waterPercent, groundPercent);
