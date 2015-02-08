@@ -6,28 +6,48 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.x = -Crafty.viewport.x + Crafty.viewport.width * 3/4;
             this.y = -Crafty.viewport.y + Crafty.viewport.width * 3/4;
             e.ctx.drawImage(this._prerender, this.x, this.y, this.w, this.h);
+
+            var cameraBounds = viewportToMinimap(this._mapbounds, {x: this.x, y: this.y, w: this.w, h: this.h});
+
+            e.ctx.save();
+            e.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            e.ctx.strokeStyle = 'black';
+            e.ctx.rect(cameraBounds.x, cameraBounds.y, cameraBounds.w, cameraBounds.h);
+            e.ctx.fill();
+            e.ctx.stroke();
+            e.ctx.restore();
         }
     }
 
     var mousedown = function(e) {
-        this._mousedownpos = {x: e.clientX, y: e.clientY};
+        var pos = {x: e.realX, y: e.realY};
+        if(pos.x > this.x && pos.y > this.y &&
+                pos.x < this.x + this.w && pos.y < this.y + this.h) {
+            this.trigger("MinimapClick", {x: (pos.x - this.x) / this.w, y: (pos.y - this.y) / this.h});
+        }
     }
 
     var mousemove = function(e) {
-    }
-    
-    var mouseup = function(e) {
+        var pos = {x: e.realX, y: e.realY};
+        if(pos.x > this.x && pos.y > this.y &&
+                pos.x < this.x + this.w && pos.y < this.y + this.h) {
+            this.trigger("MinimapClick", {x: (pos.x - this.x) / this.w, y: (pos.y - this.y) / this.h});
+        }
     }
 
-    var mouseout = function(e) {
-    }
-
-    var mouseup = function(e) {
+    var viewportToMinimap = function(mapbounds, minimapbounds) {
+        return {
+            x: minimapbounds.x + -Crafty.viewport.x / mapbounds.w * minimapbounds.w,
+            y: minimapbounds.y + -Crafty.viewport.y / mapbounds.h * minimapbounds.h,
+            w: Crafty.viewport.width / mapbounds.w * minimapbounds.w,
+            h: Crafty.viewport.height / mapbounds.h * minimapbounds.h
+        };
     }
 
     Crafty.c("Minimap", {
         _prerender: null,
         _lastmouse: {x: 0, y: 0},
+        _mapbounds: {x: 0, y: 0, w: 100, h: 100},
         ready: false,
 
         init: function() {
@@ -35,8 +55,6 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.bind("Draw", draw);
             this.bind("MouseDown", mousedown);
             this.bind("MouseMove", mousemove);
-            this.bind("MouseUp", mouseup);
-            this.bind("MouseOut", mouseup);
             this.trigger("Invalidate");
         },
 
@@ -44,13 +62,13 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.unbind("Draw", draw);
             this.unbind("MouseDown", mousedown);
             this.unbind("MouseMove", mousemove);
-            this.unbind("MouseUp", mouseup);
-            this.unbind("MouseOut", mouseup);
             this.trigger("Invalidate");
         },
 
-        minimap: function(prerender) {
+        minimap: function(prerender, mapbounds) {
             this._prerender = prerender;
+            this._mapbounds = mapbounds;
+
             this.x = -Crafty.viewport.x + Crafty.viewport.width * 3/4;
             this.y = -Crafty.viewport.y + Crafty.viewport.width * 3/4;
             this.w = Crafty.viewport.width * 1/4;

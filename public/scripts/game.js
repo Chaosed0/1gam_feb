@@ -10,7 +10,7 @@ define(['crafty', 'jquery', './VoronoiTerrain',
     const waterPercent = 0.6;
     const groundPercent = 0.2;
     const tileDensity = 100;
-    const terrainSize = {x: 8000, y: 8000};
+    const terrainSize = {x: 0, y: 0, w: 8000, h: 8000};
     
     var width = $(document).width();
     var height = $(document).height();
@@ -21,13 +21,13 @@ define(['crafty', 'jquery', './VoronoiTerrain',
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, CameraControls, Mouse")
-            .attr({x: 0, y: 0, w: terrainSize.x, h: terrainSize.y})
+            .attr({x: 0, y: 0, w: terrainSize.w, h: terrainSize.h})
             .terrainvisualizer(terrain, waterPercent, groundPercent)
-            .cameracontrols({x: 0, y: 0, w: terrainSize.x, h: terrainSize.y});
+            .cameracontrols({x: 0, y: 0, w: terrainSize.w, h: terrainSize.h});
 
         var minimap = Crafty.e("2D, Canvas, Minimap")
             .attr({z: 9999})
-            .minimap(terrainVis.getPrerender());
+            .minimap(terrainVis.getPrerender(), terrainSize);
     });
 
     Crafty.scene("Load", function() {
@@ -40,7 +40,7 @@ define(['crafty', 'jquery', './VoronoiTerrain',
         // text up before blocking the thread
         setTimeout(function() {
             console.log('GENERATE');
-            terrain.generateTerrain(terrainSize.x, terrainSize.y, tileDensity, waterPercent);
+            terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, waterPercent);
             console.log('DONE');
             Crafty.scene("Main");
         }, 100);
