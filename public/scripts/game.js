@@ -25,8 +25,8 @@ define(['crafty', 'jquery', './VoronoiTerrain',
             .terrainvisualizer(terrain, waterPercent, groundPercent)
             .cameracontrols({x: 0, y: 0, w: terrainSize.w, h: terrainSize.h});
 
-        var minimap = Crafty.e("2D, Canvas, Minimap")
-            .attr({z: 9999})
+        var minimap = Crafty.e("2D, Canvas, Minimap, Mouse")
+            .attr({w: width / 4, h: height / 4, z: 9999})
             .minimap(terrainVis.getPrerender(), terrainSize);
     });
 
