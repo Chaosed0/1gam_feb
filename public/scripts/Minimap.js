@@ -22,19 +22,40 @@ define(['crafty', 'util',], function(Crafty, u) {
         this.y = -Crafty.viewport.y + Crafty.viewport.height - this.h;
     }
 
-    var mousedown = function(e) {
+    var pointToMapPos = function(point, rect, mapbounds) {
+        if(point.x >= rect.x && point.y >= rect.y &&
+                point.x <= rect.x + rect.w && point.y <= rect.y + rect.h) {
+            return {x: (point.x - rect.x) / rect.w * mapbounds.w,
+                    y: (point.y - rect.y) / rect.h * mapbounds.h};
+        }
+
+        //Uh oh
+        return {x: 0, y: 0};
+    }
+
+    var minimapclick = function(e) {
         var pos = {x: e.realX, y: e.realY};
-        if(pos.x > this.x && pos.y > this.y &&
-                pos.x < this.x + this.w && pos.y < this.y + this.h) {
-            this.trigger("MinimapClick", {x: (pos.x - this.x) / this.w, y: (pos.y - this.y) / this.h});
+        var point = pointToMapPos(pos, this, this._mapbounds);
+        this.trigger("MinimapDown", point);
+    }
+
+    var mousedown = function(e) {
+        if(e.mouseButton == 0) {
+            this._dragging = true;
+            minimapclick.call(this, e);
         }
     }
 
     var mousemove = function(e) {
-        var pos = {x: e.realX, y: e.realY};
-        if(pos.x > this.x && pos.y > this.y &&
-                pos.x < this.x + this.w && pos.y < this.y + this.h) {
-            this.trigger("MinimapClick", {x: (pos.x - this.x) / this.w, y: (pos.y - this.y) / this.h});
+        if(this._dragging) {
+            minimapclick.call(this, e);
+        }
+    }
+
+    var mouseup = function(e) {
+        if(this._dragging) {
+            this._dragging = false;
+            this.trigger("MinimapUp");
         }
     }
 
@@ -51,6 +72,7 @@ define(['crafty', 'util',], function(Crafty, u) {
         _prerender: null,
         _lastmouse: {x: 0, y: 0},
         _mapbounds: {x: 0, y: 0, w: 100, h: 100},
+        _dragging: false,
         ready: false,
 
         init: function() {
@@ -58,6 +80,8 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.bind("Draw", draw);
             this.bind("MouseDown", mousedown);
             this.bind("MouseMove", mousemove);
+            this.bind("MouseUp", mouseup);
+            this.bind("MouseOut", mouseup);
             this.bind("InvalidateViewport", viewportchanged);
             this.trigger("Invalidate");
         },
@@ -66,6 +90,9 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.unbind("Draw", draw);
             this.unbind("MouseDown", mousedown);
             this.unbind("MouseMove", mousemove);
+            this.unbind("MouseUp", mouseup);
+            this.unbind("MouseOut", mouseup);
+            this.unbind("InvalidateViewport", viewportchanged);
             this.trigger("Invalidate");
         },
 

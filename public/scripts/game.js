@@ -1,9 +1,8 @@
 
-define(['crafty', 'jquery', './VoronoiTerrain',
+define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
     './TerrainVisualizer',
-    './CameraControls',
     './Minimap',
-], function(Crafty, $, VoronoiTerrain) {
+], function(Crafty, $, VoronoiTerrain, CameraControls) {
     var self = this;
     var map;
 
@@ -20,14 +19,22 @@ define(['crafty', 'jquery', './VoronoiTerrain',
                         
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
-        var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, CameraControls, Mouse")
-            .attr({x: 0, y: 0, w: terrainSize.w, h: terrainSize.h})
-            .terrainvisualizer(terrain, waterPercent, groundPercent)
-            .cameracontrols({x: 0, y: 0, w: terrainSize.w, h: terrainSize.h});
+        var camera = new CameraControls(terrainSize);
+        camera.mouselook(true);
+
+        var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
+            .attr(terrainSize)
+            .terrainvisualizer(terrain, waterPercent, groundPercent);
 
         var minimap = Crafty.e("2D, Canvas, Minimap, Mouse")
             .attr({w: width / 4, h: height / 4, z: 9999})
-            .minimap(terrainVis.getPrerender(), terrainSize);
+            .minimap(terrainVis.getPrerender(), terrainSize)
+            .bind("MinimapDown", function(point) {
+                camera.mouselook(false);
+                camera.centerOn(point);
+            }).bind("MinimapUp", function() {
+                camera.mouselook(true);
+            });
     });
 
     Crafty.scene("Load", function() {
