@@ -16,8 +16,11 @@ define(['seedrandom'], function(seedrandom) {
                 return Math.random() * min;
             }
         },
-        close: function(v1, v2) {
-            return Math.abs(v1.x - v2.x) < epsilon && Math.abs(v1.y - v2.y) < epsilon;
+        close: function(v1, v2, e) {
+            if(e === undefined) {
+                e = epsilon;
+            }
+            return Math.abs(v1.x - v2.x) < e && Math.abs(v1.y - v2.y) < e;
         },
     }
 

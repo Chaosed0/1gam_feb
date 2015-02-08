@@ -8,6 +8,7 @@ define(['crafty', 'jquery', './VoronoiTerrain',
     const waterPercent = 0.6;
     const groundPercent = 0.2;
     const tileDensity = 50;
+    const terrainMult = 8;
     
     var width = $(document).width();
     var height = $(document).height();
@@ -18,7 +19,7 @@ define(['crafty', 'jquery', './VoronoiTerrain',
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
         var island = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
-            .attr({x: 0, y: 0, w: width * 8, h: height * 8})
+            .attr({x: 0, y: 0, w: width * terrainMult, h: height * terrainMult})
             .terrainvisualizer(terrain, waterPercent, groundPercent);
         Crafty.viewport.mouselook(true);
         Crafty.viewport.clampToEntities = false;
@@ -34,7 +35,7 @@ define(['crafty', 'jquery', './VoronoiTerrain',
         // text up before blocking the thread
         setTimeout(function() {
             console.log('GENERATE');
-            terrain.generateTerrain(width * 8, height * 8, 100, waterPercent);
+            terrain.generateTerrain(width * terrainMult, height * terrainMult, 100, waterPercent);
             console.log('DONE');
             Crafty.scene("Main");
         }, tileDensity);
