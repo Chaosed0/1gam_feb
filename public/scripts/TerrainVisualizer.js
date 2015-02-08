@@ -72,6 +72,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                         pointData.dimensions.y)
             };
 
+            e.ctx.save();
             for(var y = bounds.by; y < bounds.ey; y++) {
                 for(var x = bounds.bx; x < bounds.ex; x++) {
                     var point = points[y * pointData.dimensions.x + x];
@@ -104,26 +105,28 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                     }
                 }
             }
+            e.ctx.restore();
 
+            e.ctx.save();
+            e.ctx.strokeStyle = '#0000FF';
+            e.ctx.lineWidth = 3;
+            e.ctx.lineCap = 'round';
+            e.ctx.lineJoin = 'round';
             for(var i = 0; i < rivers.length; i++) {
                 var river = rivers[i];
                 
-                e.ctx.save();
                 e.ctx.beginPath();
-                e.ctx.strokeStyle = '#0000FF';
-                e.ctx.lineWidth = 3;
-                e.ctx.lineCap = 'round';
-                e.ctx.lineJoin = 'round';
                 e.ctx.moveTo(river[0].x, river[0].y);
                 for(var j = 1; j < river.length; j++) {
                     var point = river[j];
                     e.ctx.lineTo(point.x, point.y);
                 }
                 e.ctx.stroke();
-                e.ctx.restore();
             }
+            e.ctx.restore();
 
             if(this._drawSites) {
+                e.ctx.save();
                 e.ctx.beginPath();
                 e.ctx.fillStyle = 'black';
                 for(var i = 0; i < points.length; i++) {
@@ -131,9 +134,11 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                     e.ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
                 }
                 e.ctx.fill();
+                e.ctx.restore();
             }
 
             if(this._drawEdges) {
+                e.ctx.save();
                 e.ctx.beginPath();
                 e.ctx.strokeStyle = 'red';
                 for(var i = 0; i < edges.length; i++) {
@@ -142,7 +147,35 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                     e.ctx.lineTo(edge.vb.x, edge.vb.y);
                 }
                 e.ctx.stroke();
+                e.ctx.restore();
             }
+
+            if(this._selectedcell) {
+                var halfedges = this._selectedcell.halfedges;
+                e.ctx.save();
+                e.ctx.beginPath();
+                e.ctx.strokeStyle = 'black';
+                e.ctx.lineWidth = 5;
+                e.ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
+                for(var i = 1; i < halfedges.length; i++) {
+                    var point = halfedges[i].getStartpoint();
+                    e.ctx.lineTo(point.x, point.y);
+                }
+                e.ctx.closePath();
+                e.ctx.stroke();
+                e.ctx.restore();
+            }
+        }
+    }
+
+    var mousedown = function(e) {
+        this._mousedownpos = {x: e.realX, y: e.realY};
+    }
+
+    var mouseup = function(e) {
+        if(this._mousedownpos && u.close({x: e.realX, y: e.realY}, this._mousedownpos)) {
+            this._selectedcell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
+            this.trigger("Invalidate");
         }
     }
 
@@ -154,16 +187,22 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         _drawElevations: false,
         _terrainpercents: null,
         _cellcolors: {},
+        _selectedcell: null,
+        _mousedownpos: null,
         ready: false,
 
         init: function() {
             this.ready = true;
             this.bind("Draw", draw);
+            this.bind("MouseDown", mousedown);
+            this.bind("MouseUp", mouseup);
             this.trigger("Invalidate");
         },
 
         remove: function() {
             this.unbind("Draw", draw);
+            this.unbind("MouseDown", mousedown);
+            this.unbind("MouseUp", mouseup);
             this.trigger("Invalidate");
         },
 

@@ -9,22 +9,33 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     const numOctaves = 16;
     const frequencyConst = 5;
     const perturbConst = 3.0;
-    const epsilon = 0.001;
 
     var VoronoiTerrain = function() {
         this.diagram = null;
         this.pointData = null;
         this.elevationRange = null;
         this.rivers = null;
+        this.size = {w: 0, h: 0}
     }
 
-    var close = function(v1, v2) {
-        return Math.abs(v1.x - v2.x) < epsilon && Math.abs(v1.y - v2.y) < epsilon;
+    VoronoiTerrain.prototype.inCell = function(point, cell) {
+        var halfedges = cell.halfedges;
+        var result = false;
+        for (var i = 0; i < halfedges.length; i++) {
+            var halfedge = halfedges[i];
+            var p1 = halfedge.getStartpoint();
+            var p2 = halfedge.getEndpoint();
+            if ((p1.y > point.y) != (p2.y > point.y) &&
+                    (point.x < (p2.x - p1.x) * (point.y - p1.y) / (p2.y - p1.y) + p1.x)) {
+                result = !result;
+            }
+        }
+        return result;
     }
 
     VoronoiTerrain.prototype.generatePoints = function(width, height, density) {
         var gridSize = new vec2(width / density, height / density);
-        var gridDimensions = new vec2(Math.floor(width / gridSize.x), Math.floor(height / gridSize.y));
+        var gridDimensions = new vec2(Math.round(width / gridSize.x), Math.floor(height / gridSize.y));
         var points = new Array(gridDimensions.x * gridDimensions.y);
 
         for (var y = 0; y < gridDimensions.y; y++) {
@@ -44,6 +55,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     VoronoiTerrain.prototype.generateDiagram = function(width, height) {
         var v = new Voronoi();
         this.diagram = v.compute(this.pointData.points, {xl: 0, xr: width, yt: 0, yb: height});
+        console.log(this.diagram);
     }
 
     VoronoiTerrain.prototype.annotateElevation = function() {
@@ -206,6 +218,42 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         this.rivers = rivers;
     }
 
+    VoronoiTerrain.prototype.getCellForPos = function(pos) {
+        if(pos.x < 0 || pos.y < 0 || pos.x > this.size.w || pos.y > this.size.h) {
+            return null;
+        }
+
+        //Exploit a property of the voronoi cells we generate; since we generate
+        // a grid of points for the sites, try the grid cell the coord would
+        // correspond to and then spiral out from there
+        var gridLoc = new vec2(Math.round(pos.x / this.pointData.size.x),
+                               Math.round(pos.y / this.pointData.size.y));
+        var rel = new vec2(0, 0);
+        var point = this.pointData.points[gridLoc.y * this.pointData.dimensions.x + gridLoc.x];
+        var found = false;
+        var dx = 0;
+        var dy = -1;
+
+        while(!(found = this.inCell(pos, this.diagram.cells[point.voronoiId]))) {
+            if(rel.x == rel.y ||
+                    (rel.x < 0 && rel.x == - rel.y) ||
+                    (rel.x > 0 && rel.x == 1 - rel.y)) {
+                var tmp = dx;
+                dx = -dy;
+                dy = tmp;
+            }
+            rel.x += dx;
+            rel.y += dy;
+            point = this.pointData.points[(gridLoc.y + rel.y) * this.pointData.dimensions.x + (gridLoc.x + rel.x)];
+        }
+
+        if(found) {
+            return this.diagram.cells[point.voronoiId];
+        } else {
+            throw "Didn't find a cell containing point " + pos + ", but we should have";
+        }
+    }
+
     VoronoiTerrain.prototype.getElevationRange = function() {
         return this.elevationRange;
     }
@@ -223,6 +271,8 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     }
 
     VoronoiTerrain.prototype.generateTerrain = function(width, height, density, waterPercent) {
+        this.size.w = width;
+        this.size.h = height;
         this.generatePoints(width, height, density);
         this.generateDiagram(width, height);
         this.annotateElevation();

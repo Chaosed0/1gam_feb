@@ -1,5 +1,6 @@
 
 define(['seedrandom'], function(seedrandom) {
+    const epsilon = 0.001;
     var seed = Math.random();
     Math.seedrandom(seed);
     console.log(seed);
@@ -14,6 +15,9 @@ define(['seedrandom'], function(seedrandom) {
             } else {
                 return Math.random() * min;
             }
+        },
+        close: function(v1, v2) {
+            return Math.abs(v1.x - v2.x) < epsilon && Math.abs(v1.y - v2.y) < epsilon;
         },
     }
 
