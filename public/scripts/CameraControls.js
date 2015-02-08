@@ -42,6 +42,7 @@ define(['crafty'], function(Crafty) {
 
         cameracontrols: function(bounds) {
             this._bounds = bounds;
+            return this;
         }
     });
 });

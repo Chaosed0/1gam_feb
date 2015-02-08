@@ -67,98 +67,6 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                 e.ctx.stroke();
                 e.ctx.restore();
             }
-
-            //Always draw the minimap in the bottom-right
-            if(this._drawMinimap) {
-                e.ctx.drawImage(this._prerender,
-                        -Crafty.viewport.x + Crafty.viewport.width * 3/4,
-                        -Crafty.viewport.y + Crafty.viewport.height * 3/4,
-                        Crafty.viewport.width * 1/4, Crafty.viewport.height * 1/4);
-            }
-        }
-    }
-
-    var drawto = function(ctx, vis) {
-        var pointData = vis._terrain.getPointData();
-        var diagram = vis._terrain.getDiagram();
-        var rivers = vis._terrain.getRivers();
-        var points = pointData.points;
-        var edges = diagram.edges;
-        var cells = diagram.cells;
-
-        ctx.save();
-        for(var i = 0; i < cells.length; i++) {
-            var cell = cells[i];
-            var elevation = cell.site.elevation;
-            var halfEdges = cell.halfedges;
-            var color = vis._cellcolors[cell.site.voronoiId];
-            var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
-
-            ctx.beginPath();
-            ctx.fillStyle = textColor;
-            ctx.strokeStyle = textColor;
-
-            var point = halfEdges[0].getStartpoint();
-            ctx.moveTo(point.x, point.y);
-
-            for(var j = 1; j < halfEdges.length; j++) {
-                point = halfEdges[j].getStartpoint();
-                ctx.lineTo(point.x, point.y);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            if(vis._drawElevations) {
-                ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
-                ctx.font = "8px";
-                ctx.textAlign = 'center';
-                ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
-            }
-        }
-        ctx.restore();
-
-        ctx.save();
-        ctx.strokeStyle = '#0000FF';
-        ctx.lineWidth = 5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        for(var i = 0; i < rivers.length; i++) {
-            var river = rivers[i];
-            
-            ctx.beginPath();
-            ctx.moveTo(river[0].x, river[0].y);
-            for(var j = 1; j < river.length; j++) {
-                var point = river[j];
-                ctx.lineTo(point.x, point.y);
-            }
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        if(vis._drawSites) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.fillStyle = 'black';
-            for(var i = 0; i < points.length; i++) {
-                var point = points[i];
-                ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
-            }
-            ctx.fill();
-            ctx.restore();
-        }
-
-        if(vis._drawEdges) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.strokeStyle = 'red';
-            for(var i = 0; i < edges.length; i++) {
-                var edge = edges[i];
-                ctx.moveTo(edge.va.x, edge.va.y);
-                ctx.lineTo(edge.vb.x, edge.vb.y);
-            }
-            ctx.stroke();
-            ctx.restore();
         }
     }
 
@@ -220,9 +128,16 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
             this._prerender.width = this.w;
             this._prerender.height = this.h;
             var prerenderctx = this._prerender.getContext('2d');
-            drawto(prerenderctx, this, false);
-            this._drawMinimap = true;
+            this._terrain.drawTo(prerenderctx, this._cellcolors, {
+                drawEdges: this._drawEdges,
+                drawSites: this._drawSites,
+                drawElevations: this._drawElevations
+            });
             return this;
+        },
+
+        getPrerender: function() {
+            return this._prerender;
         }
     });
 });

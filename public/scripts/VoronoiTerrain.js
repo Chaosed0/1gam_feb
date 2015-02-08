@@ -254,6 +254,90 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         }
     }
 
+    VoronoiTerrain.prototype.drawTo = function(ctx, colormap, options) {
+        var pointData = this.pointData;
+        var diagram = this.diagram;
+        var rivers = this.rivers;
+        var points = pointData.points;
+        var edges = diagram.edges;
+        var cells = diagram.cells;
+
+        ctx.save();
+        for(var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            var elevation = cell.site.elevation;
+            var halfEdges = cell.halfedges;
+            var color = colormap[cell.site.voronoiId];
+            var textColor = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
+
+            ctx.beginPath();
+            ctx.fillStyle = textColor;
+            ctx.strokeStyle = textColor;
+
+            var point = halfEdges[0].getStartpoint();
+            ctx.moveTo(point.x, point.y);
+
+            for(var j = 1; j < halfEdges.length; j++) {
+                point = halfEdges[j].getStartpoint();
+                ctx.lineTo(point.x, point.y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            if(options._drawElevations) {
+                ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
+                ctx.font = "8px";
+                ctx.textAlign = 'center';
+                ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
+            }
+        }
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = '#0000FF';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for(var i = 0; i < rivers.length; i++) {
+            var river = rivers[i];
+            
+            ctx.beginPath();
+            ctx.moveTo(river[0].x, river[0].y);
+            for(var j = 1; j < river.length; j++) {
+                var point = river[j];
+                ctx.lineTo(point.x, point.y);
+            }
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        if(options && options.drawSites) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = 'black';
+            for(var i = 0; i < points.length; i++) {
+                var point = points[i];
+                ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+            }
+            ctx.fill();
+            ctx.restore();
+        }
+
+        if(options && options.drawEdges) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = 'red';
+            for(var i = 0; i < edges.length; i++) {
+                var edge = edges[i];
+                ctx.moveTo(edge.va.x, edge.va.y);
+                ctx.lineTo(edge.vb.x, edge.vb.y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
     VoronoiTerrain.prototype.getElevationRange = function() {
         return this.elevationRange;
     }
