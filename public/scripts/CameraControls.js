@@ -3,8 +3,8 @@ define(['crafty'], function(Crafty) {
     var mousemove = function(e) {
         if(this._lastmouse) {
             var scroll = {x: this._lastmouse.x - e.clientX, y: this._lastmouse.y - e.clientY};
-            Crafty.viewport.pan(scroll.x / Crafty.viewport._scale,
-                                scroll.y / Crafty.viewport._scale, 0.0);
+            Crafty.viewport.x -= scroll.x / Crafty.viewport._scale
+            Crafty.viewport.y -= scroll.y / Crafty.viewport._scale;
             this._lastmouse = {x: e.clientX, y: e.clientY};
         }
     }

@@ -169,11 +169,11 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
     }
 
     var mousedown = function(e) {
-        this._mousedownpos = {x: e.realX, y: e.realY};
+        this._mousedownpos = {x: e.clientX, y: e.clientY};
     }
 
     var mouseup = function(e) {
-        if(this._mousedownpos && u.close({x: e.realX, y: e.realY}, this._mousedownpos, 8)) {
+        if(this._mousedownpos && u.close({x: e.clientX, y: e.clientY}, this._mousedownpos, 8)) {
             this._selectedcell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
             this.trigger("Invalidate");
         }

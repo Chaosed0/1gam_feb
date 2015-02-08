@@ -1,6 +1,7 @@
 
 define(['crafty', 'jquery', './VoronoiTerrain',
     './TerrainVisualizer',
+    './CameraControls',
 ], function(Crafty, $, VoronoiTerrain) {
     var self = this;
     var map;
@@ -18,10 +19,10 @@ define(['crafty', 'jquery', './VoronoiTerrain',
                         
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
-        var island = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
+        var islandRadius = Math.min(width, height);
+        var island = Crafty.e("2D, Canvas, TerrainVisualizer, CameraControls, Mouse")
             .attr({x: 0, y: 0, w: width * terrainMult, h: height * terrainMult})
             .terrainvisualizer(terrain, waterPercent, groundPercent);
-        Crafty.viewport.mouselook(true);
         Crafty.viewport.clampToEntities = false;
     });
 
