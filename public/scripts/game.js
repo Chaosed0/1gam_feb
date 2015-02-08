@@ -8,8 +8,8 @@ define(['crafty', 'jquery', './VoronoiTerrain',
 
     const waterPercent = 0.6;
     const groundPercent = 0.2;
-    const tileDensity = 50;
-    const terrainMult = 8;
+    const tileDensity = 100;
+    const terrainSize = {x: 8000, y: 8000};
     
     var width = $(document).width();
     var height = $(document).height();
@@ -20,9 +20,9 @@ define(['crafty', 'jquery', './VoronoiTerrain',
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
         var island = Crafty.e("2D, Canvas, TerrainVisualizer, CameraControls, Mouse")
-            .attr({x: 0, y: 0, w: width * terrainMult, h: height * terrainMult})
+            .attr({x: 0, y: 0, w: terrainSize.x, h: terrainSize.y})
             .terrainvisualizer(terrain, waterPercent, groundPercent)
-            .cameracontrols({x: 0, y: 0, w: width * terrainMult, h: height * terrainMult});
+            .cameracontrols({x: 0, y: 0, w: terrainSize.x, h: terrainSize.y});
     });
 
     Crafty.scene("Load", function() {
@@ -35,10 +35,10 @@ define(['crafty', 'jquery', './VoronoiTerrain',
         // text up before blocking the thread
         setTimeout(function() {
             console.log('GENERATE');
-            terrain.generateTerrain(width * terrainMult, height * terrainMult, 100, waterPercent);
+            terrain.generateTerrain(terrainSize.x, terrainSize.y, tileDensity, waterPercent);
             console.log('DONE');
             Crafty.scene("Main");
-        }, tileDensity);
+        }, 100);
     });
     
     Crafty.scene("Load");
