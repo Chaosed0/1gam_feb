@@ -5,7 +5,8 @@ define(['crafty', 'util',], function(Crafty, u) {
         if(e.type == 'canvas') {
             e.ctx.drawImage(this._prerender, this.x, this.y, this.w, this.h);
 
-            var cameraBounds = viewportToMinimap(this._mapbounds, {x: this.x, y: this.y, w: this.w, h: this.h});
+            var cameraBounds = viewportToMinimap(this._mapbounds,
+                    {x: this.x, y: this.y, w: this.w, h: this.h});
 
             e.ctx.save();
             e.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
@@ -18,8 +19,10 @@ define(['crafty', 'util',], function(Crafty, u) {
     }
 
     var viewportchanged = function() {
-        this.x = -Crafty.viewport.x + Crafty.viewport.width - this.w;
-        this.y = -Crafty.viewport.y + Crafty.viewport.height - this.h;
+        this.w = this._originalsize.w / Crafty.viewport._scale;
+        this.h = this._originalsize.h / Crafty.viewport._scale;
+        this.x = -Crafty.viewport.x + Crafty.viewport.width / Crafty.viewport._scale - this.w;
+        this.y = -Crafty.viewport.y + Crafty.viewport.height / Crafty.viewport._scale  - this.h;
     }
 
     var pointToMapPos = function(point, rect, mapbounds) {
@@ -72,11 +75,13 @@ define(['crafty', 'util',], function(Crafty, u) {
         _prerender: null,
         _lastmouse: {x: 0, y: 0},
         _mapbounds: {x: 0, y: 0, w: 100, h: 100},
+        _originalsize: {w: 0, h: 0},
         _dragging: false,
         ready: false,
 
         init: function() {
             this.ready = true;
+
             this.bind("Draw", draw);
             this.bind("MouseDown", mousedown);
             this.bind("MouseMove", mousemove);
@@ -99,9 +104,9 @@ define(['crafty', 'util',], function(Crafty, u) {
         minimap: function(prerender, mapbounds) {
             this._prerender = prerender;
             this._mapbounds = mapbounds;
-
-            this.x = -Crafty.viewport.x + Crafty.viewport.width - this.w;
-            this.y = -Crafty.viewport.y + Crafty.viewport.height - this.h;
+            this._originalsize.w = this.w;
+            this._originalsize.h = this.h;
+            viewportchanged.call(this);
             return this;
         }
     });
