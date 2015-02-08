@@ -109,7 +109,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
 
             e.ctx.save();
             e.ctx.strokeStyle = '#0000FF';
-            e.ctx.lineWidth = 3;
+            e.ctx.lineWidth = 5;
             e.ctx.lineCap = 'round';
             e.ctx.lineJoin = 'round';
             for(var i = 0; i < rivers.length; i++) {
@@ -155,13 +155,15 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                 e.ctx.save();
                 e.ctx.beginPath();
                 e.ctx.strokeStyle = 'black';
-                e.ctx.lineWidth = 5;
+                e.ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                e.ctx.lineWidth = 3;
                 e.ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
                 for(var i = 1; i < halfedges.length; i++) {
                     var point = halfedges[i].getStartpoint();
                     e.ctx.lineTo(point.x, point.y);
                 }
                 e.ctx.closePath();
+                e.ctx.fill();
                 e.ctx.stroke();
                 e.ctx.restore();
             }
