@@ -3,8 +3,6 @@ define(['crafty', 'util',], function(Crafty, u) {
 
     var draw = function(e) {
         if(e.type == 'canvas') {
-            this.x = -Crafty.viewport.x + Crafty.viewport.width - this.w;
-            this.y = -Crafty.viewport.y + Crafty.viewport.height - this.h;
             e.ctx.drawImage(this._prerender, this.x, this.y, this.w, this.h);
 
             var cameraBounds = viewportToMinimap(this._mapbounds, {x: this.x, y: this.y, w: this.w, h: this.h});
@@ -17,6 +15,11 @@ define(['crafty', 'util',], function(Crafty, u) {
             e.ctx.stroke();
             e.ctx.restore();
         }
+    }
+
+    var viewportchanged = function() {
+        this.x = -Crafty.viewport.x + Crafty.viewport.width - this.w;
+        this.y = -Crafty.viewport.y + Crafty.viewport.height - this.h;
     }
 
     var mousedown = function(e) {
@@ -55,6 +58,7 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.bind("Draw", draw);
             this.bind("MouseDown", mousedown);
             this.bind("MouseMove", mousemove);
+            this.bind("InvalidateViewport", viewportchanged);
             this.trigger("Invalidate");
         },
 
