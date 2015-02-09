@@ -4,6 +4,7 @@ define(['crafty'], function(Crafty) {
     var CameraControls = function(bounds) {
         this.lastmouse = null;
         this.bounds = bounds;
+        this.maxScale = Math.min(Crafty.viewport.width / bounds.w, Crafty.viewport.height / bounds.h);
         this.mouselookactive = false;
     }
 
@@ -58,8 +59,8 @@ define(['crafty'], function(Crafty) {
     CameraControls.prototype.clampViewportScale = function() {
         if(Crafty.viewport._scale > 1.0) {
             Crafty.viewport.scale(1.0);
-        } else if(Crafty.viewport._scale < 1/8) {
-            Crafty.viewport.scale(1/8);
+        } else if(Crafty.viewport._scale < this.maxScale) {
+            Crafty.viewport.scale(this.maxScale);
         }
     }
 
