@@ -12,7 +12,7 @@ define(['crafty'], function(Crafty) {
             var scroll = {x: this._lastmouse.x - e.clientX, y: this._lastmouse.y - e.clientY};
             Crafty.viewport.x -= scroll.x / Crafty.viewport._scale
             Crafty.viewport.y -= scroll.y / Crafty.viewport._scale;
-            this.constrainViewportPos();
+            this.clampViewportPos();
             this._lastmouse = {x: e.clientX, y: e.clientY};
         }
     }
@@ -33,18 +33,18 @@ define(['crafty'], function(Crafty) {
         var oldScale = Crafty.viewport._scale;
         var scaleFactor = (1 - e.deltaY / 500);
         Crafty.viewport.scale(Crafty.viewport._scale * scaleFactor);
-        this.constrainViewportScale();
+        this.clampViewportScale();
 
-        //After constraining, we might not actually have scaled; correct accordingly
+        //After clamping, we might not actually have scaled; correct accordingly
         scaleFactor = Crafty.viewport._scale / oldScale;
         //Zoom in on a point, i.e. keep that point at the same place on the screen
         Crafty.viewport.x = - (e.realX - (Crafty.viewport.x + e.realX) / scaleFactor);
         Crafty.viewport.y = - (e.realY - (Crafty.viewport.y + e.realY) / scaleFactor);
 
-        this.constrainViewportPos();
+        this.clampViewportPos();
     }
 
-    CameraControls.prototype.constrainViewportPos = function() {
+    CameraControls.prototype.clampViewportPos = function() {
         if(this.bounds) {
             Crafty.viewport.x = Math.min(Crafty.viewport.x, this.bounds.x);
             Crafty.viewport.y = Math.min(Crafty.viewport.y, this.bounds.y);
@@ -55,7 +55,7 @@ define(['crafty'], function(Crafty) {
         }
     }
     
-    CameraControls.prototype.constrainViewportScale = function() {
+    CameraControls.prototype.clampViewportScale = function() {
         if(Crafty.viewport._scale > 1.0) {
             Crafty.viewport.scale(1.0);
         } else if(Crafty.viewport._scale < 1/8) {
@@ -66,7 +66,7 @@ define(['crafty'], function(Crafty) {
     CameraControls.prototype.centerOn = function(point) {
         Crafty.viewport.x = -point.x + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0;
         Crafty.viewport.y = -point.y + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0;
-        this.constrainViewportPos();
+        this.clampViewportPos();
     }
 
     CameraControls.prototype.mouselook = function(active) {
