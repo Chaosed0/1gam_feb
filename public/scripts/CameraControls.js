@@ -32,6 +32,7 @@ define(['crafty'], function(Crafty) {
     var wheel = function(e) {
         Crafty.viewport.scale(Crafty.viewport._scale * (1 - e.deltaY / 1000));
         this.constrainViewportScale();
+        this.constrainViewportPos();
     }
 
     CameraControls.prototype.constrainViewportPos = function() {
