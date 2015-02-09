@@ -30,7 +30,7 @@ define(['crafty'], function(Crafty) {
     }
 
     var wheel = function(e) {
-        Crafty.viewport.scale(Crafty.viewport._scale - e.deltaY / 1000);
+        Crafty.viewport.scale(Crafty.viewport._scale * (1 - e.deltaY / 1000));
         this.constrainViewportScale();
     }
 
@@ -38,14 +38,19 @@ define(['crafty'], function(Crafty) {
         if(this.bounds) {
             Crafty.viewport.x = Math.min(Crafty.viewport.x, this.bounds.x);
             Crafty.viewport.y = Math.min(Crafty.viewport.y, this.bounds.y);
-            Crafty.viewport.x = Math.max(Crafty.viewport.x, - this.bounds.w + Crafty.viewport.width);
-            Crafty.viewport.y = Math.max(Crafty.viewport.y, - this.bounds.h + Crafty.viewport.height);
+            Crafty.viewport.x = Math.max(Crafty.viewport.x,
+                    Crafty.viewport.width / Crafty.viewport._scale - this.bounds.w);
+            Crafty.viewport.y = Math.max(Crafty.viewport.y,
+                    Crafty.viewport.height / Crafty.viewport._scale - this.bounds.h);
         }
     }
     
     CameraControls.prototype.constrainViewportScale = function() {
-        Crafty.viewport.scale(Math.min(Crafty.viewport._scale, 1.0));
-        Crafty.viewport.scale(Math.max(Crafty.viewport._scale, 1.0/8.0));
+        if(Crafty.viewport._scale > 1.0) {
+            Crafty.viewport.scale(1.0);
+        } else if(Crafty.viewport._scale < 1/8) {
+            Crafty.viewport.scale(1/8);
+        }
     }
 
     CameraControls.prototype.centerOn = function(point) {
