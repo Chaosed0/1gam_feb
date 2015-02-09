@@ -16,6 +16,9 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
     var gameElem = document.getElementById('game');
 
     Crafty.init(width, height, gameElem);
+
+    /* Hack in wheel event to mouseDispatch */
+    Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
                         
     var terrain = new VoronoiTerrain();
     Crafty.scene("Main", function () {
