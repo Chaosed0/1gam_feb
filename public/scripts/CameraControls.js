@@ -30,8 +30,17 @@ define(['crafty'], function(Crafty) {
     }
 
     var wheel = function(e) {
-        Crafty.viewport.scale(Crafty.viewport._scale * (1 - e.deltaY / 1000));
+        var oldScale = Crafty.viewport._scale;
+        var scaleFactor = (1 - e.deltaY / 500);
+        Crafty.viewport.scale(Crafty.viewport._scale * scaleFactor);
         this.constrainViewportScale();
+
+        //After constraining, we might not actually have scaled; correct accordingly
+        scaleFactor = Crafty.viewport._scale / oldScale;
+        //Zoom in on a point, i.e. keep that point at the same place on the screen
+        Crafty.viewport.x = - (e.realX - (Crafty.viewport.x + e.realX) / scaleFactor);
+        Crafty.viewport.y = - (e.realY - (Crafty.viewport.y + e.realY) / scaleFactor);
+
         this.constrainViewportPos();
     }
 
