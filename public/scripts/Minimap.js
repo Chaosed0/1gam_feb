@@ -71,10 +71,12 @@ define(['crafty', 'util',], function(Crafty, u) {
 
     var viewportToMinimap = function(mapbounds, minimapbounds) {
         return {
-            x: minimapbounds.x + -Crafty.viewport.x / mapbounds.w * minimapbounds.w,
-            y: minimapbounds.y + -Crafty.viewport.y / mapbounds.h * minimapbounds.h,
-            w: Crafty.viewport.width / Crafty.viewport._scale / mapbounds.w * minimapbounds.w,
-            h: Crafty.viewport.height / Crafty.viewport._scale / mapbounds.h * minimapbounds.h
+            x: Math.max(minimapbounds.x + -Crafty.viewport.x / mapbounds.w * minimapbounds.w, minimapbounds.x),
+            y: Math.max(minimapbounds.y + -Crafty.viewport.y / mapbounds.h * minimapbounds.h, minimapbounds.y),
+            w: Math.min(Crafty.viewport.width / Crafty.viewport._scale / mapbounds.w * minimapbounds.w,
+                    minimapbounds.w),
+            h: Math.min(Crafty.viewport.height / Crafty.viewport._scale / mapbounds.h * minimapbounds.h,
+                    minimapbounds.h)
         };
     }
 
