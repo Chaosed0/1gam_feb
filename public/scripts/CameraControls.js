@@ -54,8 +54,8 @@ define(['crafty'], function(Crafty) {
     }
 
     CameraControls.prototype.centerOn = function(point) {
-        Crafty.viewport.x = -point.x + Crafty.viewport.width / 2.0;
-        Crafty.viewport.y = -point.y + Crafty.viewport.width / 2.0;
+        Crafty.viewport.x = -point.x + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0;
+        Crafty.viewport.y = -point.y + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0;
         this.constrainViewportPos();
     }
 
