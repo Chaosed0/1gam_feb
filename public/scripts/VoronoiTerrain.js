@@ -16,6 +16,8 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         this.elevationRange = null;
         this.rivers = null;
         this.size = {w: 0, h: 0}
+        this.waterline = 0.0;
+        this.bodies = {};
     }
 
     VoronoiTerrain.prototype.inCell = function(point, cell) {
@@ -58,6 +60,129 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         console.log(this.diagram);
     }
 
+    //Annotates land and sea coast tiles with isCoast, and the edges
+    // of the land coastlines with isCoastline.
+    VoronoiTerrain.prototype.annotateCoasts = function() {
+        /* NOTE: we're assuming generateRivers was already called */
+        var cells = this.diagram.cells;
+        for(var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            var halfedges = cell.halfedges;
+            
+            if(cell.site.elevation < this.waterLine) {
+                /* Skip this one, we're in water */
+                continue;
+            }
+
+            for(var j = 0; j < halfedges.length; j++) {
+                var halfedge = halfedges[j];
+                var lsite = halfedge.edge.lSite;
+                var rsite = halfedge.edge.rSite;
+                var othersite;
+
+                if(lsite && rsite == cell.site) {
+                    othersite = lsite;
+                } else if(rsite && lsite == cell.site) {
+                    othersite = rsite;
+                }
+
+                if(othersite.elevation < this.waterLine) {
+                    cell.site.isCoast = true;
+                    othersite.isCoast = true;
+                    halfedge.edge.isCoastline = true;
+                }
+            }
+        }
+    }
+
+    // Creates bodies from the tile data. Large bodies of water are of
+    // type 'ocean', small ones 'lake', small bodies of land 'island', and
+    // large ones 'continent'.
+    VoronoiTerrain.prototype.makeBodies = function() {
+        var points = this.pointData.points;
+        var dimensions = this.pointData.dimensions;
+        var size = this.pointData.size;
+
+        /* Floodfill everything, but don't fill things that are already filled */
+        var set = new Set();
+        for(var y = 0; y < dimensions.y; y++) {
+            for(var x = 0; x < dimensions.x; x++) {
+                var point = points[y * dimensions.x + x];
+                var ids = [];
+                this.floodFill(point, ids, set, function(opoint) {
+                    if(point.elevation > this.waterLine) {
+                        return opoint.elevation > this.waterLine;
+                    } else {
+                        return opoint.elevation < this.waterLine;
+                    }
+                });
+
+                var type, land;
+                if(point.elevation < this.waterLine) {
+                    if(ids.length > 30) {
+                        //Large body of water
+                        type = 'ocean';
+                    } else {
+                        type = 'lake';
+                    }
+                    land = false;
+                } else {
+                    if(ids.length > 30) {
+                        type = 'continent';
+                    } else {
+                        type = 'island';
+                    }
+                    land = true;
+                }
+
+                this.makeBody(ids, type, land);
+                point.type = type;
+            }
+        }
+        console.log(this.bodies);
+    }
+
+    VoronoiTerrain.prototype.floodFill = function(point, arr, set, condition) {
+        if(!condition.call(this, point) || set.has(point)) {
+            return;
+        } 
+
+        arr.push(point);
+        set.add(point);
+
+        var halfedges = this.diagram.cells[point.voronoiId].halfedges;
+        for(var i = 0; i < halfedges.length; i++) {
+            var lsite = halfedges[i].edge.lSite;
+            var rsite = halfedges[i].edge.rSite;
+            if(rsite && lsite === point) {
+                this.floodFill(rsite, arr, set, condition);
+            } else if(lsite && rsite === point) {
+                this.floodFill(lsite, arr, set, condition);
+            }
+        }
+    }
+
+    VoronoiTerrain.prototype.makeBody = function(ids, type, land) {
+        if(ids.length <= 0) {
+            return;
+        }
+
+        var body = { ids: ids, land: land, coast: [] };
+        var coast = body.coast;
+
+        for(var i = 0; i < ids; i++) {
+            var id = ids[i];
+            if(this.diagram.cells[id].site.isCoast) {
+                coast.push(id);
+            }
+        }
+
+        if(!(type in this.bodies)) {
+            this.bodies[type] = [];
+        }
+        this.bodies[type].push(body);
+    }
+
     VoronoiTerrain.prototype.annotateElevation = function() {
         var octaves = new Array(numOctaves);
         for(var i = 0; i < numOctaves; i++) {
@@ -93,9 +218,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         this.elevationRange = range;
     }
 
-    VoronoiTerrain.prototype.generateRivers = function(waterPercent) {
-        var waterLine = this.elevationRange.min +
-            (this.elevationRange.max - this.elevationRange.min) * waterPercent;
+    VoronoiTerrain.prototype.generateRivers = function() {
         var prioq = new PriorityQueue({
             comparator: function(a, b) {
                 return b.elevation - a.elevation;
@@ -138,7 +261,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             var halfedge = Math.floor(u.getRandom(cell.halfedges.length));
             var river = [];
 
-            while(elevation > waterLine) {
+            while(elevation > this.waterLine) {
                 //Find the neighbor cell with the lowest elevation
                 var halfEdges = cell.halfedges;
                 var nextPoint = halfEdges[0].edge.rSite;
@@ -187,6 +310,13 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
                     //Annotate the edge for later, saying that there's a river here
                     halfEdges[j].edge.isRiver = true;
+                    //It's possible that this edge borders the edge of the map
+                    if(halfEdges[j].edge.lSite) {
+                        halfEdges[j].edge.lSite.bordersRiver = true;
+                    }
+                    if(halfEdges[j].edge.rSite) {
+                        halfEdges[j].edge.rSite.bordersRiver = true;
+                    }
                 }
 
                 //Update state
@@ -336,6 +466,29 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             ctx.stroke();
             ctx.restore();
         }
+
+        if(options && options.drawCoasts) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = 'yellow';
+            ctx.lineCap = 'round';
+            ctx.lineWidth = 5;
+            for(var i = 0; i < cells.length; i++) {
+                if(cells[i].site.isCoast) {
+                    var halfedges = cells[i].halfedges;
+                    for(var j = 0; j < halfedges.length; j++) {
+                        if(halfedges[j].edge.isCoastline) {
+                            var p1 = halfedges[j].getStartpoint();
+                            var p2 = halfedges[j].getEndpoint();
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                        }
+                    }
+                }
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 
     VoronoiTerrain.prototype.getElevationRange = function() {
@@ -360,7 +513,13 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         this.generatePoints(width, height, density);
         this.generateDiagram(width, height);
         this.annotateElevation();
-        this.generateRivers(waterPercent);
+
+        this.waterLine = this.elevationRange.min +
+            (this.elevationRange.max - this.elevationRange.min) * waterPercent;
+
+        this.generateRivers();
+        this.annotateCoasts();
+        this.makeBodies();
     }
     
     return VoronoiTerrain;

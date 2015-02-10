@@ -131,7 +131,8 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
             this._terrain.drawTo(prerenderctx, this._cellcolors, {
                 drawEdges: this._drawEdges,
                 drawSites: this._drawSites,
-                drawElevations: this._drawElevations
+                drawElevations: this._drawElevations,
+                drawCoasts: true,
             });
             return this;
         },
