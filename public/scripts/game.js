@@ -42,7 +42,7 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
 
     Crafty.scene("Load", function() {
         var loadtext = Crafty.e("2D, Canvas, Text")
-            .attr({x: width/2.0, y: width/2.0})
+            .attr({x: width/2.0, y: height/2.0})
             .text("Loading")
             .textFont({size: '20px'});
 
