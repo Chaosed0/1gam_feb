@@ -8,10 +8,14 @@ define(['crafty', 'util',], function(Crafty, u) {
              * draw the minimap */
             e.ctx.save();
             e.ctx.setTransform(1, 0, 0, 1, 0, 0);
-            e.ctx.drawImage(this._prerender, this._clientbounds.x, this._clientbounds.y,
-                    this._clientbounds.w, this._clientbounds.h);
 
-            var cameraBounds = viewportToMinimap(this._mapbounds,this._clientbounds);
+            e.ctx.fillStyle = '#000000';
+            e.ctx.fillRect(this._clientbounds.x, this._clientbounds.y,
+                    this._clientbounds.w, this._clientbounds.h);
+            e.ctx.drawImage(this._prerender, this._interiorbounds.x, this._interiorbounds.y,
+                    this._interiorbounds.w, this._interiorbounds.h);
+
+            var cameraBounds = viewportToMinimap(this._mapbounds, this._interiorbounds);
 
             e.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
             e.ctx.strokeStyle = 'black';
@@ -32,7 +36,7 @@ define(['crafty', 'util',], function(Crafty, u) {
         this.y = -Crafty.viewport.y + Crafty.viewport.height / Crafty.viewport._scale  - this.h;
     }
 
-    var pointToMapPos = function(point, rect, mapbounds) {
+    var pointToMapPos = function(point, mapbounds, rect) {
         if(point.x >= rect.x && point.y >= rect.y &&
                 point.x <= rect.x + rect.w && point.y <= rect.y + rect.h) {
             return {x: (point.x - rect.x) / rect.w * mapbounds.w,
@@ -40,13 +44,17 @@ define(['crafty', 'util',], function(Crafty, u) {
         }
 
         //Uh oh
-        return {x: 0, y: 0};
+        return null;
     }
 
     var minimapclick = function(e) {
         var pos = {x: e.clientX, y: e.clientY};
-        var point = pointToMapPos(pos, this._clientbounds, this._mapbounds);
-        this.trigger("MinimapDown", point);
+        var point = pointToMapPos(pos, this._mapbounds, this._interiorbounds);
+        
+        /* Ensure the point isn't outside the minimap */
+        if(point) {
+            this.trigger("MinimapDown", point);
+        }
     }
 
     var mousedown = function(e) {
@@ -95,6 +103,7 @@ define(['crafty', 'util',], function(Crafty, u) {
         _lastmouse: {x: 0, y: 0},
         _mapbounds: {x: 0, y: 0, w: 100, h: 100},
         _clientbounds: {x: 0, y: 0, w: 0, h: 0},
+        _interiorbounds: {x: 0, y: 0, w: 0, h: 0},
         _dragging: false,
         ready: false,
 
@@ -129,6 +138,20 @@ define(['crafty', 'util',], function(Crafty, u) {
                 w: this.w, h: this.h
             };
             viewportchanged.call(this);
+
+            /* We want the actual minimap to be the same scale as the real map, but we want
+             * it to fit inside the bounding box specified by (this.x, this.y, this.w, this.h).
+             * Calculate these interior bounds. */
+            if(mapbounds.w > mapbounds.h) {
+                this._interiorbounds.h = this.h * mapbounds.h / mapbounds.w;
+                this._interiorbounds.w = this.w;
+            } else {
+                this._interiorbounds.w = this.w * mapbounds.w / mapbounds.h;
+                this._interiorbounds.h = this.h;
+            }
+            this._interiorbounds.x = this._clientbounds.x + this._clientbounds.w/2.0 - this._interiorbounds.w/2.0;
+            this._interiorbounds.y = this._clientbounds.y + this._clientbounds.h/2.0 - this._interiorbounds.h/2.0;
+
             return this;
         }
     });

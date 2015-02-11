@@ -9,7 +9,8 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
     const waterPercent = 0.6;
     const groundPercent = 0.2;
     const tileDensity = 100;
-    const terrainSize = {x: 0, y: 0, w: 8000, h: 8000};
+    const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
+    const minimapRatio = 0.25;
     
     var width = $(document).width();
     var height = $(document).height();
@@ -29,8 +30,11 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
             .attr(terrainSize)
             .terrainvisualizer(terrain, waterPercent, groundPercent);
 
+        /* Make the minimap square */
+        var minimapSize = Math.min(width * minimapRatio, height * minimapRatio);
+
         var minimap = Crafty.e("2D, Canvas, Minimap, Mouse")
-            .attr({w: width / 4, h: height / 4, z: 9999})
+            .attr({w: minimapSize, h: minimapSize, z: 9999})
             .minimap(terrainVis.getPrerender(), terrainSize)
             .bind("MinimapDown", function(point) {
                 camera.mouselook(false);
