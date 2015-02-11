@@ -4,7 +4,7 @@ define(['crafty'], function(Crafty) {
     var CameraControls = function(bounds) {
         this.lastmouse = null;
         this.bounds = bounds;
-        this.maxScale = Math.min(Crafty.viewport.width / bounds.w, Crafty.viewport.height / bounds.h);
+        this.maxScale = Math.max(Crafty.viewport.width / bounds.w, Crafty.viewport.height / bounds.h);
         this.mouselookactive = false;
     }
 
