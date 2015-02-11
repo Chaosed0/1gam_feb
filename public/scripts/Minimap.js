@@ -79,16 +79,6 @@ define(['crafty', 'util',], function(Crafty, u) {
         };
     }
 
-    /* So here's the deal about HUD elements in Crafty.
-     * On one hand, they should be completely divorced from the normal viewport
-     * transforms/scaling.
-     * On the other, if we don't set our position/size in "real coordinates",
-     * Crafty thinks the element is outside the viewport. The element will
-     * get culled during drawing, and we'll also miss out on events.
-     * The result is that we have a dual thing going on; this.pos is going to be
-     * set only so that the element doesn't get culled, but we're going to draw
-     * the element using this._clientbounds.
-     */
     Crafty.c("Minimap", {
         _prerender: null,
         _lastmouse: {x: 0, y: 0},
