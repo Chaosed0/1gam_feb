@@ -32,7 +32,9 @@ define(['crafty', 'util',], function(Crafty, u) {
          * listen to events and don't get culled */
         this.w = this._clientbounds.w / Crafty.viewport._scale;
         this.h = this._clientbounds.h / Crafty.viewport._scale;
-        this.x = -Crafty.viewport.x + Crafty.viewport.width / Crafty.viewport._scale - this.w;
+        /* XXX: If you change clientbounds.x or y make sure to change this too! Nasty, but
+         * easiest way... */
+        this.x = -Crafty.viewport.x;
         this.y = -Crafty.viewport.y + Crafty.viewport.height / Crafty.viewport._scale  - this.h;
     }
 
@@ -133,15 +135,15 @@ define(['crafty', 'util',], function(Crafty, u) {
             this._prerender = prerender;
             this._mapbounds = mapbounds;
             this._clientbounds = {
-                x: Crafty.viewport.width - this.w,
+                x: 0,
                 y: Crafty.viewport.height - this.h,
                 w: this.w, h: this.h
             };
             viewportchanged.call(this);
 
             /* We want the actual minimap to be the same scale as the real map, but we want
-             * it to fit inside the bounding box specified by (this.x, this.y, this.w, this.h).
-             * Calculate these interior bounds. */
+             * it to fit inside the bounding box specified by _clientbounds. Calculate these
+             * interior bounds. */
             if(mapbounds.w > mapbounds.h) {
                 this._interiorbounds.h = this.h * mapbounds.h / mapbounds.w;
                 this._interiorbounds.w = this.w;
