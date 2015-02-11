@@ -2,6 +2,7 @@
 define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
     './TerrainVisualizer',
     './Minimap',
+    './HUD',
 ], function(Crafty, $, VoronoiTerrain, CameraControls) {
     var self = this;
     var map;
@@ -33,7 +34,7 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls',
         /* Make the minimap square */
         var minimapSize = Math.min(width * minimapRatio, height * minimapRatio);
 
-        var minimap = Crafty.e("2D, Canvas, Minimap, Mouse")
+        var minimap = Crafty.e("2D, Canvas, Minimap, HUD, Mouse")
             .attr({w: minimapSize, h: minimapSize, z: 9999})
             .minimap(terrainVis.getPrerender(), terrainSize)
             .bind("MinimapDown", function(point) {

@@ -27,17 +27,6 @@ define(['crafty', 'util',], function(Crafty, u) {
         }
     }
 
-    var viewportchanged = function() {
-        /* Set our position in "world coordinates" so that we can still
-         * listen to events and don't get culled */
-        this.w = this._clientbounds.w / Crafty.viewport._scale;
-        this.h = this._clientbounds.h / Crafty.viewport._scale;
-        /* XXX: If you change clientbounds.x or y make sure to change this too! Nasty, but
-         * easiest way... */
-        this.x = -Crafty.viewport.x;
-        this.y = -Crafty.viewport.y + Crafty.viewport.height / Crafty.viewport._scale  - this.h;
-    }
-
     var pointToMapPos = function(point, mapbounds, rect) {
         if(point.x >= rect.x && point.y >= rect.y &&
                 point.x <= rect.x + rect.w && point.y <= rect.y + rect.h) {
@@ -117,7 +106,6 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.bind("MouseMove", mousemove);
             this.bind("MouseUp", mouseup);
             this.bind("MouseOut", mouseup);
-            this.bind("InvalidateViewport", viewportchanged);
             this.trigger("Invalidate");
         },
 
@@ -127,7 +115,6 @@ define(['crafty', 'util',], function(Crafty, u) {
             this.unbind("MouseMove", mousemove);
             this.unbind("MouseUp", mouseup);
             this.unbind("MouseOut", mouseup);
-            this.unbind("InvalidateViewport", viewportchanged);
             this.trigger("Invalidate");
         },
 
@@ -139,7 +126,6 @@ define(['crafty', 'util',], function(Crafty, u) {
                 y: Crafty.viewport.height - this.h,
                 w: this.w, h: this.h
             };
-            viewportchanged.call(this);
 
             /* We want the actual minimap to be the same scale as the real map, but we want
              * it to fit inside the bounding box specified by _clientbounds. Calculate these
