@@ -1,9 +1,13 @@
 
 define(['seedrandom'], function(seedrandom) {
     const epsilon = 0.001;
-    var seed = Math.random();
-    Math.seedrandom(seed);
-    console.log(seed);
+
+    //Antipattern??
+    if(!window.seed) {
+        window.seed = Math.random();
+        Math.seedrandom(window.seed);
+        console.log(seed);
+    }
 
     var exports = {
         setSeed: function(seed) {

@@ -112,11 +112,11 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             for(var x = 0; x < dimensions.x; x++) {
                 var point = points[y * dimensions.x + x];
                 var ids = [];
-                this.floodFill(point, ids, set, function(opoint) {
-                    if(point.elevation > this.waterLine) {
-                        return opoint.elevation > this.waterLine;
+                this.floodFillSub(point, ids, set, function(terrain, opoint) {
+                    if(point.elevation > terrain.waterLine) {
+                        return opoint.elevation > terrain.waterLine;
                     } else {
-                        return opoint.elevation < this.waterLine;
+                        return opoint.elevation < terrain.waterLine;
                     }
                 });
 
@@ -144,11 +144,28 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         }
         console.log(this.bodies);
     }
+    
+    VoronoiTerrain.prototype.aboveWater = function(point) {
+        return point.elevation > this.waterLine;
+    }
 
-    VoronoiTerrain.prototype.floodFill = function(point, arr, set, condition) {
-        if(!condition.call(this, point) || set.has(point.voronoiId)) {
+    VoronoiTerrain.prototype.floodFill = function(point, limit, condition) {
+        var ids = [];
+        var set = new Set();
+        this.floodFillSub(point, ids, set, condition, limit, 0);
+        return ids;
+    }
+
+    VoronoiTerrain.prototype.floodFillSub = function(point, arr, set, condition, limit, num) {
+        if(!condition(this, point) ||
+                set.has(point.voronoiId) ||
+                (num !== undefined && limit !== undefined && num >= limit)) {
             return;
         } 
+
+        if(num !== undefined) {
+            num++;
+        }
 
         arr.push(point.voronoiId);
         set.add(point.voronoiId);
@@ -158,9 +175,9 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             var lsite = halfedges[i].edge.lSite;
             var rsite = halfedges[i].edge.rSite;
             if(rsite && lsite === point) {
-                this.floodFill(rsite, arr, set, condition);
+                this.floodFillSub(rsite, arr, set, condition, limit, num);
             } else if(lsite && rsite === point) {
-                this.floodFill(lsite, arr, set, condition);
+                this.floodFillSub(lsite, arr, set, condition, limit, num);
             }
         }
     }
@@ -173,7 +190,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         var body = { ids: ids, land: land, coast: [] };
         var coast = body.coast;
 
-        for(var i = 0; i < ids; i++) {
+        for(var i = 0; i < ids.length; i++) {
             var id = ids[i];
             if(this.diagram.cells[id].site.isCoast) {
                 coast.push(id);

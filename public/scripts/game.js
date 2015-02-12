@@ -35,12 +35,15 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls', 'Util',
                      g: Math.floor(u.getRandom(255)),
                      b: Math.floor(u.getRandom(255))};
 
-        //Pick a random continent and stick some guys on the coastline
+        //Pick a random continent and stick some guys in an area
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
-        var firstCoast = Math.floor(u.getRandom(continent.coast.length));
+        var randomTile = continent.ids[Math.floor(u.getRandom(continent.ids.length))];
+        var ids = terrain.floodFill(terrain.getDiagram().cells[randomTile].site, 4, function(terrain, point) {
+            return terrain.aboveWater(point);
+        });
         for(var i = 0; i < num; i++) {
-            var id = continent.coast[firstCoast + i];
-            var site = cells[id].site;
+            var id = ids[Math.floor(u.getRandom(ids.length))];
+            var site = terrain.getDiagram().cells[id].site;
             Crafty.e("2D, Canvas, Color")
                 .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
                 .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')');
