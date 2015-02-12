@@ -68,7 +68,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         for(var i = 0; i < cells.length; i++) {
             var cell = cells[i];
             var halfedges = cell.halfedges;
-            
+
             if(cell.site.elevation < this.waterLine) {
                 /* Skip this one, we're in water */
                 continue;
@@ -80,15 +80,18 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 var rsite = halfedge.edge.rSite;
                 var othersite;
 
-                if(lsite && rsite == cell.site) {
+                if(rsite == cell.site) {
                     othersite = lsite;
-                } else if(rsite && lsite == cell.site) {
+                } else {
                     othersite = rsite;
                 }
 
-                if(othersite.elevation < this.waterLine) {
+                //We want to count cells bordering the edge of the map as coasts as well
+                if(othersite == null || othersite.elevation < this.waterLine) {
+                    if(othersite) {
+                        othersite.isCoast = true;
+                    }
                     cell.site.isCoast = true;
-                    othersite.isCoast = true;
                     halfedge.edge.isCoastline = true;
                 }
             }
@@ -121,16 +124,16 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                 if(point.elevation < this.waterLine) {
                     if(ids.length > 30) {
                         //Large body of water
-                        type = 'ocean';
+                        type = 'oceans';
                     } else {
-                        type = 'lake';
+                        type = 'lakes';
                     }
                     land = false;
                 } else {
                     if(ids.length > 30) {
-                        type = 'continent';
+                        type = 'continents';
                     } else {
-                        type = 'island';
+                        type = 'islands';
                     }
                     land = true;
                 }
@@ -143,12 +146,12 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     }
 
     VoronoiTerrain.prototype.floodFill = function(point, arr, set, condition) {
-        if(!condition.call(this, point) || set.has(point)) {
+        if(!condition.call(this, point) || set.has(point.voronoiId)) {
             return;
         } 
 
-        arr.push(point);
-        set.add(point);
+        arr.push(point.voronoiId);
+        set.add(point.voronoiId);
 
         var halfedges = this.diagram.cells[point.voronoiId].halfedges;
         for(var i = 0; i < halfedges.length; i++) {
@@ -505,6 +508,10 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
     VoronoiTerrain.prototype.getRivers = function() {
         return this.rivers;
+    }
+
+    VoronoiTerrain.prototype.getBodies = function() {
+        return this.bodies;
     }
 
     VoronoiTerrain.prototype.generateTerrain = function(width, height, density, waterPercent) {
