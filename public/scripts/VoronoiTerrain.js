@@ -255,11 +255,9 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         var rivers = [];
 
         while(rivers.length < numRivers) {
-            if(prioq.length <= 0) {
-                // Uh oh, that's really bad - either the map is too small or the
-                // close-spawn avoidance is acting up too much
-                throw "WE RAN OUT OF RIVER CANDIDATES!?";
-            }
+            // If this assert is hit, either we're spawning too many
+            // rivers or riverTooClose is too large
+            u.assert(prioq.length > 0, "We ran out of river candidates!?");
 
             var point = prioq.dequeue();
             var skip = false;
@@ -358,9 +356,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                     } 
                 }
 
-                if(!foundDual) {
-                    throw "DUAL EDGE NOT FOUND";
-                }
+                u.assert(foundDual, "We didn't find a dual edge for some halfedge");
             }
 
             if(river.length > 0) {
@@ -403,7 +399,8 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         if(found) {
             return this.diagram.cells[point.voronoiId];
         } else {
-            throw "Didn't find a cell containing point " + pos + ", but we should have";
+            console.log("WARNING: Didn't find a cell containing point " + pos);
+            return null;
         }
     }
 

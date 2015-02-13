@@ -27,7 +27,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
             } else if('other' in terrainPercentages) {
                 curSubpercent = terrainPercentages['other'];
             } else {
-                throw 'Couldn\'t find terrain type ' + type;
+                u.assert(false, "Couldn't find terrain type " + type);
             }
             var typeColorMap = elevationColorMap[type];
 
