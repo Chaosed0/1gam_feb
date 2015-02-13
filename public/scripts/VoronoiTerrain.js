@@ -115,6 +115,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             for(var x = 0; x < dimensions.x; x++) {
                 var point = points[y * dimensions.x + x];
                 var ids = [];
+
                 this.floodFillSub(point, ids, set, function(terrain, opoint) {
                     if(point.elevation > terrain.waterLine) {
                         return opoint.elevation > terrain.waterLine;
@@ -152,35 +153,19 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         return point.elevation > this.waterLine;
     }
 
-    VoronoiTerrain.prototype.floodFill = function(point, limit, condition) {
-        var ids = [];
-        var set = new Set();
-        this.floodFillSub(point, ids, set, condition, limit, 0);
-        return ids;
-    }
-
-    VoronoiTerrain.prototype.floodFillSub = function(point, arr, set, condition, limit, num) {
-        if(!condition(this, point) ||
-                set.has(point.voronoiId) ||
-                (num !== undefined && limit !== undefined && num > limit)) {
+    VoronoiTerrain.prototype.floodFillSub = function(point, arr, set, condition) {
+        if(!condition(this, point) || set.has(point.voronoiId)) {
             return;
         } 
 
-        if(num !== undefined) {
-            num++;
-        }
-
-        arr.push(point.voronoiId);
         set.add(point.voronoiId);
+        arr.push(point.voronoiId);
 
         var halfedges = this.diagram.cells[point.voronoiId].halfedges;
         for(var i = 0; i < halfedges.length; i++) {
-            var lsite = halfedges[i].edge.lSite;
-            var rsite = halfedges[i].edge.rSite;
-            if(rsite && lsite === point) {
-                this.floodFillSub(rsite, arr, set, condition, limit, num);
-            } else if(lsite && rsite === point) {
-                this.floodFillSub(lsite, arr, set, condition, limit, num);
+            var othersite = this.getOtherSite(halfedges[i].edge, point);
+            if(othersite) {
+                this.floodFillSub(othersite, arr, set, condition);
             }
         }
     }
@@ -204,6 +189,45 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
             this.bodies[type] = [];
         }
         this.bodies[type].push(body);
+    }
+
+    VoronoiTerrain.prototype.bfs = function(cell, limit, condition, action) {
+        var prioq = new PriorityQueue({
+            comparator: function(a, b) {
+                /* Low to high priority */
+                return a.prio - b.prio;
+            }
+        });
+        var visitedCells = new Set();
+
+        prioq.queue({cell: cell, prio: 0});
+        console.log('---');
+
+        while(prioq.length > 0) {
+            var data = prioq.dequeue();
+            var cell = data.cell;
+            var prio = data.prio;
+
+            action(cell);
+
+            if(prio + 1 > limit) {
+                continue;
+            }
+
+            for(var i = 0; i < cell.halfedges.length; i++) {
+                var halfedge = cell.halfedges[i];
+                var othersite = this.getOtherSite(cell.halfedges[i].edge, cell.site);
+                //Other site must be valid
+                if(othersite) {
+                    var othercell = this.getCellForId(othersite.voronoiId);
+                    //Cell must meet condition and not be visited already
+                    if(!visitedCells.has(othercell) && condition(this, othercell)) {
+                        prioq.queue({cell: othercell, prio: prio + 1});
+                        visitedCells.add(cell);
+                    }
+                }
+            }
+        }
     }
 
     VoronoiTerrain.prototype.annotateElevation = function() {
@@ -533,6 +557,19 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
     VoronoiTerrain.prototype.getCellForId = function(voronoiId) {
         return this.diagram.cells[voronoiId];
+    }
+
+    VoronoiTerrain.prototype.getOtherSite = function(edge, site) {
+        u.assert(edge.lSite || edge.rSite);
+        var lsite = edge.lSite;
+        var rsite = edge.rSite;
+        if(lsite === site) {
+            return rsite;
+        } else if(rsite === site) {
+            return lsite;
+        } else {
+            return null;
+        }
     }
 
     VoronoiTerrain.prototype.generateTerrain = function(width, height, density, waterPercent) {

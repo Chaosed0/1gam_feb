@@ -40,21 +40,24 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
         //Pick a random continent and stick some guys on it
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
         var randomTile = continent.ids[Math.floor(u.getRandom(continent.ids.length))];
-        var ids = terrain.floodFill(terrain.getDiagram().cells[randomTile].site, 4, function(terrain, point) {
-            return terrain.aboveWater(point);
+        var cells = [];
+        terrain.bfs(terrain.getDiagram().cells[randomTile], 4, function(terrain, cell) {
+            return terrain.aboveWater(cell.site);
+        }, function(cell) {
+            cells.push(cell);
         });
         for(var i = 0; i < num; i++) {
             var placed = false;
             while(!placed) {
-                var id = ids[Math.floor(u.getRandom(ids.length))];
-                var site = terrain.getDiagram().cells[id].site;
-                if(!unitManager.getUnitForId(id)) {
+                var cell = cells[Math.floor(u.getRandom(cells.length))];
+                var site = cell.site;
+                if(!unitManager.getUnitForCell(cell)) {
                     placed = true;
                     var unit = Crafty.e("2D, Canvas, Color, Unit")
                         .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
                         .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')')
-                        .unit(4, num);
-                    unitManager.addUnit(id, unit);
+                        .unit(3, num);
+                    unitManager.addUnit(site.voronoiId, unit);
                 }
             }
         }
@@ -70,23 +73,22 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
             .bind("CellSelected", function(cell) {
                 var unitSelected = unitManager.getUnitForCell(cell);
                 if(unitSelected !== null) {
-                    console.log(unitSelected);
-                    var ids = terrain.floodFill(cell.site, unitSelected.getSpeed(), function(terrain, point) {
+                    var cells = [];
+                    terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {
                         //Terrain must be walkable and not occupied by a unit of another faction
-                        var unitOnPoint = unitManager.getUnitForId(point.voronoiId);
-                        var passable = terrain.aboveWater(point);
+                        var unitOnPoint = unitManager.getUnitForId(cell.site.voronoiId);
+                        var passable = terrain.aboveWater(cell.site);
                         if (passable && unitOnPoint) {
                             if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
                                 passable = false;
                             }
                         }
-                        if(!passable && unitOnPoint) {
-                            console.log(point.voronoiId, unitOnPoint);
-                        }
                         return passable;
+                    }, function(cell) {
+                        cells.push(cell);
                     });
 
-                    this.highlightIds(ids);
+                    this.highlightCells(cells);
                 }
             });
 

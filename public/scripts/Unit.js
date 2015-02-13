@@ -8,7 +8,7 @@ define(['crafty'], function(Crafty) {
         },
 
         unit: function(speed, faction) {
-            this._speed = speed;
+            this._movespeed = speed;
             this._faction = faction;
             return this;
         },
