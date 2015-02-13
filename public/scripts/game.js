@@ -70,7 +70,8 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
             .attr(terrainSize)
             .terrainvisualizer(terrain, waterPercent, groundPercent)
-            .bind("CellSelected", function(cell) {
+            .bind("CellSelected", function(data) {
+                var cell = data.cell;
                 var unitSelected = unitManager.getUnitForCell(cell);
                 if(unitSelected !== null) {
                     var cells = [];

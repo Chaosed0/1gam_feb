@@ -95,12 +95,17 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         /* Make sure the mouseup was close to the mousedown */
         if(this._mousedownpos && u.close({x: e.clientX, y: e.clientY}, this._mousedownpos, 8)) {
             /* User might have selected a cell of the map */
-            this._selectedcell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
-            if(this._selectedcell) {
-                /* Valid cell */
-                this.trigger("CellSelected", this._selectedcell);
+            var cell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
+            if(cell) {
+                /* Valid cell, trigger */
+                this.trigger("CellSelected", {button: e.mouseButton, cell: cell});
+
+                if(e.mouseButton == 0) {
+                    /* Left click, also highlight the map cell */
+                    this._selectedcell = cell;
+                    this.trigger("Invalidate");
+                }
             }
-            this.trigger("Invalidate");
         }
     }
 
