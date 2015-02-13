@@ -67,6 +67,24 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
                 e.ctx.stroke();
                 e.ctx.restore();
             }
+
+            e.ctx.save();
+            if(this._highlightids) {
+                e.ctx.fillStyle = 'rgba(0, 200, 0, .8)';
+                for(var i = 0; i < this._highlightids.length; i++) {
+                    var cell = this._terrain.getCellForId(this._highlightids[i]);
+                    var halfedges = cell.halfedges;
+                    e.ctx.beginPath();
+                    e.ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
+                    for(var j = 1; j < halfedges.length; j++) {
+                        e.ctx.lineTo(halfedges[j].getStartpoint().x, halfedges[j].getStartpoint().y);
+                    }
+                    e.ctx.closePath();
+                    e.ctx.fill();
+                }
+                e.ctx.beginPath();
+            }
+            e.ctx.restore();
         }
     }
 
@@ -87,8 +105,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         }
     }
 
-    Crafty.c("TerrainVisualizer", {
-        _terrain: null,
+    Crafty.c("TerrainVisualizer", { _terrain: null,
         _elevationRange: {min: 0, max: 0},
         _drawEdges: false,
         _drawSites: false,
@@ -98,6 +115,7 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
         _selectedcell: null,
         _mousedownpos: null,
         _prerender: null,
+        _highlightIds: null,
         ready: false,
 
         init: function() {
@@ -145,6 +163,15 @@ define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrai
 
         getPrerender: function() {
             return this._prerender;
+        },
+
+        highlightIds: function(ids) {
+            if(ids.constructor === Array) {
+                this._highlightids = ids;
+            } else {
+                this._highlightids = null;
+            }
+            this.trigger("Invalidate");
         }
     });
 });

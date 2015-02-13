@@ -162,7 +162,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     VoronoiTerrain.prototype.floodFillSub = function(point, arr, set, condition, limit, num) {
         if(!condition(this, point) ||
                 set.has(point.voronoiId) ||
-                (num !== undefined && limit !== undefined && num >= limit)) {
+                (num !== undefined && limit !== undefined && num > limit)) {
             return;
         } 
 
@@ -529,6 +529,10 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
     VoronoiTerrain.prototype.getBodies = function() {
         return this.bodies;
+    }
+
+    VoronoiTerrain.prototype.getCellForId = function(voronoiId) {
+        return this.diagram.cells[voronoiId];
     }
 
     VoronoiTerrain.prototype.generateTerrain = function(width, height, density, waterPercent) {

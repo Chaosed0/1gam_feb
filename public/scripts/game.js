@@ -4,6 +4,7 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
     './Minimap',
     './InfoDisplay',
     './HUD',
+    './Unit',
 ], function(Crafty, $, VoronoiTerrain, UnitManager, CameraControls, u) {
     var self = this;
     var map;
@@ -49,9 +50,10 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
                 var site = terrain.getDiagram().cells[id].site;
                 if(!unitManager.getUnitForId(id)) {
                     placed = true;
-                    var unit = Crafty.e("2D, Canvas, Color")
+                    var unit = Crafty.e("2D, Canvas, Color, Unit")
                         .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
-                        .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')');
+                        .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')')
+                        .unit(4, num);
                     unitManager.addUnit(id, unit);
                 }
             }
@@ -67,7 +69,25 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
             .terrainvisualizer(terrain, waterPercent, groundPercent)
             .bind("CellSelected", function(cell) {
                 var unitSelected = unitManager.getUnitForCell(cell);
-                console.log(unitSelected);
+                if(unitSelected !== null) {
+                    console.log(unitSelected);
+                    var ids = terrain.floodFill(cell.site, unitSelected.getSpeed(), function(terrain, point) {
+                        //Terrain must be walkable and not occupied by a unit of another faction
+                        var unitOnPoint = unitManager.getUnitForId(point.voronoiId);
+                        var passable = terrain.aboveWater(point);
+                        if (passable && unitOnPoint) {
+                            if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
+                                passable = false;
+                            }
+                        }
+                        if(!passable && unitOnPoint) {
+                            console.log(point.voronoiId, unitOnPoint);
+                        }
+                        return passable;
+                    });
+
+                    this.highlightIds(ids);
+                }
             });
 
         /* Make the minimap square */
