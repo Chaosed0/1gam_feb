@@ -10,6 +10,9 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
     const frequencyConst = 5;
     const perturbConst = 3.0;
 
+    const oceanThreshold = 100;
+    const continentThreshold = 100;
+
     var VoronoiTerrain = function() {
         this.diagram = null;
         this.pointData = null;
@@ -122,7 +125,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
 
                 var type, land;
                 if(point.elevation < this.waterLine) {
-                    if(ids.length > 30) {
+                    if(ids.length > oceanThreshold) {
                         //Large body of water
                         type = 'oceans';
                     } else {
@@ -130,7 +133,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                     }
                     land = false;
                 } else {
-                    if(ids.length > 30) {
+                    if(ids.length > continentThreshold) {
                         type = 'continents';
                     } else {
                         type = 'islands';
