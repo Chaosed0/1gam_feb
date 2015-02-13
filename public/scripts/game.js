@@ -1,10 +1,10 @@
 
-define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls', 'Util',
+define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraControls', 'Util',
     './TerrainVisualizer',
     './Minimap',
     './InfoDisplay',
     './HUD',
-], function(Crafty, $, VoronoiTerrain, CameraControls, u) {
+], function(Crafty, $, VoronoiTerrain, UnitManager, CameraControls, u) {
     var self = this;
     var map;
 
@@ -20,6 +20,7 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls', 'Util',
     var height = $(document).height();
     var gameElem = document.getElementById('game');
     var terrain = new VoronoiTerrain();
+    var unitManager = new UnitManager();
 
     Crafty.init(width, height, gameElem);
 
@@ -35,18 +36,25 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls', 'Util',
                      g: Math.floor(u.getRandom(255)),
                      b: Math.floor(u.getRandom(255))};
 
-        //Pick a random continent and stick some guys in an area
+        //Pick a random continent and stick some guys on it
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
         var randomTile = continent.ids[Math.floor(u.getRandom(continent.ids.length))];
         var ids = terrain.floodFill(terrain.getDiagram().cells[randomTile].site, 4, function(terrain, point) {
             return terrain.aboveWater(point);
         });
         for(var i = 0; i < num; i++) {
-            var id = ids[Math.floor(u.getRandom(ids.length))];
-            var site = terrain.getDiagram().cells[id].site;
-            Crafty.e("2D, Canvas, Color")
-                .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
-                .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')');
+            var placed = false;
+            while(!placed) {
+                var id = ids[Math.floor(u.getRandom(ids.length))];
+                var site = terrain.getDiagram().cells[id].site;
+                if(!unitManager.getUnitForId(id)) {
+                    placed = true;
+                    var unit = Crafty.e("2D, Canvas, Color")
+                        .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
+                        .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')');
+                    unitManager.addUnit(id, unit);
+                }
+            }
         }
     }
 
@@ -54,11 +62,13 @@ define(['crafty', 'jquery', './VoronoiTerrain', './CameraControls', 'Util',
         var camera = new CameraControls(terrainSize);
         camera.mouselook(true);
 
-        var infodisplay = 'aa';
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
             .attr(terrainSize)
             .terrainvisualizer(terrain, waterPercent, groundPercent)
-            .bind("CellSelected", infodisplay.displaycellinfo);
+            .bind("CellSelected", function(cell) {
+                var unitSelected = unitManager.getUnitForCell(cell);
+                console.log(unitSelected);
+            });
 
         /* Make the minimap square */
         var minimapSize = Math.min(width * minimapRatio, height * minimapRatio);
