@@ -39,9 +39,9 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
 
         //Pick a random continent and stick some guys on it
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
-        var randomTile = continent.ids[Math.floor(u.getRandom(continent.ids.length))];
+        var centerCell = continent.cells[Math.floor(u.getRandom(continent.cells.length))];
         var cells = [];
-        terrain.bfs(terrain.getDiagram().cells[randomTile], 4, function(terrain, cell) {
+        terrain.bfs(centerCell, 4, function(terrain, cell) {
             return terrain.aboveWater(cell.site);
         }, function(cell) {
             cells.push(cell);

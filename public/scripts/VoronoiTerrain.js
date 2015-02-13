@@ -114,19 +114,27 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         for(var y = 0; y < dimensions.y; y++) {
             for(var x = 0; x < dimensions.x; x++) {
                 var point = points[y * dimensions.x + x];
-                var ids = [];
+                var cell = this.getCellForId(point.voronoiId);
+                var cells = [];
 
-                this.floodFillSub(point, ids, set, function(terrain, opoint) {
+                this.floodFill(cell, set, function(terrain, ocell) {
                     if(point.elevation > terrain.waterLine) {
-                        return opoint.elevation > terrain.waterLine;
+                        return ocell.site.elevation > terrain.waterLine;
                     } else {
-                        return opoint.elevation < terrain.waterLine;
+                        return ocell.site.elevation < terrain.waterLine;
                     }
+                }, function(cell) {
+                    cells.push(cell);
                 });
+
+                if(cells.length <= 0) {
+                    // We've likely already been here
+                    continue;
+                }
 
                 var type, land;
                 if(point.elevation < this.waterLine) {
-                    if(ids.length > oceanThreshold) {
+                    if(cells.length > oceanThreshold) {
                         //Large body of water
                         type = 'oceans';
                     } else {
@@ -134,7 +142,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                     }
                     land = false;
                 } else {
-                    if(ids.length > continentThreshold) {
+                    if(cells.length > continentThreshold) {
                         type = 'continents';
                     } else {
                         type = 'islands';
@@ -142,7 +150,7 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
                     land = true;
                 }
 
-                this.makeBody(ids, type, land);
+                this.makeBody(cells, type, land);
                 point.type = type;
             }
         }
@@ -153,35 +161,36 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         return point.elevation > this.waterLine;
     }
 
-    VoronoiTerrain.prototype.floodFillSub = function(point, arr, set, condition) {
-        if(!condition(this, point) || set.has(point.voronoiId)) {
+    VoronoiTerrain.prototype.floodFill = function(cell, set, condition, action) {
+        if(!condition(this, cell) || set.has(cell)) {
             return;
         } 
 
-        set.add(point.voronoiId);
-        arr.push(point.voronoiId);
+        action(cell);
+        set.add(cell);
 
-        var halfedges = this.diagram.cells[point.voronoiId].halfedges;
+        var halfedges = cell.halfedges;
         for(var i = 0; i < halfedges.length; i++) {
-            var othersite = this.getOtherSite(halfedges[i].edge, point);
+            var othersite = this.getOtherSite(halfedges[i].edge, cell.site);
             if(othersite) {
-                this.floodFillSub(othersite, arr, set, condition);
+                var othercell = this.getCellForId(othersite.voronoiId);
+                this.floodFill(othercell, set, condition, action);
             }
         }
     }
 
-    VoronoiTerrain.prototype.makeBody = function(ids, type, land) {
-        if(ids.length <= 0) {
+    VoronoiTerrain.prototype.makeBody = function(cells, type, land) {
+        if(cells.length <= 0) {
             return;
         }
 
-        var body = { ids: ids, land: land, coast: [] };
+        var body = { cells: cells, land: land, coast: [] };
         var coast = body.coast;
 
-        for(var i = 0; i < ids.length; i++) {
-            var id = ids[i];
-            if(this.diagram.cells[id].site.isCoast) {
-                coast.push(id);
+        for(var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            if(cell.site.isCoast) {
+                coast.push(cell);
             }
         }
 
@@ -201,7 +210,6 @@ define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voro
         var visitedCells = new Set();
 
         prioq.queue({cell: cell, prio: 0});
-        console.log('---');
 
         while(prioq.length > 0) {
             var data = prioq.dequeue();
