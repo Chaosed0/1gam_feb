@@ -11,7 +11,6 @@ require.config({
     voronoi: "../bower_components/Javascript-Voronoi/rhill-voronoi-core",
     noise: "../bower_components/noisejs/index",
     prioq: "../bower_components/js-priority-queue/priority-queue",
-    util: "./Util"
   },
   packages: [
 

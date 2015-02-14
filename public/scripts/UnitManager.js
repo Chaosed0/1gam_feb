@@ -1,6 +1,6 @@
 
 // Map of voronoi cell ids to units
-define(['crafty', 'util'], function(Crafty, u) {
+define(['crafty', './Util'], function(Crafty, u) {
     var vec2 = Crafty.math.Vector2D;
 
     var UnitManager = function() {

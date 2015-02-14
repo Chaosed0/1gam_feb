@@ -1,5 +1,5 @@
 
-define(['crafty', 'util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrain) {
+define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrain) {
     const elevationColorMap = {
         water: [
             {chance: 0.5, color: { r: 0, g: 0, b: 200}},

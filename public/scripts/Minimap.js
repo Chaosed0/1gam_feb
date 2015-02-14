@@ -1,5 +1,5 @@
 
-define(['crafty', 'util',], function(Crafty, u) {
+define(['crafty', './Util',], function(Crafty, u) {
 
     var draw = function(e) {
         if(e.type == 'canvas') {

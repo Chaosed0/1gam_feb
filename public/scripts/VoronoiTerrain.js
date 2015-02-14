@@ -1,7 +1,7 @@
 
 //Terrain generator using voronoi cells
 // http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/
-define(['crafty', 'util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voronoi, Noise, PriorityQueue) {
+define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Voronoi, Noise, PriorityQueue) {
     var vec2 = Crafty.math.Vector2D;
 
     const numRivers = 10;
