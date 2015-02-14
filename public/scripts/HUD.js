@@ -17,9 +17,8 @@ define(['crafty', ], function(Crafty) {
         e.ctx.save();
         e.ctx.setTransform(1, 0, 0, 1, 0, 0);
         
-        /* If the user requested us to save the bounds while drawing, do that */
+        /* If the user requested us to set the bounds before drawing, do that */
         if(this._savebounds) {
-            this._savedbounds = { x: this.x, y: this.y, w: this.w, h: this.h };
             e.pos._x = this._clientbounds.x;
             e.pos._y = this._clientbounds.y;
             e.pos._w = this._clientbounds.w;

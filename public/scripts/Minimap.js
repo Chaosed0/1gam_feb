@@ -3,14 +3,15 @@ define(['crafty', './Util',], function(Crafty, u) {
 
     var draw = function(e) {
         if(e.type == 'canvas') {
+            /* Draw a black backing, then the minimap */
             e.ctx.fillStyle = '#000000';
             e.ctx.fillRect(this._clientbounds.x, this._clientbounds.y,
                     this._clientbounds.w, this._clientbounds.h);
             e.ctx.drawImage(this._prerender, this._interiorbounds.x, this._interiorbounds.y,
                     this._interiorbounds.w, this._interiorbounds.h);
 
+            /* Draw the viewport, transformed into our minimap space */
             var cameraBounds = viewportToMinimap(this._mapbounds, this._interiorbounds);
-
             e.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
             e.ctx.strokeStyle = 'black';
             e.ctx.rect(cameraBounds.x, cameraBounds.y, cameraBounds.w, cameraBounds.h);
