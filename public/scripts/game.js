@@ -1,11 +1,11 @@
 
-define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraControls', 'Util',
+require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './CameraControls', './Util',
     './TerrainVisualizer',
     './Minimap',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, VoronoiTerrain, UnitManager, CameraControls, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, u) {
     var self = this;
     var map;
 
@@ -13,7 +13,7 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
     const groundPercent = 0.2;
     const tileDensity = 100;
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
-    const minimapRatio = 0.25;
+    const guiRatio = 0.25;
 
     const unitSize = 16;
     
@@ -64,9 +64,6 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
     }
 
     Crafty.scene("Main", function () {
-        var camera = new CameraControls(terrainSize);
-        camera.mouselook(true);
-
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
             .attr(terrainSize)
             .terrainvisualizer(terrain, waterPercent, groundPercent)
@@ -93,28 +90,17 @@ define(['crafty', 'jquery', './VoronoiTerrain', './UnitManager', './CameraContro
                 }
             });
 
-        /* Make the minimap square */
-        var minimapSize = Math.min(width * minimapRatio, height * minimapRatio);
+        var guiSize = {w: Crafty.viewport.width, h: Crafty.viewport.height * guiRatio};
+        var gui = new GUI(guiSize, camera, terrainVis.getPrerender(), terrainSize);
 
-        var minimap = Crafty.e("2D, Canvas, Minimap, HUD, Mouse")
-            .attr({w: minimapSize, h: minimapSize, z: 9999})
-            .minimap(terrainVis.getPrerender(), terrainSize)
-            .bind("MinimapDown", function(point) {
-                camera.mouselook(false);
-                camera.centerOn(point);
-            }).bind("MinimapUp", function() {
-                camera.mouselook(true);
-            });
-
-        var infodisplay = Crafty.e("2D, Canvas, HUD, InfoDisplay")
-            .attr({
-                x: minimapSize,
-                y: Crafty.viewport.height - minimapSize,
-                w: Crafty.viewport.width - minimapSize,
-                h: minimapSize,
-                z: 9999
-            })
-            .infodisplay(minimapSize);
+        /* Camera needs to go beyond the terrain a bit, since the gui takes up some space */
+        var camera = new CameraControls({
+            x: terrainSize.x,
+            y: terrainSize.y,
+            w: terrainSize.w,
+            h: terrainSize.h + guiSize.h
+        });
+        camera.mouselook(true);
 
         for(var i = 0; i < 5; i++) {
             generateSomeUnits(5);

@@ -10,6 +10,19 @@ define(['crafty', ], function(Crafty) {
         }
     }
 
+    var predraw = function(e) {
+        /* Save drawing transform, including whatever translations/scaling
+         * the viewport may have, then reset to the identity transform to
+         * draw the HUD element */
+        e.ctx.save();
+        e.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    var postdraw = function(e) {
+        /* Restore the original transform for whatever comes after */
+        e.ctx.restore();
+    }
+
     /* So here's the deal about HUD elements in Crafty.
      * On one hand, they should be completely divorced from the normal viewport
      * transforms/scaling.
@@ -24,10 +37,14 @@ define(['crafty', ], function(Crafty) {
     Crafty.c("HUD", {
         init: function() {
             viewportchanged.call(this);
+            this.bind("PreDraw", predraw);
+            this.bind("PostDraw", postdraw);
             this.bind("InvalidateViewport", viewportchanged);
         },
 
         remove: function() {
+            this.unbind("PreDraw", predraw);
+            this.unbind("PostDraw", postdraw);
             this.unbind("InvalidateViewport", viewportchanged);
         },
     });

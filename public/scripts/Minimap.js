@@ -3,12 +3,6 @@ define(['crafty', './Util',], function(Crafty, u) {
 
     var draw = function(e) {
         if(e.type == 'canvas') {
-            /* Save drawing transform, including whatever translations/scaling
-             * the viewport may have, then reset to the identity transform to
-             * draw the minimap */
-            e.ctx.save();
-            e.ctx.setTransform(1, 0, 0, 1, 0, 0);
-
             e.ctx.fillStyle = '#000000';
             e.ctx.fillRect(this._clientbounds.x, this._clientbounds.y,
                     this._clientbounds.w, this._clientbounds.h);
@@ -22,8 +16,6 @@ define(['crafty', './Util',], function(Crafty, u) {
             e.ctx.rect(cameraBounds.x, cameraBounds.y, cameraBounds.w, cameraBounds.h);
             e.ctx.fill();
             e.ctx.stroke();
-            /* Restore the original transform for whatever comes after */
-            e.ctx.restore();
         }
     }
 
