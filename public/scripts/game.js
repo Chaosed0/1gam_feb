@@ -1,11 +1,18 @@
 
-require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './CameraControls', './Util',
+require(['crafty',
+        'jquery',
+        './GUI',
+        './VoronoiTerrain',
+        './UnitManager',
+        './CameraControls',
+        './TerrainRenderer',
+        './Util',
     './TerrainVisualizer',
     './Minimap',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, u) {
     var self = this;
     var map;
 
@@ -14,12 +21,27 @@ require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './Ca
     const tileDensity = 100;
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
-
     const unitSize = 16;
+
+    const terrainPercents = {
+        water: waterPercent,
+        ground: groundPercent,
+        other: 1 - waterPercent - groundPercent
+    };
+
+    const terrainRenderOptions = {
+        drawElevations: false,
+        drawRivers: true,
+        drawSites: false,
+        drawEdges: false,
+        drawCoasts: true,
+    };
     
     var width = $(document).width();
     var height = $(document).height();
     var gameElem = document.getElementById('game');
+
+    var terrainPrerender = null;
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
 
@@ -66,7 +88,7 @@ require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './Ca
     Crafty.scene("Main", function () {
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
             .attr(terrainSize)
-            .terrainvisualizer(terrain, waterPercent, groundPercent)
+            .terrainvisualizer(terrain, terrainPrerender)
             .bind("CellSelected", function(data) {
                 var cell = data.cell;
                 var unitSelected = unitManager.getUnitForCell(cell);
@@ -105,7 +127,7 @@ require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './Ca
         camera.mouselook(true);
 
         /* Create the actual gui */
-        var gui = new GUI(guiSize, camera, terrainVis.getPrerender(), terrainSize);
+        var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
 
         /* Generate some units (placeholder) */
         for(var i = 0; i < 5; i++) {
@@ -124,6 +146,7 @@ require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './Ca
         setTimeout(function() {
             console.log('GENERATE');
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, waterPercent);
+            terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
             console.log('DONE');
             Crafty.scene("Main");
         }, 100);
