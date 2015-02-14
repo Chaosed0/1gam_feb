@@ -90,18 +90,24 @@ require(['crafty', 'jquery', './GUI', './VoronoiTerrain', './UnitManager', './Ca
                 }
             });
 
+        /* Calculate the size of the bottom bar (GUI) */
         var guiSize = {w: Crafty.viewport.width, h: Crafty.viewport.height * guiRatio};
-        var gui = new GUI(guiSize, camera, terrainVis.getPrerender(), terrainSize);
 
-        /* Camera needs to go beyond the terrain a bit, since the gui takes up some space */
+        /* Initialize the camera controls, with some padding at the bottom */
         var camera = new CameraControls({
             x: terrainSize.x,
             y: terrainSize.y,
             w: terrainSize.w,
-            h: terrainSize.h + guiSize.h
+            h: terrainSize.h
+        }, {
+            b: guiSize.h
         });
         camera.mouselook(true);
 
+        /* Create the actual gui */
+        var gui = new GUI(guiSize, camera, terrainVis.getPrerender(), terrainSize);
+
+        /* Generate some units (placeholder) */
         for(var i = 0; i < 5; i++) {
             generateSomeUnits(5);
         }

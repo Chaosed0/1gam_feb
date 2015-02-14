@@ -1,9 +1,10 @@
 
 define(['crafty'], function(Crafty) {
 
-    var CameraControls = function(bounds) {
+    var CameraControls = function(bounds, padding) {
         this.lastmouse = null;
         this.bounds = bounds;
+        this.padding = padding;
         this.maxScale = Math.max(Crafty.viewport.width / bounds.w, Crafty.viewport.height / bounds.h);
         this.mouselookactive = false;
     }
@@ -47,12 +48,42 @@ define(['crafty'], function(Crafty) {
 
     CameraControls.prototype.clampViewportPos = function() {
         if(this.bounds) {
-            Crafty.viewport.x = Math.min(Crafty.viewport.x, this.bounds.x);
-            Crafty.viewport.y = Math.min(Crafty.viewport.y, this.bounds.y);
+            var bounds;
+            if(this.padding) {
+                bounds = {
+                    x: this.bounds.x,
+                    y: this.bounds.y,
+                    w: this.bounds.w,
+                    h: this.bounds.h
+                };
+                if(this.padding.l) {
+                    var realPadding = this.padding.l / Crafty.viewport._scale
+                    bounds.x -= realPadding;
+                    bounds.w += realPadding;
+                }
+                if(this.padding.r) {
+                    var realPadding = this.padding.r / Crafty.viewport._scale
+                    bounds.w += realPadding;
+                }
+                if(this.padding.t) {
+                    var realPadding = this.padding.t / Crafty.viewport._scale
+                    bounds.y -= realPadding;
+                    bounds.h += realPadding;
+                }
+                if(this.padding.b) {
+                    var realPadding = this.padding.b / Crafty.viewport._scale
+                    bounds.h += realPadding;
+                }
+            } else {
+                bounds = this.bounds;
+            }
+
+            Crafty.viewport.x = Math.min(Crafty.viewport.x, bounds.x);
+            Crafty.viewport.y = Math.min(Crafty.viewport.y, bounds.y);
             Crafty.viewport.x = Math.max(Crafty.viewport.x,
-                    Crafty.viewport.width / Crafty.viewport._scale - this.bounds.w);
+                    Crafty.viewport.width / Crafty.viewport._scale - bounds.w);
             Crafty.viewport.y = Math.max(Crafty.viewport.y,
-                    Crafty.viewport.height / Crafty.viewport._scale - this.bounds.h);
+                    Crafty.viewport.height / Crafty.viewport._scale - bounds.h);
         }
     }
     
