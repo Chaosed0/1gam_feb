@@ -162,19 +162,24 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
     }
 
     VoronoiTerrain.prototype.floodFill = function(cell, set, condition, action) {
-        if(!condition(this, cell) || set.has(cell)) {
-            return;
-        } 
+        var stack = [cell];
 
-        action(cell);
-        set.add(cell);
+        while(stack.length > 0) {
+            var cell = stack.pop();
+            if(!condition(this, cell) || set.has(cell)) {
+                continue;
+            } 
 
-        var halfedges = cell.halfedges;
-        for(var i = 0; i < halfedges.length; i++) {
-            var othersite = this.getOtherSite(halfedges[i].edge, cell.site);
-            if(othersite) {
-                var othercell = this.getCellForId(othersite.voronoiId);
-                this.floodFill(othercell, set, condition, action);
+            action(cell);
+            set.add(cell);
+
+            var halfedges = cell.halfedges;
+            for(var i = 0; i < halfedges.length; i++) {
+                var othersite = this.getOtherSite(halfedges[i].edge, cell.site);
+                if(othersite) {
+                    var othercell = this.getCellForId(othersite.voronoiId);
+                    stack.push(othercell);
+                }
             }
         }
     }
