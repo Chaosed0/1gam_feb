@@ -3,10 +3,10 @@ define(['crafty', ], function(Crafty) {
 
     var viewportchanged = function() {
         if(this._clientbounds) {
-            this.w = this._clientbounds.w / Crafty.viewport._scale;
-            this.h = this._clientbounds.h / Crafty.viewport._scale;
             this.x = -Crafty.viewport.x + this._clientbounds.x / Crafty.viewport._scale;
             this.y = -Crafty.viewport.y + this._clientbounds.y / Crafty.viewport._scale;
+            this.w = this._clientbounds.w / Crafty.viewport._scale;
+            this.h = this._clientbounds.h / Crafty.viewport._scale;
         }
     }
 
@@ -16,6 +16,15 @@ define(['crafty', ], function(Crafty) {
          * draw the HUD element */
         e.ctx.save();
         e.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
+        /* If the user requested us to save the bounds while drawing, do that */
+        if(this._savebounds) {
+            this._savedbounds = { x: this.x, y: this.y, w: this.w, h: this.h };
+            e.pos._x = this._clientbounds.x;
+            e.pos._y = this._clientbounds.y;
+            e.pos._w = this._clientbounds.w;
+            e.pos._h = this._clientbounds.h;
+        }
     }
 
     var postdraw = function(e) {
@@ -35,6 +44,8 @@ define(['crafty', ], function(Crafty) {
      * of the HUD element as it is drawn on the screen.
      */
     Crafty.c("HUD", {
+        _savebounds: false,
+
         init: function() {
             viewportchanged.call(this);
             this.bind("PreDraw", predraw);
@@ -46,6 +57,14 @@ define(['crafty', ], function(Crafty) {
             this.unbind("PreDraw", predraw);
             this.unbind("PostDraw", postdraw);
             this.unbind("InvalidateViewport", viewportchanged);
+        },
+
+        hud: function(bounds) {
+            if(bounds) {
+                this._savebounds = true;
+                this._clientbounds = bounds;
+            }
+            return this;
         },
     });
 });
