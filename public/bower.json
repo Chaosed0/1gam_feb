@@ -1,11 +1,11 @@
 {
-  "name": "ld31",
+  "name": "1gam_feb",
   "version": "0.0.1",
-  "homepage": "https://github.com/chaosed0/LD31",
+  "homepage": "https://github.com/chaosed0/1gam_feb",
   "authors": [
     "Ed Lu <chaosed0@gmail.com>"
   ],
-  "description": "Ludum Dare 31",
+  "description": "Ed Lu's February 1GAM",
   "main": "scripts/main.js",
   "license": "MIT",
   "private": true,
@@ -17,11 +17,11 @@
     "tests"
   ],
   "dependencies": {
-    "crafty": "~0.6.3",
+    "crafty": "https://github.com/chaosed0/Crafty.git#dist",
     "jquery": "~2.1.1",
     "requirejs": "~2.1.15",
     "simplify-js": "https://github.com/mourner/simplify-js.git",
-    "Javascript-Voronoi": "/home/chaosed0/Code/Javascript-Voronoi/",
+    "Javascript-Voronoi": "https://github.com/Chaosed0/Javascript-Voronoi.git",
     "noisejs": "*",
     "js-priority-queue": "~0.1.1",
     "seedrandom": "~2.3.11"

@@ -3,7 +3,7 @@ require.config({
 
   },
   paths: {
-    crafty: "../bower_components/crafty/dist/crafty",
+    crafty: "../bower_components/crafty/crafty",
     jquery: "../bower_components/jquery/dist/jquery",
     require: "../bower_components/requirejs/require",
     simplify: "../bower_components/simplify-js/simplify",
