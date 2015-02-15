@@ -118,12 +118,19 @@ require(['crafty',
                                     //Terrain must be walkable and not occupied by a unit of another faction
                                     var unitOnPoint = unitManager.getUnitForCell(cell);
                                     var passable = terrain.aboveWater(cell.site);
+                                    var skip = false;
                                     if (passable && unitOnPoint) {
                                         if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
                                             passable = false;
+                                        } else {
+                                            skip = true;
                                         }
                                     }
-                                    return passable;
+                                    if(skip) {
+                                        return -1;
+                                    } else {
+                                        return passable;
+                                    }
                                 }, function(cell) {
                                     highlightedCells.push(cell);
                                 });

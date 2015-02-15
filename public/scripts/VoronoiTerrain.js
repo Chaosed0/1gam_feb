@@ -220,8 +220,18 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             var data = prioq.dequeue();
             var cell = data.cell;
             var prio = data.prio;
+            var result = condition(this, cell);
 
-            action(cell);
+            visitedCells.add(cell);
+            if(result > 0) {
+                //We want this cell
+                action(cell);
+            } else if(result == 0) {
+                //We don't want this cell
+                continue;
+            }
+            //Anything else, we want to skip this cell for
+            // taking an action but still go forward
 
             if(prio + 1 > limit) {
                 continue;
@@ -234,9 +244,8 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                 if(othersite) {
                     var othercell = this.getCellForId(othersite.voronoiId);
                     //Cell must meet condition and not be visited already
-                    if(!visitedCells.has(othercell) && condition(this, othercell)) {
+                    if(!visitedCells.has(othercell)) {
                         prioq.queue({cell: othercell, prio: prio + 1});
-                        visitedCells.add(cell);
                     }
                 }
             }
