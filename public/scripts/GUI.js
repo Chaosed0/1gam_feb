@@ -45,7 +45,8 @@ define(['crafty', './HUD'], function(Crafty) {
                 y: this.infoBounds.y + this.infoBounds.h * 7/8,
                 z: 10000 })
             .hud(true)
-            .textFont({size: '20px'});
+            .textFont({size: '20px'})
+            .textAlign('center');
     }
 
     /* Display info about a cell in the center GUI element. */
