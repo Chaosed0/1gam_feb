@@ -7,9 +7,10 @@ define(['crafty', './Util'], function(Crafty, u) {
         this.map = {};
     }
 
-    UnitManager.prototype.addUnit = function(id, unit) {
-        u.assert(!(id in this.map));
-        this.map[id] = unit;
+    UnitManager.prototype.addUnit = function(cell, unit) {
+        u.assert(!(cell.site.voronoiId in this.map));
+        this.map[cell.site.voronoiId] = unit;
+        unit.setLocation(cell);
     }
 
     UnitManager.prototype.getUnitForCell = function(cell) {
@@ -22,6 +23,17 @@ define(['crafty', './Util'], function(Crafty, u) {
         } else {
             return null;
         }
+    }
+
+    UnitManager.prototype.moveUnit = function(unit, cell) {
+        u.assert(!this.getUnitForCell(cell));
+        var unitCell = unit.getLocation();
+        u.assert(this.getUnitForCell(unitCell) === unit);
+        this.map[unitCell.site.voronoiId] = undefined;
+        this.map[cell.site.voronoiId] = unit;
+
+        unit.x = cell.site.x - unit.w/2;
+        unit.y = cell.site.y - unit.h/2;
     }
 
     return UnitManager;

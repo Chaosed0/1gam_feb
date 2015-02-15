@@ -45,6 +45,10 @@ require(['crafty',
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
 
+    var selectMode = 'free';
+    var selectedUnit = null;
+    var highlightedCells = null;
+
     Crafty.init(width, height, gameElem);
 
     /* Hack in wheel event to mouseDispatch */
@@ -79,7 +83,7 @@ require(['crafty',
                         .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
                         .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')')
                         .unit(3, num);
-                    unitManager.addUnit(site.voronoiId, unit);
+                    unitManager.addUnit(cell, unit);
                 }
             }
         }
@@ -97,32 +101,50 @@ require(['crafty',
 
                 gui.displayCellInfo(cell);
 
-                if(unitSelected !== null) {
-                    gui.displayUnitInfo(unitSelected);
-                    gui.setButtons([{
-                        text: 'Move',
-                        callback: function() {
-                            var cells = [];
-                            terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {
-                                //Terrain must be walkable and not occupied by a unit of another faction
-                                var unitOnPoint = unitManager.getUnitForId(cell.site.voronoiId);
-                                var passable = terrain.aboveWater(cell.site);
-                                if (passable && unitOnPoint) {
-                                    if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
-                                        passable = false;
-                                    }
-                                }
-                                return passable;
-                            }, function(cell) {
-                                cells.push(cell);
-                            });
+                if(selectMode === 'free') {
+                    if(data.mouseButton == 0) {
+                        /* Left click, also highlight the map cell */
+                        vis.selectCell(cell);
+                    }
 
-                            vis.highlightCells(cells);
-                        }
-                    }]);
-                } else {
-                    gui.hideButtons();
-                    vis.clearHighlight();
+                    if(unitSelected !== null) {
+                        selectedUnit = unitSelected;
+                        gui.displayUnitInfo(unitSelected);
+                        gui.setButtons([{
+                            text: 'Move',
+                            callback: function() {
+                                highlightedCells = [];
+                                terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {
+                                    //Terrain must be walkable and not occupied by a unit of another faction
+                                    var unitOnPoint = unitManager.getUnitForCell(cell);
+                                    var passable = terrain.aboveWater(cell.site);
+                                    if (passable && unitOnPoint) {
+                                        if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
+                                            passable = false;
+                                        }
+                                    }
+                                    return passable;
+                                }, function(cell) {
+                                    highlightedCells.push(cell);
+                                });
+
+                                vis.highlightCells(highlightedCells);
+                                selectMode = 'highlight';
+                            }
+                        }]);
+                    } else {
+                        gui.hideButtons();
+                        vis.clearHighlight();
+                        selectedUnit = null;
+                    }
+                } else if(selectMode === 'highlight') {
+                    if(highlightedCells.indexOf(cell) >= 0) {
+                        unitManager.moveUnit(selectedUnit, cell);
+                        gui.hideButtons();
+                        vis.clearHighlight();
+                        vis.deselect();
+                        selectMode = 'free';
+                    }
                 }
             });
 

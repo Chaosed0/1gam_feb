@@ -3,6 +3,7 @@ define(['crafty'], function(Crafty) {
     Crafty.c("Unit", {
         _movespeed: 4,
         _faction: 1,
+        _loc: null,
 
         init: function() {
         },
@@ -20,5 +21,13 @@ define(['crafty'], function(Crafty) {
         getFaction: function() {
             return this._faction;
         },
+
+        getLocation: function() {
+            return this._loc;
+        },
+
+        setLocation: function(loc) {
+            this._loc = loc;
+        }
     });
 });

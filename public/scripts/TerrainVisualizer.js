@@ -52,13 +52,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
             var cell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
             if(cell) {
                 /* Valid cell, trigger */
-                this.trigger("CellSelected", {button: e.mouseButton, cell: cell});
-
-                if(e.mouseButton == 0) {
-                    /* Left click, also highlight the map cell */
-                    this._selectedcell = cell;
-                    this.trigger("Invalidate");
-                }
+                this.trigger("CellSelected", {mouseButton: e.mouseButton, cell: cell});
             }
         }
     }
@@ -107,5 +101,15 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
                 this.trigger("Invalidate");
             }
         },
+
+        selectCell: function(cell) {
+            this._selectedcell = cell;
+            this.trigger("Invalidate");
+        },
+
+        deselect: function() {
+            this._selectedcell = null;
+            this.trigger("Invalidate");
+        }
     });
 });
