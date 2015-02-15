@@ -1,10 +1,15 @@
 
-define(['crafty', './HUD'], function(Crafty) {
+define(['crafty', './Button', './HUD'], function(Crafty, Button) {
+    const buttonPadding = 10;
+
+    const menuZ = 1000;
+    const menuElemZ = 1001;
+
     var GUI = function(size, camera, prerender, terrainSize) {
         this.minimapSize = size.h;
 
         this.minimap = Crafty.e("2D, Canvas, Minimap, HUD, Mouse")
-            .attr({w: this.minimapSize, h: this.minimapSize, z: 9999})
+            .attr({w: this.minimapSize, h: this.minimapSize, z: menuZ})
             .minimap(prerender, terrainSize)
             .hud()
             .bind("MinimapDown", function(point) {
@@ -19,7 +24,7 @@ define(['crafty', './HUD'], function(Crafty) {
             y: Crafty.viewport.height - size.h,
             w: Crafty.viewport.width - this.minimapSize * 2,
             h: size.h,
-            z: 9999
+            z: menuZ
         };
 
         this.infodisplay = Crafty.e("2D, Canvas, HUD, Color")
@@ -32,7 +37,7 @@ define(['crafty', './HUD'], function(Crafty) {
             y: Crafty.viewport.height - size.h,
             w: this.minimapSize,
             h: size.h,
-            z: 9999
+            z: menuZ 
         };
 
         this.menu = Crafty.e("2D, Canvas, HUD, Color")
@@ -43,10 +48,24 @@ define(['crafty', './HUD'], function(Crafty) {
         this.bottomCenterText = Crafty.e("2D, Canvas, HUD, Text")
             .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
                 y: this.infoBounds.y + this.infoBounds.h * 7/8,
-                z: 10000 })
+                z: menuElemZ })
             .hud(true)
             .textFont({size: '20px'})
             .textAlign('center');
+
+        this.buttons = new Array(4);
+        var buttonBounds = {w: this.menuBounds.w - buttonPadding * 2,
+            h: (this.menuBounds.h - buttonPadding * 5) / 4,
+            z: menuElemZ};
+        for(var i = 0; i < 4; i++) {
+            buttonBounds.x = this.menuBounds.x + buttonPadding;
+            buttonBounds.y = this.menuBounds.y + buttonPadding + i * (buttonBounds.h + buttonPadding);
+            this.buttons[i] = new Button('dummy', '#EEEEEE', buttonBounds);
+            this.buttons[i].background.number = i;
+            this.buttons[i].bind("MouseDown", function() {
+                console.log(this.number);
+            });
+        }
     }
 
     /* Display info about a cell in the center GUI element. */
@@ -58,7 +77,8 @@ define(['crafty', './HUD'], function(Crafty) {
         this.bottomCenterText.text('elevation: ' + cell.site.elevation.toFixed(2));
     }
 
-    /* Display info about a unit in the center GUI element. */
+    /* Display info about a unit in the center GUI element,
+     * as well as displaying controls in the right menu. */
     GUI.prototype.displayUnitInfo = function(unit) {
     }
 
