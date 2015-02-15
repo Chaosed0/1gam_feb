@@ -14,7 +14,7 @@ define(['crafty', './HUD'], function(Crafty) {
                 camera.mouselook(true);
             });
 
-        var infoBounds = {
+        this.infoBounds = {
             x: this.minimapSize,
             y: Crafty.viewport.height - size.h,
             w: Crafty.viewport.width - this.minimapSize * 2,
@@ -22,12 +22,12 @@ define(['crafty', './HUD'], function(Crafty) {
             z: 9999
         };
 
-        var infodisplay = Crafty.e("2D, Canvas, HUD, Color")
-            .attr(infoBounds)
-            .hud(infoBounds)
+        this.infodisplay = Crafty.e("2D, Canvas, HUD, Color")
+            .attr(this.infoBounds)
+            .hud(true)
             .color('#EEEEEE');
 
-        var menuBounds = {
+        this.menuBounds = {
             x: Crafty.viewport.width - this.minimapSize,
             y: Crafty.viewport.height - size.h,
             w: this.minimapSize,
@@ -35,10 +35,34 @@ define(['crafty', './HUD'], function(Crafty) {
             z: 9999
         };
 
-        var menu = Crafty.e("2D, Canvas, HUD, Color")
-            .attr(menuBounds)
-            .hud(menuBounds)
+        this.menu = Crafty.e("2D, Canvas, HUD, Color")
+            .attr(this.menuBounds)
+            .hud(true)
             .color('#BBBBBB');
+
+        this.bottomCenterText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
+                y: this.infoBounds.y + this.infoBounds.h * 7/8,
+                z: 10000 })
+            .hud(true)
+            .textFont({size: '20px'});
+    }
+
+    /* Display info about a cell in the center GUI element. */
+    GUI.prototype.displayCellInfo = function(cell) {
+        if(!cell) {
+            return;
+        }
+
+        this.bottomCenterText.text('elevation: ' + cell.site.elevation.toFixed(2));
+    }
+
+    /* Display info about a unit in the center GUI element. */
+    GUI.prototype.displayUnitInfo = function(unit) {
+    }
+
+    GUI.prototype.reset = function() {
+        this.bottomCenterText.text('');
     }
 
     return GUI;

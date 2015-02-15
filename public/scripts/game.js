@@ -86,12 +86,16 @@ require(['crafty',
     }
 
     Crafty.scene("Main", function () {
+        /* Create the terrain visualizer */
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
             .attr(terrainSize)
             .terrainvisualizer(terrain, terrainPrerender)
             .bind("CellSelected", function(data) {
                 var cell = data.cell;
                 var unitSelected = unitManager.getUnitForCell(cell);
+
+                gui.displayCellInfo(cell);
+
                 if(unitSelected !== null) {
                     var cells = [];
                     terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {

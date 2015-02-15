@@ -59,7 +59,15 @@ define(['crafty', ], function(Crafty) {
         },
 
         hud: function(bounds) {
-            if(bounds) {
+            if(typeof bounds === 'boolean') {
+                this._savebounds = true;
+                this._clientbounds = {
+                    x: this.x,
+                    y: this.y,
+                    w: this.w,
+                    h: this.h
+                };
+            } else if(bounds) {
                 this._savebounds = true;
                 this._clientbounds = bounds;
             }
