@@ -1,5 +1,5 @@
 
-define(['crafty', './Button', './HUD'], function(Crafty, Button) {
+define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     const buttonPadding = 10;
 
     const menuZ = 1000;
@@ -61,11 +61,10 @@ define(['crafty', './Button', './HUD'], function(Crafty, Button) {
             buttonBounds.x = this.menuBounds.x + buttonPadding;
             buttonBounds.y = this.menuBounds.y + buttonPadding + i * (buttonBounds.h + buttonPadding);
             this.buttons[i] = new Button('dummy', '#EEEEEE', buttonBounds);
-            this.buttons[i].background.number = i;
-            this.buttons[i].bind("MouseDown", function() {
-                console.log(this.number);
-            });
+            this.buttons[i].setVisible(false);
         }
+
+        this.callbacks = {};
     }
 
     /* Display info about a cell in the center GUI element. */
@@ -84,6 +83,25 @@ define(['crafty', './Button', './HUD'], function(Crafty, Button) {
 
     GUI.prototype.reset = function() {
         this.bottomCenterText.text('');
+    }
+
+    GUI.prototype.setButtons = function(buttons) {
+        u.assert(buttons.length <= 4);
+        for(var i = 0; i < buttons.length; i++) {
+            if(buttons[i].text) {
+                this.buttons[i].setText(buttons[i].text);
+            }
+            if(buttons[i].callback) {
+                this.buttons[i].bind("MouseDown", buttons[i].callback);
+            }
+            this.buttons[i].setVisible(true);
+        }
+    }
+
+    GUI.prototype.hideButtons = function() {
+        for(var i = 0; i < 4; i++) {
+            this.buttons[i].setVisible(false);
+        }
     }
 
     return GUI;

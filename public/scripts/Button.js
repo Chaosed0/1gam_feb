@@ -21,8 +21,13 @@ define(['crafty', './Util'], function(Crafty, u) {
         this.background.unbind(event, cb);
     }
 
-    Button.prototype.text = function(text) {
+    Button.prototype.setText = function(text) {
         this.text.text(text);
+    }
+
+    Button.prototype.setVisible = function(visible) {
+        this.background.visible = visible;
+        this.text.visible = visible;
     }
 
     return Button;

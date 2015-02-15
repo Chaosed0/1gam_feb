@@ -99,6 +99,13 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
                 this._highlightcells = null;
             }
             this.trigger("Invalidate");
-        }
+        },
+
+        clearHighlight: function() {
+            if(this._highlightcells != null) {
+                this._highlightcells = null;
+                this.trigger("Invalidate");
+            }
+        },
     });
 });

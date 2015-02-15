@@ -93,26 +93,36 @@ require(['crafty',
             .bind("CellSelected", function(data) {
                 var cell = data.cell;
                 var unitSelected = unitManager.getUnitForCell(cell);
+                var vis = this;
 
                 gui.displayCellInfo(cell);
 
                 if(unitSelected !== null) {
-                    var cells = [];
-                    terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {
-                        //Terrain must be walkable and not occupied by a unit of another faction
-                        var unitOnPoint = unitManager.getUnitForId(cell.site.voronoiId);
-                        var passable = terrain.aboveWater(cell.site);
-                        if (passable && unitOnPoint) {
-                            if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
-                                passable = false;
-                            }
-                        }
-                        return passable;
-                    }, function(cell) {
-                        cells.push(cell);
-                    });
+                    gui.displayUnitInfo(unitSelected);
+                    gui.setButtons([{
+                        text: 'Move',
+                        callback: function() {
+                            var cells = [];
+                            terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {
+                                //Terrain must be walkable and not occupied by a unit of another faction
+                                var unitOnPoint = unitManager.getUnitForId(cell.site.voronoiId);
+                                var passable = terrain.aboveWater(cell.site);
+                                if (passable && unitOnPoint) {
+                                    if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
+                                        passable = false;
+                                    }
+                                }
+                                return passable;
+                            }, function(cell) {
+                                cells.push(cell);
+                            });
 
-                    this.highlightCells(cells);
+                            vis.highlightCells(cells);
+                        }
+                    }]);
+                } else {
+                    gui.hideButtons();
+                    vis.clearHighlight();
                 }
             });
 
