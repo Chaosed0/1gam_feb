@@ -429,7 +429,7 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         var dx = 0;
         var dy = -1;
 
-        while(!(found = this.inCell(pos, this.diagram.cells[point.voronoiId]))) {
+        while(!found) {
             if(rel.x == rel.y ||
                     (rel.x < 0 && rel.x == - rel.y) ||
                     (rel.x > 0 && rel.x == 1 - rel.y)) {
@@ -437,9 +437,14 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                 dx = -dy;
                 dy = tmp;
             }
+
             rel.x += dx;
             rel.y += dy;
             point = this.pointData.points[(gridLoc.y + rel.y) * this.pointData.dimensions.x + (gridLoc.x + rel.x)];
+            if(point) {
+                //The spiral can take us out of bounds sometimes; only check if we found a point
+                found = this.inCell(pos, this.diagram.cells[point.voronoiId]);
+            }
         }
 
         if(found) {
