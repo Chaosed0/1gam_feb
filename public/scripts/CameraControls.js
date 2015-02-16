@@ -33,7 +33,7 @@ define(['crafty'], function(Crafty) {
 
     var wheel = function(e) {
         var oldScale = Crafty.viewport._scale;
-        var scaleFactor = (1 - e.deltaY / 500);
+        var scaleFactor = (1 - Math.sign(e.deltaY) * 0.1);
         Crafty.viewport.scale(Crafty.viewport._scale * scaleFactor);
         this.clampViewportScale();
 
