@@ -14,6 +14,7 @@ define(['crafty', './Util',], function(Crafty, u) {
             var cameraBounds = viewportToMinimap(this._mapbounds, this._interiorbounds);
             e.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
             e.ctx.strokeStyle = 'black';
+            e.ctx.beginPath();
             e.ctx.rect(cameraBounds.x, cameraBounds.y, cameraBounds.w, cameraBounds.h);
             e.ctx.fill();
             e.ctx.stroke();
