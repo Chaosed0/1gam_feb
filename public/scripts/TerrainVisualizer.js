@@ -4,9 +4,10 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         if(e.type == 'canvas') {
             e.ctx.drawImage(this._prerender, this.x, this.y);
 
-            e.ctx.save();
             if(this._highlightcells) {
-                e.ctx.fillStyle = 'rgba(200, 200, 200, .5)';
+                e.ctx.save();
+                e.ctx.fillStyle = 'rgba(200, 200, 200, .25)';
+                e.ctx.strokeStyle = '#000000';
                 for(var i = 0; i < this._highlightcells.length; i++) {
                     var halfedges = this._highlightcells[i].halfedges;
                     e.ctx.beginPath();
@@ -15,11 +16,11 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
                         e.ctx.lineTo(halfedges[j].getStartpoint().x, halfedges[j].getStartpoint().y);
                     }
                     e.ctx.closePath();
+                    e.ctx.stroke();
                     e.ctx.fill();
                 }
-                e.ctx.beginPath();
+                e.ctx.restore();
             }
-            e.ctx.restore();
 
             if(this._selectedcell) {
                 var halfedges = this._selectedcell.halfedges;
