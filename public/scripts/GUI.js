@@ -92,6 +92,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
                 this.buttons[i].setText(buttons[i].text);
             }
             if(buttons[i].callback) {
+                this.buttons[i].unbind("MouseDown");
                 this.buttons[i].bind("MouseDown", buttons[i].callback);
             }
             this.buttons[i].setVisible(true);

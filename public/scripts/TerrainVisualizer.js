@@ -50,7 +50,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         if(this._mousedownpos && u.close({x: e.clientX, y: e.clientY}, this._mousedownpos, 8)) {
             /* User might have selected a cell of the map */
             var cell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
-            if(cell) {
+            if(cell && (!this._highlightcells || this._highlightcells.indexOf(cell) >= 0)) {
                 /* Valid cell, trigger */
                 this.trigger("CellSelected", {mouseButton: e.mouseButton, cell: cell});
             }
