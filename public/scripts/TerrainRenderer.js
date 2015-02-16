@@ -35,16 +35,21 @@ define(['./Util'], function(u) {
             for(var i = 0; i < typeColorMap.length; i++) {
                 var curMap = typeColorMap[i];
                 curLimit += curSubpercent * curMap.chance;
-                if(normalizeElevation < curLimit) {
-                    color = {r: Math.floor(curMap.color.r + u.getRandom(colorVariation)),
-                             g: Math.floor(curMap.color.g + u.getRandom(colorVariation)),
-                             b: Math.floor(curMap.color.b + u.getRandom(colorVariation))};
-                    return color;
+                if(normalizeElevation <= curLimit) {
+                    return {r: Math.floor(curMap.color.r + u.getRandom(colorVariation)),
+                            g: Math.floor(curMap.color.g + u.getRandom(colorVariation)),
+                            b: Math.floor(curMap.color.b + u.getRandom(colorVariation))};
                 }
             }
         }
 
-        return {r: 0, g: 0, b: 0};
+        /* Floating point math won't always let us get to 1.0. Just return what we would have
+         * for the last tile if we couldn't find anything. */
+        var typeColorMap = elevationColorMap['mountain'];
+        var curMap = typeColorMap[typeColorMap.length-1];
+        return {r: Math.floor(curMap.color.r + u.getRandom(colorVariation)),
+                g: Math.floor(curMap.color.g + u.getRandom(colorVariation)),
+                b: Math.floor(curMap.color.b + u.getRandom(colorVariation))};
     }
     
     var renderTerrain = function(terrain, bounds, terrainPercents, options) {
