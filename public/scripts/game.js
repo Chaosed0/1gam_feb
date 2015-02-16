@@ -21,7 +21,7 @@ require(['crafty',
     const tileDensity = 100;
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
-    const unitSize = 16;
+    const unitSize = 48;
 
     const terrainPercents = {
         water: waterPercent,
@@ -36,6 +36,16 @@ require(['crafty',
         drawEdges: false,
         drawCoasts: true,
     };
+
+    const classNames = [
+        "warrior",
+        "rogue",
+        "archer",
+        "sorcerer",
+        "cleric",
+        "druid",
+        "axeman"
+    ]
     
     var width = $(document).width();
     var height = $(document).height();
@@ -50,6 +60,7 @@ require(['crafty',
     var highlightedCells = null;
 
     Crafty.init(width, height, gameElem);
+    Crafty.pixelart(true);
 
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
@@ -59,9 +70,7 @@ require(['crafty',
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
 
-        var color = {r: Math.floor(u.getRandom(255)),
-                     g: Math.floor(u.getRandom(255)),
-                     b: Math.floor(u.getRandom(255))};
+        var className = classNames[Math.floor(u.getRandom(classNames.length))];
 
         //Pick a random continent and stick some guys on it
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
@@ -72,18 +81,20 @@ require(['crafty',
         }, function(cell) {
             cells.push(cell);
         });
+
         for(var i = 0; i < num; i++) {
             var placed = false;
             while(!placed) {
                 var cell = cells[Math.floor(u.getRandom(cells.length))];
                 var site = cell.site;
+
                 if(!unitManager.getUnitForCell(cell)) {
-                    placed = true;
-                    var unit = Crafty.e("2D, Canvas, Color, Unit")
-                        .attr({x: site.x - unitSize/2, y: site.y - unitSize/2, w: unitSize, h: unitSize})
-                        .color('rgb(' + color.r + ',' + color.g + ',' + color.b + ')')
+                    /* Note that we're trusting in addUnit to set the unit location */
+                    var unit = Crafty.e("2D, Canvas, Unit, " + className)
+                        .attr({w: unitSize, h: unitSize})
                         .unit(3, num);
                     unitManager.addUnit(cell, unit);
+                    placed = true;
                 }
             }
         }
@@ -184,15 +195,17 @@ require(['crafty',
             .text("Loading")
             .textFont({size: '20px'});
 
-        //Give crafty a small amount of time to get the loading
-        // text up before blocking the thread
-        setTimeout(function() {
-            console.log('GENERATE');
+        /* Grab the json definition for the creatures spritesheet */
+        $.getJSON('/img/oryx_16bit_fantasy_creatures_trans.json', function(data) {
+            /* Preload assets */
+            Crafty.load(data);
+            /* Generate terrain */
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, waterPercent);
+            /* Render the terrain */
             terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
-            console.log('DONE');
+            /* Switch over to the main scene */
             Crafty.scene("Main");
-        }, 100);
+        });
     });
     
     Crafty.scene("Load");

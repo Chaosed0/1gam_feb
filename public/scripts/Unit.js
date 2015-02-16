@@ -3,7 +3,7 @@ define(['crafty'], function(Crafty) {
     Crafty.c("Unit", {
         _movespeed: 4,
         _faction: 1,
-        _loc: null,
+        _cell: null,
 
         init: function() {
         },
@@ -27,12 +27,20 @@ define(['crafty'], function(Crafty) {
             return this._faction;
         },
 
-        getLocation: function() {
-            return this._loc;
+        getCell: function() {
+            return this._cell;
         },
 
-        setLocation: function(loc) {
-            this._loc = loc;
+        setCell: function(cell) {
+            this._cell = cell;
+            var center = {x: 0, y: 0};
+            for(var j = 0; j < cell.halfedges.length; j++) {
+                var vert = cell.halfedges[j].getStartpoint();
+                center.x += (vert.x - center.x) / (j+1);
+                center.y += (vert.y - center.y) / (j+1);
+            }
+            this.x = center.x - this.w/2;
+            this.y = center.y - this.h/2;
         }
     });
 });

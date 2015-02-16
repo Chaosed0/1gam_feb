@@ -1,0 +1,18 @@
+
+{
+    "sprites": {
+        "img/oryx_16bit_fantasy_creatures_trans.png": {
+            "tile": 24,
+            "tileh": 24,
+            "map": {
+                "warrior": [1,1],
+                "rogue": [2,1],
+                "archer": [3,1],
+                "sorcerer": [4,1],
+                "cleric": [5,1],
+                "druid": [6,1],
+                "axeman": [7,1]
+            }
+        }
+    }
+}

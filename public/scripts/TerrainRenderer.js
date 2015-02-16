@@ -16,7 +16,7 @@ define(['./Util'], function(u) {
             {chance: 0.5, color: { r: 200, g: 200, b: 210}},
         ]
     };
-    const colorVariation = 5;
+    const colorVariation = 15;
 
     var elevationToColor = function(elevation, range, terrainPercentages) {
         var curSubpercent = 0;

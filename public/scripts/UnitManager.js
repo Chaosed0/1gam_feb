@@ -10,7 +10,7 @@ define(['crafty', './Util'], function(Crafty, u) {
     UnitManager.prototype.addUnit = function(cell, unit) {
         u.assert(!(cell.site.voronoiId in this.map));
         this.map[cell.site.voronoiId] = unit;
-        unit.setLocation(cell);
+        unit.setCell(cell);
     }
 
     UnitManager.prototype.getUnitForCell = function(cell) {
@@ -27,14 +27,11 @@ define(['crafty', './Util'], function(Crafty, u) {
 
     UnitManager.prototype.moveUnit = function(unit, cell) {
         u.assert(!this.getUnitForCell(cell));
-        var curCell = unit.getLocation();
+        var curCell = unit.getCell();
         u.assert(this.getUnitForCell(curCell) === unit);
         delete this.map[curCell.site.voronoiId];
         this.map[cell.site.voronoiId] = unit;
-        unit.setLocation(cell);
-
-        unit.x = cell.site.x - unit.w/2;
-        unit.y = cell.site.y - unit.h/2;
+        unit.setCell(cell);
     }
 
     return UnitManager;
