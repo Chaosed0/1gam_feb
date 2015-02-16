@@ -16,9 +16,9 @@ require(['crafty',
     var self = this;
     var map;
 
-    const waterPercent = 0.6;
-    const groundPercent = 0.2;
-    const tileDensity = 100;
+    const waterPercent = 0.3;
+    const groundPercent = 0.4;
+    const tileDensity = 50;
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
     const unitSize = 48;
@@ -66,10 +66,16 @@ require(['crafty',
 
         //Pick a random continent and stick some guys on it
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
-        var centerCell = continent.cells[Math.floor(u.getRandom(continent.cells.length))];
         var cells = [];
-        terrain.bfs(centerCell, 4, function(terrain, cell) {
-            return terrain.aboveWater(cell.site);
+        var centerCell;
+
+        /* Make sure we're not sticking the unit on a mountain */
+        do {
+            centerCell = continent.cells[Math.floor(u.getRandom(continent.cells.length))];
+        } while(!terrain.isGround(centerCell.site));
+
+        terrain.bfs(centerCell, 3, function(terrain, cell) {
+            return terrain.isGround(cell.site);
         }, function(cell) {
             cells.push(cell);
         });
@@ -84,7 +90,7 @@ require(['crafty',
                     /* Note that we're trusting in addUnit to set the unit location */
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(3, num)
+                        .unit(className + ' ' + i, 2, num)
                         .reel('idle', 2000, unitAnims[className])
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
@@ -122,7 +128,7 @@ require(['crafty',
                                 terrain.bfs(cell, unitSelected.getSpeed(), function(terrain, cell) {
                                     //Terrain must be walkable and not occupied by a unit of another faction
                                     var unitOnPoint = unitManager.getUnitForCell(cell);
-                                    var passable = terrain.aboveWater(cell.site);
+                                    var passable = terrain.isGround(cell.site);
                                     var skip = false;
                                     if (passable && unitOnPoint) {
                                         if(unitSelected.getFaction() != unitOnPoint.getFaction()) {
@@ -197,7 +203,7 @@ require(['crafty',
             unitAnims = data.animations;
             unitClasses = Object.keys(unitAnims);
             /* Generate terrain */
-            terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, waterPercent);
+            terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents);
             /* Render the terrain */
             terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
             /* Switch over to the main scene */

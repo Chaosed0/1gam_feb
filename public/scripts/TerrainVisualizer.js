@@ -6,7 +6,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
 
             e.ctx.save();
             if(this._highlightcells) {
-                e.ctx.fillStyle = 'rgba(0, 200, 0, .8)';
+                e.ctx.fillStyle = 'rgba(200, 200, 200, .5)';
                 for(var i = 0; i < this._highlightcells.length; i++) {
                     var halfedges = this._highlightcells[i].halfedges;
                     e.ctx.beginPath();

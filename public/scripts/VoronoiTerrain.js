@@ -157,8 +157,8 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         console.log(this.bodies);
     }
     
-    VoronoiTerrain.prototype.aboveWater = function(point) {
-        return point.elevation > this.waterLine;
+    VoronoiTerrain.prototype.isGround = function(point) {
+        return point.elevation > this.waterLine && point.elevation < this.groundLine;
     }
 
     VoronoiTerrain.prototype.floodFill = function(cell, set, condition, action) {
@@ -492,7 +492,7 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         }
     }
 
-    VoronoiTerrain.prototype.generateTerrain = function(width, height, density, waterPercent) {
+    VoronoiTerrain.prototype.generateTerrain = function(width, height, density, terrainPercentages) {
         this.size.w = width;
         this.size.h = height;
         this.generatePoints(width, height, density);
@@ -500,7 +500,9 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         this.annotateElevation();
 
         this.waterLine = this.elevationRange.min +
-            (this.elevationRange.max - this.elevationRange.min) * waterPercent;
+            (this.elevationRange.max - this.elevationRange.min) * terrainPercentages.water;
+        this.groundLine = this.waterLine +
+            (this.elevationRange.max - this.elevationRange.min) * terrainPercentages.ground;
 
         this.generateRivers();
         this.annotateCoasts();
