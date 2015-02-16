@@ -36,6 +36,8 @@ require(['crafty',
         drawEdges: false,
         drawCoasts: true,
     };
+
+    const TEMPunitspeed = 2;
     
     var width = $(document).width();
     var height = $(document).height();
@@ -56,7 +58,7 @@ require(['crafty',
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
 
-    var generateSomeUnits = function(num) {
+    var generateSomeUnits = function(num, faction) {
         // Terrain better be generated at the time of calling
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
@@ -89,7 +91,7 @@ require(['crafty',
                     /* Note that we're trusting in addUnit to set the unit location */
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(className + ' ' + i, 2, num)
+                        .unit(className + ' ' + i, TEMPunitspeed, faction)
                         .reel('idle', 2000, unitAnims[className])
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
@@ -131,28 +133,19 @@ require(['crafty',
             gui.hideButtons();
             highlightedCells = [];
             terrain.bfs(selectedUnit.getCell(), selectedUnit.getSpeed(), function(terrain, cell) {
-                //Terrain must be walkable and not occupied by a unit of another faction
                 var unitOnPoint = unitManager.getUnitForCell(cell);
                 var passable = terrain.isGround(cell.site);
                 var skip = false;
                 if (passable && unitOnPoint) {
-                    if(selectedUnit.getFaction() != unitOnPoint.getFaction()) {
+                    if(selectedUnit.getFaction() !== unitOnPoint.getFaction()) {
+                        /* Other unit is not of our faction, we cannot pass this tile */
                         passable = false;
                     } else {
+                        /* Other unit is of our faction; we can't move here but we can
+                         * pass through it */
                         skip = true;
                     }
                 }
-
-                gui.setButtons([{
-                    text: 'Cancel',
-                    callback: function() {
-                        /* We want to keep the previously selected unit selected */
-                        var savedUnit = selectedUnit;
-                        guiCancelHighlight();
-                        selectUnit(selectedUnit);
-                        transition(freeSelectCallback);
-                    }
-                }]);
 
                 if(skip) {
                     return -1;
@@ -162,6 +155,17 @@ require(['crafty',
             }, function(cell) {
                 highlightedCells.push(cell);
             });
+
+            gui.setButtons([{
+                text: 'Cancel',
+                callback: function() {
+                    /* We want to keep the previously selected unit selected */
+                    var savedUnit = selectedUnit;
+                    guiCancelHighlight();
+                    selectUnit(selectedUnit);
+                    transition(freeSelectCallback);
+                }
+            }]);
 
             terrainVis.highlightCells(highlightedCells);
             transition(moveSelectCallback);
@@ -228,7 +232,7 @@ require(['crafty',
 
         /* Generate some units (placeholder) */
         for(var i = 0; i < 5; i++) {
-            generateSomeUnits(5);
+            generateSomeUnits(5, i);
         }
     });
 

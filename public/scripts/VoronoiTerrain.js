@@ -223,10 +223,10 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             var result = condition(this, cell);
 
             visitedCells.add(cell);
-            if(result > 0) {
+            if(result == true || result > 0) {
                 //We want this cell
                 action(cell);
-            } else if(result == 0) {
+            } else if(result == false || result == 0) {
                 //We don't want this cell
                 continue;
             }
