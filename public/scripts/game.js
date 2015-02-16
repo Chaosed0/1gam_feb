@@ -92,7 +92,7 @@ require(['crafty',
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
                         .unit(className + ' ' + i, TEMPunitspeed, faction)
-                        .reel('idle', 2000, unitAnims[className])
+                        .reel('idle', 2000, unitInfo[className].animation)
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
                     placed = true;
@@ -243,12 +243,12 @@ require(['crafty',
             .textFont({size: '20px'});
 
         /* Grab the json definition for the creatures spritesheet */
-        $.getJSON('/img/oryx_16bit_fantasy_creatures_trans.json', function(data) {
+        $.getJSON('/data/unitinfo.json', function(data) {
             /* Preload spritesheet */
             Crafty.load(data.preload);
             /* Save animation data */
-            unitAnims = data.animations;
-            unitClasses = Object.keys(unitAnims);
+            unitInfo = data.units;
+            unitClasses = Object.keys(unitInfo);
             /* Generate terrain */
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents);
             /* Render the terrain */

@@ -1,0 +1,115 @@
+
+{
+    "units": {
+        "Knight": {
+            "health": 50,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 1,
+                "area": 0,
+                "damage": 15
+            },
+            "animation": [[1,1],[1,2]]
+        },
+        "Thief": {
+            "health": 30,
+            "speed": 3,
+            "attack": {
+                "type": "normal",
+                "range": 1,
+                "area": 0,
+                "damage": 7
+            },
+            "animation": [[2,1],[2,2]]
+        },
+        "Ranger": {
+            "health": 30,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 3,
+                "area": 0,
+                "damage": 5
+            },
+            "animation": [[3,1],[3,2]]
+        },
+        "Wizard": {
+            "health": 20,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 3,
+                "area": 1,
+                "damage": 5
+            },
+            "animation": [[4,1],[4,2]]
+        },
+        "Priest": {
+            "health": 20,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 3,
+                "area": 1,
+                "damage": 5
+            },
+            "animation": [[5,1],[5,2]]
+        },
+        "Shaman": {
+            "health": 20,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 3,
+                "area": 1,
+                "damage": 3
+            },
+            "animation": [[6,1],[6,2]]
+        },
+        "Berserker": {
+            "health": 70,
+            "speed": 1,
+            "attack": {
+                "type": "onself",
+                "range": 0,
+                "area": 1,
+                "damage": 10
+            },
+            "animation": [[7,1],[7,2]]
+        },
+        "Swordsman": {
+            "health": 40,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 1,
+                "area": 0,
+                "damage": 15
+            },
+            "animation": [[8,1],[8,2]]
+        },
+        "Paladin": {
+            "health": 40,
+            "speed": 2,
+            "attack": {
+                "type": "normal",
+                "range": 1,
+                "area": 0,
+                "damage": 10
+            },
+            "animation": [[9,1],[9,2]]
+        }
+    },
+    "preload": {
+        "sprites": {
+            "img/oryx_16bit_fantasy_creatures_trans.png": {
+                "tile": 24,
+                "tileh": 24,
+                "map": {
+                    "UnitSprite": [0,0]
+                }
+            }
+        }
+    }
+}
