@@ -36,16 +36,6 @@ require(['crafty',
         drawEdges: false,
         drawCoasts: true,
     };
-
-    const classNames = [
-        "warrior",
-        "rogue",
-        "archer",
-        "sorcerer",
-        "cleric",
-        "druid",
-        "axeman"
-    ]
     
     var width = $(document).width();
     var height = $(document).height();
@@ -58,6 +48,8 @@ require(['crafty',
     var selectMode = 'free';
     var selectedUnit = null;
     var highlightedCells = null;
+    var unitAnims = null;
+    var unitClasses = null;
 
     Crafty.init(width, height, gameElem);
     Crafty.pixelart(true);
@@ -70,7 +62,7 @@ require(['crafty',
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
 
-        var className = classNames[Math.floor(u.getRandom(classNames.length))];
+        var className = unitClasses[Math.floor(u.getRandom(unitClasses.length))];
 
         //Pick a random continent and stick some guys on it
         var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
@@ -90,9 +82,11 @@ require(['crafty',
 
                 if(!unitManager.getUnitForCell(cell)) {
                     /* Note that we're trusting in addUnit to set the unit location */
-                    var unit = Crafty.e("2D, Canvas, Unit, " + className)
+                    var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(3, num);
+                        .unit(3, num)
+                        .reel('idle', 2000, unitAnims[className])
+                        .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
                     placed = true;
                 }
@@ -197,8 +191,11 @@ require(['crafty',
 
         /* Grab the json definition for the creatures spritesheet */
         $.getJSON('/img/oryx_16bit_fantasy_creatures_trans.json', function(data) {
-            /* Preload assets */
-            Crafty.load(data);
+            /* Preload spritesheet */
+            Crafty.load(data.preload);
+            /* Save animation data */
+            unitAnims = data.animations;
+            unitClasses = Object.keys(unitAnims);
             /* Generate terrain */
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, waterPercent);
             /* Render the terrain */
