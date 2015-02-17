@@ -6,13 +6,14 @@ require(['crafty',
         './UnitManager',
         './CameraControls',
         './TerrainRenderer',
+        './GameController',
         './Util',
     './TerrainVisualizer',
     './Minimap',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, GameController, u) {
     var self = this;
     var map;
 
@@ -45,8 +46,6 @@ require(['crafty',
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
 
-    var selectedUnit = null;
-    var highlightedCells = null;
     var unitInfo = null;
     var unitClasses = null;
 
@@ -99,159 +98,10 @@ require(['crafty',
     }
 
     Crafty.scene("Main", function () {
-        var currentSelectCallback;
-
-        var transition = function(cb) {
-            terrainVis.unbind("CellSelected", currentSelectCallback);
-            currentSelectCallback = cb;
-            terrainVis.bind("CellSelected", currentSelectCallback);
-        }
-
-        var selectUnit = function(unit) {
-            selectedUnit = unit;
-            gui.displayUnitInfo(selectedUnit);
-            gui.setButtons([{
-                text: 'Move',
-                callback: guiMoveCallback
-            }, {
-                text: 'Attack',
-                callback: guiAttackCallback
-            }]);
-        }
-
-        var unhighlightButKeepSelected = function() {
-            /* We want to keep the previously selected unit selected */
-            var savedUnit = selectedUnit;
-            guiCancelHighlight();
-            selectUnit(selectedUnit);
-            transition(freeSelectCallback);
-        }
-
-        /* Callback for when "cancel" button is hit in gui. Transitions to
-         * freeSelectCallback and deselects the selected unit. */
-        var guiCancelHighlight = function() {
-            gui.hideButtons();
-            terrainVis.clearHighlight();
-            selectedUnit = null;
-        }
-
-        /* Callback for when "move" button is hit in gui. Transitions to 
-         * moveSelectCallback */
-        var guiMoveCallback = function() {
-            gui.hideButtons();
-            highlightedCells = [];
-            terrain.bfs(selectedUnit.getCell(), selectedUnit.getSpeed(), function(terrain, cell) {
-                var unitOnPoint = unitManager.getUnitForCell(cell);
-                var passable = terrain.isGround(cell.site);
-                var skip = false;
-                if (passable && unitOnPoint) {
-                    if(selectedUnit.getFaction() !== unitOnPoint.getFaction()) {
-                        /* Other unit is not of our faction, we cannot pass this tile */
-                        passable = false;
-                    } else {
-                        /* Other unit is of our faction; we can't move here but we can
-                         * pass through it */
-                        skip = true;
-                    }
-                }
-
-                if(skip) {
-                    return -1;
-                } else {
-                    return passable;
-                }
-            }, function(cell) {
-                highlightedCells.push(cell);
-            });
-
-            gui.setButtons([{
-                text: 'Cancel',
-                callback: unhighlightButKeepSelected
-            }]);
-
-            terrainVis.highlightCells(highlightedCells);
-            transition(moveSelectCallback);
-        }
-
-        /* Callback for when "move" button is hit in gui. Transitions to 
-         * freeSelectCallback, eventually. */
-        var guiAttackCallback = function() {
-            gui.hideButtons();
-            highlightedCells = [];
-            terrain.bfs(selectedUnit.getCell(), selectedUnit.getAttack().range, function(terrain, cell) {
-                /* Allow target to be anything passable */
-                return terrain.isGround(cell.site);
-            }, function(cell) {
-                highlightedCells.push(cell);
-            });
-
-            gui.setButtons([{
-                text: 'Cancel',
-                callback: unhighlightButKeepSelected
-            }]);
-
-            terrainVis.highlightCells(highlightedCells);
-            transition(attackSelectCallback);
-        }
-
-        /* Select callback when user is selecting any tile. If a unit is selected,
-         * adds the unit's available actions to the gui menu. */
-        var freeSelectCallback = function(data) {
-            var cell = data.cell;
-            var unitOnCell = unitManager.getUnitForCell(cell);
-
-            gui.displayCellInfo(cell);
-
-            if(data.mouseButton == 0) {
-                /* Left click, highlight the map cell */
-                terrainVis.selectCell(cell);
-            }
-
-            if(unitOnCell !== null) {
-                selectUnit(unitOnCell);
-            } else {
-                guiCancelHighlight();
-            }
-        }
-
-        /* Select callback when user has chosen to move the unit. Moves the
-         * selected unit to the selected cell, then transitions to
-         * freeSelectCallback.
-         * Note that we don't need to check if it's a valid cell; we only
-         * receive the callback if it's a highlighted cell. */
-        var moveSelectCallback = function(data) {
-            unitManager.moveUnit(selectedUnit, data.cell);
-            guiCancelHighlight();
-            terrainVis.deselect();
-            transition(freeSelectCallback);
-        }
-
-        /* Select callback when user has chosen to attack a unit. Deals
-         * damage depending on the selected unit's attack, then transitions
-         * to freeSelectCallback.
-         * XXX: Only supports single-target attacks for now.
-         */
-        var attackSelectCallback = function(data) {
-            var cell = data.cell;
-            var unitOnCell = unitManager.getUnitForCell(cell);
-            if(unitOnCell) {
-                unitOnCell.damage(selectedUnit.getAttack().damage);
-                guiCancelHighlight();
-                terrainVis.deselect();
-                transition(freeSelectCallback);
-            } else {
-                /* XXX: Actually display an error to user */
-                console.log('No unit!');
-            }
-        }
-
-        currentSelectCallback = freeSelectCallback;
-
         /* Create the terrain visualizer */
         var terrainVis = Crafty.e("2D, Canvas, TerrainVisualizer, Mouse")
             .attr(terrainSize)
-            .terrainvisualizer(terrain, terrainPrerender)
-            .bind("CellSelected", currentSelectCallback);
+            .terrainvisualizer(terrain, terrainPrerender);
 
         /* Calculate the size of the bottom bar (GUI) */
         var guiSize = {w: Crafty.viewport.width, h: Crafty.viewport.height * guiRatio};
@@ -274,6 +124,9 @@ require(['crafty',
         for(var i = 0; i < 5; i++) {
             generateSomeUnits(5, i);
         }
+
+        /* Create the game controller */
+        var gameController = new GameController(unitManager, terrain, gui, terrainVis);
     });
 
     Crafty.scene("Load", function() {
