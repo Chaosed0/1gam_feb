@@ -1,9 +1,11 @@
 
 define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
-    const buttonPadding = 10;
-
     const menuZ = 1000;
     const menuElemZ = 1001;
+
+    const fontFamily = 'Palatino';
+    const padding = 10;
+    const smallPadding = 5;
 
     var GUI = function(size, camera, prerender, terrainSize) {
         this.minimapSize = size.h;
@@ -32,6 +34,29 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .hud(true)
             .color('#EEEEEE');
 
+        this.titleText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
+                y: this.infoBounds.y + this.infoBounds.h * 1/16,
+                z: menuElemZ })
+            .hud(true)
+            .textFont({family: fontFamily, size: '30px'})
+            .textAlign('center')
+            .text('a');
+
+        this.subtitleText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
+                y: this.titleText.y + this.titleText.h + smallPadding,
+                z: menuElemZ })
+            .hud(true)
+            .textFont({family: fontFamily, size: '15px'})
+            .textAlign('center');
+
+        this.classImage = Crafty.e("2D, Canvas, HUD, ClassSprite")
+            .attr({x: this.titleText.x - 100,
+                   y: this.titleText.y, w: this.titleText.h - 2, h: this.titleText.h, z: menuElemZ})
+            .hud(true);
+        this.classImage.visible = false;
+
         this.menuBounds = {
             x: Crafty.viewport.width - this.minimapSize,
             y: Crafty.viewport.height - size.h,
@@ -45,26 +70,34 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .hud(true)
             .color('#BBBBBB');
 
-        this.bottomCenterText = Crafty.e("2D, Canvas, HUD, Text")
-            .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
-                y: this.infoBounds.y + this.infoBounds.h * 7/8,
-                z: menuElemZ })
-            .hud(true)
-            .textFont({size: '20px'})
-            .textAlign('center');
-
         this.buttons = new Array(4);
-        var buttonBounds = {w: this.menuBounds.w - buttonPadding * 2,
-            h: (this.menuBounds.h - buttonPadding * 5) / 4,
+        var buttonBounds = {w: this.menuBounds.w - padding * 2,
+            h: (this.menuBounds.h - padding * 5) / 4,
             z: menuElemZ};
         for(var i = 0; i < 4; i++) {
-            buttonBounds.x = this.menuBounds.x + buttonPadding;
-            buttonBounds.y = this.menuBounds.y + buttonPadding + i * (buttonBounds.h + buttonPadding);
+            buttonBounds.x = this.menuBounds.x + padding;
+            buttonBounds.y = this.menuBounds.y + padding + i * (buttonBounds.h + padding);
             this.buttons[i] = new Button('dummy', '#EEEEEE', buttonBounds);
             this.buttons[i].setVisible(false);
         }
 
+        /* We set the titletext temporarily so we could get the height - unset it */
+        this.titleText.text('');
         this.callbacks = {};
+    }
+
+    GUI.prototype.updateClassImage = function(className) {
+        if(className && this.getClassMap) {
+            var index = this.getClassMap(className);
+            this.classImage.sprite(index[0], index[1]);
+            this.classImage.visible = true;
+        } else {
+            this.classImage.visible = false;
+        }
+    }
+
+    GUI.prototype.setClassMapCallback = function(cb) {
+        this.getClassMap = cb;
     }
 
     /* Display info about a cell in the center GUI element. */
@@ -79,6 +112,9 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     /* Display info about a unit in the center GUI element,
      * as well as displaying controls in the right menu. */
     GUI.prototype.displayUnitInfo = function(unit) {
+        this.titleText.text(unit.getName());
+        this.subtitleText.text('of ' + unit.getFaction());
+        this.updateClassImage(unit.getClassName());
     }
 
     GUI.prototype.reset = function() {

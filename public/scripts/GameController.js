@@ -103,7 +103,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
 
-            gui.displayCellInfo(cell);
+            /*gui.displayCellInfo(cell); */
 
             if(data.mouseButton == 0) {
                 /* Left click, highlight the map cell */

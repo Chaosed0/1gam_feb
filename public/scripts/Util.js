@@ -37,5 +37,9 @@ define(['seedrandom'], function(seedrandom) {
         }
     }
 
+    Util.randomElem = function(arr) {
+        return arr[Math.floor(this.getRandom(arr.length))];
+    }
+
     return Util;
 });

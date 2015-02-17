@@ -46,6 +46,7 @@ require(['crafty',
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
 
+    var names = null;
     var unitInfo = null;
     var unitClasses = null;
 
@@ -55,21 +56,21 @@ require(['crafty',
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
 
-    var generateSomeUnits = function(num, faction) {
+    var generateSomeUnits = function(num) {
         // Terrain better be generated at the time of calling
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
 
-        var className = unitClasses[Math.floor(u.getRandom(unitClasses.length))];
-
         //Pick a random continent and stick some guys on it
-        var continent = bodies.continents[Math.floor(u.getRandom(bodies.continents.length))];
+        var continent = u.randomElem(bodies.continents);
         var cells = [];
         var centerCell;
 
+        var factionName = u.randomElem(names.groups);
+
         /* Make sure we're not sticking the unit on a mountain */
         do {
-            centerCell = continent.cells[Math.floor(u.getRandom(continent.cells.length))];
+            centerCell = u.randomElem(continent.cells);
         } while(!terrain.isGround(centerCell.site));
 
         terrain.bfs(centerCell, 3, function(terrain, cell) {
@@ -79,6 +80,8 @@ require(['crafty',
         });
 
         for(var i = 0; i < num; i++) {
+            var unitName = u.randomElem(names.heroes.male_human);
+            var className = u.randomElem(unitClasses);
             var placed = false;
             while(!placed) {
                 var cell = cells[Math.floor(u.getRandom(cells.length))];
@@ -88,7 +91,7 @@ require(['crafty',
                     /* Note that we're trusting in addUnit to set the unit location */
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(className + ' ' + i, faction, unitInfo[className])
+                        .unit(unitName, factionName, className, unitInfo[className])
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
                     placed = true;
@@ -119,6 +122,10 @@ require(['crafty',
 
         /* Create the actual gui */
         var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
+        gui.setClassMapCallback(function(className) {
+            u.assert(unitClasses.indexOf(className) >= 0);
+            return unitInfo[className].classImageMap;
+        });
 
         /* Generate some units (placeholder) */
         for(var i = 0; i < 5; i++) {
@@ -142,12 +149,16 @@ require(['crafty',
             /* Save animation data */
             unitInfo = data.units;
             unitClasses = Object.keys(unitInfo);
+            names = data.names;
             /* Generate terrain */
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents);
             /* Render the terrain */
             terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
             /* Switch over to the main scene */
             Crafty.scene("Main");
+        }).fail(function(jqxhr, textStatus, error) {
+            var err = textStatus + " (" + error + ")";
+            console.log("Error requesting JSON from server: " + err);
         });
     });
     

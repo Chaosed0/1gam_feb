@@ -1,5 +1,65 @@
 
 {
+    "names":{
+        "heroes": {
+            "male_human": [
+                "Georguy",
+                "Cyne",
+                "Gery",
+                "Clyone",
+                "Briffith",
+                "Heny",
+                "Gerey",
+                "Ornes",
+                "Nichye",
+                "Willey",
+                "Alard",
+                "Cote",
+                "Aered",
+                "Wini",
+                "Elmulf",
+                "Munda",
+                "Ryany",
+                "Masym",
+                "Reder",
+                "Gauwilh",
+                "Parray",
+                "Eadwean"
+            ]
+        },
+        "groups": [
+            "Joane's Guild",
+            "The Ruby Circle",
+            "The Demons of Wrebury",
+            "Bryany's Circle",
+            "The Legion of the Arcane Fang",
+            "Ralphye's Guild",
+            "The Jade Saints",
+            "The Fellowship of the Lost Thorn",
+            "The Crimson Hounds",
+            "Gery's Company",
+            "The Demons of Ciburh",
+            "Hilip's Order",
+            "The Ruby Council",
+            "The Council of the Shield",
+            "Suse's Fellowship",
+            "The Gray Fellowship",
+            "Mesym's Circle",
+            "The Golden Heroes",
+            "Ellen's Fangs",
+            "The Adventurers of Simor",
+            "The Covenant of the Iron Hound",
+            "The Silver Dragons",
+            "The Angels of Crothorp",
+            "The Ravens of Weestone",
+            "Rarder's Swords",
+            "The Legion of the Black Crown",
+            "The Jade Arrows",
+            "The Wolves of Haford",
+            "Arthur's Fellowship",
+            "Annen's Knights"
+        ]
+    },
     "units": {
         "Knight": {
             "health": 50,
@@ -10,7 +70,8 @@
                 "area": 0,
                 "damage": 15
             },
-            "animation": [[1,1],[1,2]]
+            "animation": [[1,1],[1,2]],
+            "classImageMap": [5,1]
         },
         "Thief": {
             "health": 30,
@@ -21,7 +82,8 @@
                 "area": 0,
                 "damage": 7
             },
-            "animation": [[2,1],[2,2]]
+            "animation": [[2,1],[2,2]],
+            "classImageMap": [0,1]
         },
         "Ranger": {
             "health": 30,
@@ -32,7 +94,8 @@
                 "area": 0,
                 "damage": 5
             },
-            "animation": [[3,1],[3,2]]
+            "animation": [[3,1],[3,2]],
+            "classImageMap": [1,2]
         },
         "Wizard": {
             "health": 20,
@@ -43,7 +106,8 @@
                 "area": 1,
                 "damage": 5
             },
-            "animation": [[4,1],[4,2]]
+            "animation": [[4,1],[4,2]],
+            "classImageMap": [1,0]
         },
         "Priest": {
             "health": 20,
@@ -54,7 +118,8 @@
                 "area": 1,
                 "damage": 5
             },
-            "animation": [[5,1],[5,2]]
+            "animation": [[5,1],[5,2]],
+            "classImageMap": [0,0]
         },
         "Shaman": {
             "health": 20,
@@ -65,7 +130,8 @@
                 "area": 1,
                 "damage": 3
             },
-            "animation": [[6,1],[6,2]]
+            "animation": [[6,1],[6,2]],
+            "classImageMap": [0,3]
         },
         "Berserker": {
             "health": 70,
@@ -76,7 +142,8 @@
                 "area": 1,
                 "damage": 10
             },
-            "animation": [[7,1],[7,2]]
+            "animation": [[7,1],[7,2]],
+            "classImageMap": [3,3]
         },
         "Swordsman": {
             "health": 40,
@@ -87,7 +154,8 @@
                 "area": 0,
                 "damage": 15
             },
-            "animation": [[8,1],[8,2]]
+            "animation": [[8,1],[8,2]],
+            "classImageMap": [3,3]
         },
         "Paladin": {
             "health": 40,
@@ -98,7 +166,8 @@
                 "area": 0,
                 "damage": 10
             },
-            "animation": [[9,1],[9,2]]
+            "animation": [[9,1],[9,2]],
+            "classImageMap": [4,1]
         }
     },
     "preload": {
@@ -108,6 +177,15 @@
                 "tileh": 24,
                 "map": {
                     "UnitSprite": [0,0]
+                }
+            },
+            "img/oryx_16bit_fantasy_classes_trans_mod.png": {
+                "tile": 24,
+                "tileh": 26,
+                "paddingX": 7,
+                "paddingY": 7,
+                "map": {
+                    "ClassSprite": [0,0]
                 }
             }
         }

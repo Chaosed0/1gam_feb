@@ -11,9 +11,10 @@ define(['crafty'], function(Crafty) {
         init: function() {
         },
 
-        unit: function(name, faction, data) {
+        unit: function(name, faction, className, data) {
             this._name = name;
             this._faction = faction;
+            this._className = className;
             if(data) {
                 this._maxhealth = data.health;
                 this._curhealth = data.health;
@@ -30,6 +31,10 @@ define(['crafty'], function(Crafty) {
 
         isDead: function() {
             return this._curhealth < 0;
+        },
+
+        getClassName: function() {
+            return this._className;
         },
 
         getName: function() {
