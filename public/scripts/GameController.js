@@ -26,7 +26,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             /* We want to keep the previously selected unit selected */
             var savedUnit = selectedUnit;
             guiCancelHighlight();
-            selectUnit(selectedUnit);
+            selectUnit(savedUnit);
             transition(freeSelectCallback);
         }
 
