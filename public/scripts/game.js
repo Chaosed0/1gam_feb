@@ -143,7 +143,7 @@ require(['crafty',
             .textFont({size: '20px'});
 
         /* Grab the json definition for the creatures spritesheet */
-        $.getJSON('/data/unitinfo.json', function(data) {
+        $.getJSON('data/unitinfo.json', function(data) {
             /* Preload spritesheet */
             Crafty.load(data.preload);
             /* Save animation data */
