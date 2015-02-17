@@ -51,6 +51,62 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .textFont({family: fontFamily, size: '15px'})
             .textAlign('center');
 
+        this.healthText = Crafty.e("2D, Canvas, HUD, Text")
+            .textFont({family: fontFamily, size: '12px'})
+            .text("HP");
+        this.healthMeter = Crafty.e("2D, Canvas, HUD, Meter")
+            .attr({w: 200, h: 5})
+            .meter('#FF0000')
+            .fill(1);
+        this.healthAmtText = Crafty.e("2D, Canvas, HUD, Text")
+            .textFont({family: fontFamily, size: '12px'})
+            .text("100/100");
+
+        this.manaText = Crafty.e("2D, Canvas, HUD, Text")
+            .textFont({family: fontFamily, size: '12px'})
+            .text('MP');
+        this.manaMeter = Crafty.e("2D, Canvas, HUD, Meter")
+            .attr({w: 200, h: 5})
+            .meter('#0000FF')
+            .fill(1);
+        this.manaAmtText = Crafty.e("2D, Canvas, HUD, Text")
+            .textFont({family: fontFamily, size: '12px'})
+            .text("100/100");
+
+        var metersLeft = this.infoBounds.x + this.infoBounds.w / 2.0 - this.healthText.w / 2
+            - smallPadding - this.healthMeter.w / 2 - this.healthAmtText.w / 2;
+        this.healthText.x = metersLeft;
+        this.healthText.y = this.subtitleText.y + this.subtitleText.h + padding;
+        this.healthText.z = menuElemZ;
+        this.healthText.visible = false;
+        this.healthText.hud(true);
+        this.healthMeter.x = this.healthText.x + this.healthText.w + smallPadding;
+        this.healthMeter.y = this.healthText.y + this.healthText.h / 2 - this.healthMeter.h / 2;
+        this.healthMeter.z = menuElemZ;
+        this.healthMeter.visible = false;
+        this.healthMeter.hud(true);
+        this.healthAmtText.x = this.healthMeter.x + this.healthMeter.w + smallPadding;
+        this.healthAmtText.y = this.healthText.y;
+        this.healthAmtText.z = menuElemZ;
+        this.healthAmtText.visible = false;
+        this.healthAmtText.hud(true);
+
+        this.manaText.x = metersLeft;
+        this.manaText.y = this.healthText.y + this.healthText.h + smallPadding;
+        this.manaText.z = menuElemZ;
+        this.manaText.visible = false;
+        this.manaText.hud(true);
+        this.manaMeter.x = this.healthMeter.x;
+        this.manaMeter.y = this.manaText.y + this.manaText.h / 2 - this.manaMeter.h / 2;
+        this.manaMeter.z = menuElemZ;
+        this.manaMeter.visible = false;
+        this.manaMeter.hud(true);
+        this.manaAmtText.x = this.healthAmtText.x;
+        this.manaAmtText.y = this.manaText.y;
+        this.manaAmtText.visible = false;
+        this.manaAmtText.z = menuElemZ;
+        this.manaAmtText.hud(true);
+
         this.classImage = Crafty.e("2D, Canvas, HUD, ClassSprite")
             .attr({x: this.titleText.x - 100,
                    y: this.titleText.y, w: this.titleText.h - 2, h: this.titleText.h, z: menuElemZ})
@@ -131,6 +187,17 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.titleText.text(unit.getName());
         this.subtitleText.text('of ' + unit.getFaction());
         this.updateClassImage(unit.getClassName());
+
+        this.healthMeter.fill(unit.getHealth() / unit.getMaxHealth());
+        this.manaMeter.fill(unit.getMana() / unit.getMaxMana());
+        this.healthAmtText.text(unit.getHealth() + "/" + unit.getMaxHealth());
+        this.manaAmtText.text(unit.getMana() + "/" + unit.getMaxMana());
+        this.healthText.visible = true;
+        this.healthMeter.visible = true;
+        this.healthAmtText.visible = true;
+        this.manaText.visible = true;
+        this.manaMeter.visible = true;
+        this.manaAmtText.visible = true;
     }
 
     GUI.prototype.reset = function() {

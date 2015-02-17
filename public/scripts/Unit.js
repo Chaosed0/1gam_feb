@@ -1,8 +1,10 @@
 
 define(['crafty'], function(Crafty) {
     Crafty.c("Unit", {
-        _maxhealth: 0,
+        _maxhealth: 1,
         _curhealth: 0,
+        _maxmana: 1,
+        _curmana: 0,
         _movespeed: 4,
         _faction: 1,
         _attack: null,
@@ -31,6 +33,22 @@ define(['crafty'], function(Crafty) {
 
         isDead: function() {
             return this._curhealth < 0;
+        },
+
+        getHealth: function() {
+            return this._curhealth;
+        },
+
+        getMaxHealth: function(){
+            return this._maxhealth;
+        },
+
+        getMana: function() {
+            return this._curmana;
+        },
+
+        getMaxMana: function() {
+            return this._maxmana;
         },
 
         getClassName: function() {
