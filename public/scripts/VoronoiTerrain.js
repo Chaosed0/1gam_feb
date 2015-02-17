@@ -354,7 +354,7 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                 //If the next-lowest elevation actually goes up,
                 // we're stuck in a valley; just make a path
                 if(nextPoint.elevation > point.elevation) {
-                    nextPoint.elevation = point.elevation - 0.01;
+                    nextPoint.elevation = point.elevation - 0.000001;
                 }
 
                 //We now have the next site for the river, but we need

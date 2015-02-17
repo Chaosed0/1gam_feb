@@ -73,8 +73,8 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .textFont({family: fontFamily, size: '12px'})
             .text("100/100");
 
-        var metersLeft = this.infoBounds.x + this.infoBounds.w / 2.0 - this.healthText.w / 2
-            - smallPadding - this.healthMeter.w / 2 - this.healthAmtText.w / 2;
+        var metersLeft = this.infoBounds.x + (this.infoBounds.w - this.healthText.w
+                - this.healthMeter.w - this.healthAmtText.w - smallPadding)/2;
         this.healthText.x = metersLeft;
         this.healthText.y = this.subtitleText.y + this.subtitleText.h + padding;
         this.healthText.z = menuElemZ;
