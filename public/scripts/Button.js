@@ -15,10 +15,12 @@ define(['crafty', './Util'], function(Crafty, u) {
 
     Button.prototype.bind = function(event, cb) {
         this.background.bind(event, cb);
+        return this;
     }
 
     Button.prototype.unbind = function(event, cb) {
         this.background.unbind(event, cb);
+        return this;
     }
 
     Button.prototype.setText = function(text) {
@@ -28,6 +30,11 @@ define(['crafty', './Util'], function(Crafty, u) {
     Button.prototype.setVisible = function(visible) {
         this.background.visible = visible;
         this.text.visible = visible;
+    }
+
+    Button.prototype.textBaselineCenter = function() {
+        this.text.y = this.text.y - this.text.h/2.0;
+        this.text.hud(true);
     }
 
     return Button;

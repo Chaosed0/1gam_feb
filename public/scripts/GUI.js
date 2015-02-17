@@ -81,6 +81,22 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             this.buttons[i].setVisible(false);
         }
 
+        var aboutButton = new Button('?', 'rgba(238, 238, 238, 0.25)', {
+            x: Crafty.viewport.width - smallPadding - 25,
+            y: smallPadding, w: 25, h: 25
+        }).bind("MouseDown", function(e) {
+            window.open("about.html", "_blank");
+        }).bind("MouseOver", function(e) {
+            aboutButton.background.color('rgba(238,238,238,1.0)');
+            aboutButton.text.textColor('rgba(0,0,0,1.0)');
+        }).bind("MouseOut", function(e) {
+            aboutButton.background.color('rgba(238,238,238,0.25)');
+            aboutButton.text.textColor('rgba(0,0,0,0.25)');
+        });
+        aboutButton.text.textColor('rgba(0,0,0,0.25)');
+        aboutButton.text.textFont({family: fontFamily, size: '20px'});
+        aboutButton.textBaselineCenter();
+
         /* We set the titletext temporarily so we could get the height - unset it */
         this.titleText.text('');
         this.callbacks = {};
