@@ -154,7 +154,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         aboutButton.textBaselineCenter();
 
         /* We set the titletext temporarily so we could get the height - unset it */
-        this.titleText.text('');
+        this.titleText.visible = false;
         this.callbacks = {};
     }
 
@@ -192,6 +192,10 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.manaMeter.fill(unit.getMana() / unit.getMaxMana());
         this.healthAmtText.text(unit.getHealth() + "/" + unit.getMaxHealth());
         this.manaAmtText.text(unit.getMana() + "/" + unit.getMaxMana());
+
+        this.titleText.visible = true;
+        this.subtitleText.visible = true;
+        this.classImage.visible = true;
         this.healthText.visible = true;
         this.healthMeter.visible = true;
         this.healthAmtText.visible = true;
@@ -200,21 +204,33 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.manaAmtText.visible = true;
     }
 
-    GUI.prototype.reset = function() {
-        this.bottomCenterText.text('');
+    GUI.prototype.hideInfo = function() {
+        this.titleText.visible = false;
+        this.subtitleText.visible = false;
+        this.classImage.visible = false;
+        this.healthMeter.visible = false;
+        this.manaMeter.visible = false;
+        this.healthText.visible = false;
+        this.manaText.visible = false;
+        this.healthAmtText.visible = false;
+        this.manaAmtText.visible = false;
     }
 
     GUI.prototype.setButtons = function(buttons) {
-        u.assert(buttons.length <= 4);
-        for(var i = 0; i < buttons.length; i++) {
-            if(buttons[i].text) {
-                this.buttons[i].setText(buttons[i].text);
+        u.assert(buttons === null || buttons.length <= 4);
+        for(var i = 0; i < this.buttons.length; i++) {
+            if(buttons && i < buttons.length) {
+                if(buttons[i].text) {
+                    this.buttons[i].setText(buttons[i].text);
+                }
+                if(buttons[i].callback) {
+                    this.buttons[i].unbind("MouseDown");
+                    this.buttons[i].bind("MouseDown", buttons[i].callback);
+                }
+                this.buttons[i].setVisible(true);
+            } else {
+                this.buttons[i].setVisible(false);
             }
-            if(buttons[i].callback) {
-                this.buttons[i].unbind("MouseDown");
-                this.buttons[i].bind("MouseDown", buttons[i].callback);
-            }
-            this.buttons[i].setVisible(true);
         }
     }
 

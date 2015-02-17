@@ -1,39 +1,89 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
     var GameController = function(unitManager, terrain, gui, vis) {
-        var selectedUnit = null;
-        var currentSelectCallback;
-        var lastBFSResult = null;
+        var stack = [];
 
-        var transition = function(cb) {
+        var currentSelectCallback;
+        var selectedUnit = null;
+        var lastBFSResult = null;
+        var currentButtons = null;
+
+        var cancelButton = {
+            text: 'Cancel',
+            callback: null
+        };
+
+        var setButtons = function(buttons) {
+            currentButtons = buttons;
+            gui.setButtons(currentButtons);
+        }
+
+        var hideButtons = function(buttons) {
+            currentButtons = [];
+            gui.hideButtons();
+        }
+
+        var newSelectCallback = function(cb) {
             vis.unbind("CellSelected", currentSelectCallback);
             currentSelectCallback = cb;
             vis.bind("CellSelected", currentSelectCallback);
         }
 
-        var selectUnit = function(unit) {
-            selectedUnit = unit;
-            gui.displayUnitInfo(selectedUnit);
-            gui.setButtons([{
-                text: 'Move',
-                callback: guiMoveCallback
-            }, {
-                text: 'Attack',
-                callback: guiAttackCallback
-            }]);
+        var useState = function(state) {
+            vis.selectMode(state.selectmode);
+            vis.selection(state.selection);
+            vis.highlight(state.highlight);
+            gui.setButtons(state.buttons);
+            newSelectCallback(state.selectcb);
+            selectedUnit = state.selectedunit;
+
+            if(selectedUnit) {
+                gui.displayUnitInfo(selectedUnit);
+            } else {
+                gui.hideInfo();
+            }
         }
 
-        /* Callback for when "cancel" button is hit in gui. Transitions to
-         * freeSelectCallback and deselects the selected unit. */
-        var cancelHighlight = function() {
-            gui.hideButtons();
-            vis.clearHighlight();
+        var pushState = function() {
+            var state = {
+                selectmode: vis.selectMode(),
+                selection: vis.selection(),
+                highlight: vis.highlight(),
+                buttons: currentButtons,
+                selectedunit: selectedUnit,
+                selectcb: currentSelectCallback,
+            }
+            stack.push(state);
+            useState(state);
         }
+        
+        var popState = function() {
+            /* Never pop the initial state */
+            if(stack.length > 1) {
+                var state = stack.pop();
+                useState(stack[stack.length-1]);
+                return state;
+            } else {
+                useState(stack[0]);
+                return stack[0];
+            }
+        }
+
+        var rewindStates = function() {
+            while(stack.length > 1) {
+                stack.pop();
+            }
+            useState(stack[0]);
+        }
+
+        cancelButton.callback = popState;
+
+        /* ---- */
 
         /* Callback for when "move" button is hit in gui. Transitions to 
          * moveSelectCallback */
         var guiMoveCallback = function() {
-            gui.hideButtons();
+            hideButtons();
             highlightedCells = [];
             lastBFSResult = terrain.bfs(selectedUnit.getCell(), selectedUnit.getSpeed(), function(terrain, cell) {
                 var unitOnPoint = unitManager.getUnitForCell(cell);
@@ -59,24 +109,17 @@ define(['crafty', './Util'], function(Crafty, u) {
                 highlightedCells.push(cell);
             });
 
-            gui.setButtons([{
-                text: 'Cancel',
-                callback: function() {
-                    cancelHighlight();
-                    vis.selectmode('free');
-                    transition(freeSelectCallback);
-                }
-            }]);
-
-            vis.highlightCells(highlightedCells);
+            setButtons([ cancelButton ]);
+            vis.highlight(highlightedCells);
             vis.selectMode('highlight');
-            transition(moveSelectCallback);
+            newSelectCallback(moveSelectCallback);
+            pushState();
         }
 
         /* Callback for when "move" button is hit in gui. Transitions to 
          * freeSelectCallback, eventually. */
         var guiAttackCallback = function() {
-            gui.hideButtons();
+            hideButtons();
             highlightedCells = [];
             came_from = terrain.bfs(selectedUnit.getCell(), selectedUnit.getAttack().range, function(terrain, cell) {
                 /* Allow target to be anything passable */
@@ -85,55 +128,54 @@ define(['crafty', './Util'], function(Crafty, u) {
                 highlightedCells.push(cell);
             });
 
-            gui.setButtons([{
-                text: 'Cancel',
-                callback: function() {
-                    cancelHighlight();
-                    vis.selectmode('free');
-                    transition(freeSelectCallback);
-                }
-            }]);
-
-            vis.highlightCells(highlightedCells);
+            setButtons([cancelButton]); 
+            vis.highlight(highlightedCells);
             vis.selectMode('highlight');
-            transition(attackSelectCallback);
+            newSelectCallback(attackSelectCallback);
+            pushState();
         }
 
         /* Select callback when user is selecting any tile. If a unit is selected,
          * adds the unit's available actions to the gui menu. */
         var freeSelectCallback = function(data) {
             var cell = data.cell;
-            var unitOnCell = unitManager.getUnitForCell(cell);
-
-            /*gui.displayCellInfo(cell); */
 
             if(data.mouseButton == 0) {
                 /* Left click, highlight the map cell */
-                vis.selectCell(cell);
-            }
+                vis.selection(cell);
+                var unitOnCell = unitManager.getUnitForCell(cell);
 
-            if(unitOnCell !== null) {
-                selectUnit(unitOnCell);
-            } else {
-                cancelHighlight();
-                selectedUnit = null;
+                if(unitOnCell !== null) {
+                    selectedUnit = unitOnCell;
+                    gui.displayUnitInfo(selectedUnit);
+                    gui.setButtons([{
+                        text: 'Move',
+                        callback: guiMoveCallback
+                    }, {
+                        text: 'Attack',
+                        callback: guiAttackCallback
+                    }]);
+                } else {
+                    selectedUnit = null;
+                    gui.hideInfo();
+                    gui.setButtons(null);
+                }
             }
         }
 
         /* Select callback when user has chosen to move the unit. Moves the
-         * selected unit to the selected cell, then transitions to
+         * selected unit to the selected cell, then newSelectCallbacks to
          * freeSelectCallback.
          * Note that we don't need to check if it's a valid cell; we only
          * receive the callback if it's a highlighted cell. */
         var moveSelectCallback = function(data) {
-            var savedUnit = selectedUnit;
-            cancelHighlight();
-            vis.deselect();
-            var path = terrain.reconstructPath(savedUnit.getCell(), data.cell, lastBFSResult);
-            vis.highlightCells(path);
-            vis.selectCell(data.cell);
+            var path = terrain.reconstructPath(selectedUnit.getCell(), data.cell, lastBFSResult);
+            vis.highlight(path);
+            vis.selection(data.cell);
             vis.selectMode('confirm');
-            transition(moveConfirmCallback);
+            setButtons([ cancelButton ]);
+            newSelectCallback(moveConfirmCallback);
+            pushState();
         }
 
         /* Selection callback when the user has selected a cell to move a
@@ -141,15 +183,15 @@ define(['crafty', './Util'], function(Crafty, u) {
          * freeSelectCallback. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            cancelHighlight();
             selectedUnit = null;
-            vis.deselect();
+            vis.selection(null);
             vis.selectMode('free');
-            transition(freeSelectCallback);
+            newSelectCallback(freeSelectCallback);
+            rewindStates();
         }
 
         /* Select callback when user has chosen to attack a unit. Deals
-         * damage depending on the selected unit's attack, then transitions
+         * damage depending on the selected unit's attack, then newSelectCallbacks
          * to freeSelectCallback.
          * XXX: Only supports single-target attacks for now.
          */
@@ -157,11 +199,13 @@ define(['crafty', './Util'], function(Crafty, u) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
             if(unitOnCell) {
-                vis.
-                vis.deselect();
-                vis.selectCell(cell);
+                selectedUnit = unitOnCell;
+                vis.selection(cell);
                 vis.selectMode('confirm');
-                transition(attackConfirmCallback);
+                vis.highlight(null);
+                setButtons([ cancelButton ]);
+                newSelectCallback(attackConfirmCallback);
+                pushState();
             } else {
                 /* XXX: Actually display an error to user */
                 console.log('No unit!');
@@ -169,19 +213,17 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         var attackConfirmCallback = function(data) {
-            var unitOnCell = unitManager.getUnitForCell(cell);
+            var unitOnCell = unitManager.getUnitForCell(data.cell);
             u.assert(unitOnCell);
 
             unitOnCell.damage(selectedUnit.getAttack().damage);
-            cancelHighlight();
-            selectedUnit = null;
-            vis.deselect();
-            vis.selectMode('free');
-            transition(freeSelectCallback);
+            rewindStates();
         }
 
         currentSelectCallback = freeSelectCallback;
         vis.bind("CellSelected", currentSelectCallback);
+        /* Push initial state */
+        pushState();
     };
 
     return GameController;

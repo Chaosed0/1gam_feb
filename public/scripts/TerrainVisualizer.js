@@ -92,35 +92,35 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
             return this;
         },
 
-        highlightCells: function(cells) {
-            if(cells.constructor === Array) {
-                this._highlightcells = cells;
+        highlight: function(cells) {
+            if(cells === undefined) {
+                return this._highlightcells;
             } else {
-                this._highlightcells = null;
-            }
-            this.trigger("Invalidate");
-        },
-
-        clearHighlight: function() {
-            if(this._highlightcells != null) {
-                this._highlightcells = null;
+                if(cells !== null && cells.constructor === Array) {
+                    this._highlightcells = cells;
+                } else {
+                    this._highlightcells = null;
+                }
                 this.trigger("Invalidate");
             }
         },
 
-        selectCell: function(cell) {
-            u.assert(cell.site);
-            this._selectedcell = cell;
-            this.trigger("Invalidate");
-        },
-
-        deselect: function() {
-            this._selectedcell = null;
-            this.trigger("Invalidate");
+        selection: function(cell) {
+            if(cell === undefined) {
+                return this._selectedcell;
+            } else {
+                u.assert(cell === null || cell.site);
+                this._selectedcell = cell;
+                this.trigger("Invalidate");
+            }
         },
 
         selectMode: function(mode) {
-            this._selectmode = mode;
+            if(mode === undefined) {
+                return this._selectmode;
+            } else {
+                this._selectmode = mode;
+            }
         }
     });
 });
