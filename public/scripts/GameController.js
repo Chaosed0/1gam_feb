@@ -3,6 +3,7 @@ define(['crafty', './Util'], function(Crafty, u) {
     var GameController = function(unitManager, terrain, gui, vis) {
         var selectedUnit = null;
         var currentSelectCallback;
+        var lastBFSResult = null;
 
         var transition = function(cb) {
             vis.unbind("CellSelected", currentSelectCallback);
@@ -22,20 +23,11 @@ define(['crafty', './Util'], function(Crafty, u) {
             }]);
         }
 
-        var unhighlightButKeepSelected = function() {
-            /* We want to keep the previously selected unit selected */
-            var savedUnit = selectedUnit;
-            guiCancelHighlight();
-            selectUnit(savedUnit);
-            transition(freeSelectCallback);
-        }
-
         /* Callback for when "cancel" button is hit in gui. Transitions to
          * freeSelectCallback and deselects the selected unit. */
-        var guiCancelHighlight = function() {
+        var cancelHighlight = function() {
             gui.hideButtons();
             vis.clearHighlight();
-            selectedUnit = null;
         }
 
         /* Callback for when "move" button is hit in gui. Transitions to 
@@ -43,7 +35,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         var guiMoveCallback = function() {
             gui.hideButtons();
             highlightedCells = [];
-            terrain.bfs(selectedUnit.getCell(), selectedUnit.getSpeed(), function(terrain, cell) {
+            lastBFSResult = terrain.bfs(selectedUnit.getCell(), selectedUnit.getSpeed(), function(terrain, cell) {
                 var unitOnPoint = unitManager.getUnitForCell(cell);
                 var passable = terrain.isGround(cell.site);
                 var skip = false;
@@ -69,10 +61,15 @@ define(['crafty', './Util'], function(Crafty, u) {
 
             gui.setButtons([{
                 text: 'Cancel',
-                callback: unhighlightButKeepSelected
+                callback: function() {
+                    cancelHighlight();
+                    vis.selectmode('free');
+                    transition(freeSelectCallback);
+                }
             }]);
 
             vis.highlightCells(highlightedCells);
+            vis.selectMode('highlight');
             transition(moveSelectCallback);
         }
 
@@ -81,7 +78,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         var guiAttackCallback = function() {
             gui.hideButtons();
             highlightedCells = [];
-            terrain.bfs(selectedUnit.getCell(), selectedUnit.getAttack().range, function(terrain, cell) {
+            came_from = terrain.bfs(selectedUnit.getCell(), selectedUnit.getAttack().range, function(terrain, cell) {
                 /* Allow target to be anything passable */
                 return terrain.isGround(cell.site);
             }, function(cell) {
@@ -90,10 +87,15 @@ define(['crafty', './Util'], function(Crafty, u) {
 
             gui.setButtons([{
                 text: 'Cancel',
-                callback: unhighlightButKeepSelected
+                callback: function() {
+                    cancelHighlight();
+                    vis.selectmode('free');
+                    transition(freeSelectCallback);
+                }
             }]);
 
             vis.highlightCells(highlightedCells);
+            vis.selectMode('highlight');
             transition(attackSelectCallback);
         }
 
@@ -113,7 +115,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             if(unitOnCell !== null) {
                 selectUnit(unitOnCell);
             } else {
-                guiCancelHighlight();
+                cancelHighlight();
+                selectedUnit = null;
             }
         }
 
@@ -123,9 +126,25 @@ define(['crafty', './Util'], function(Crafty, u) {
          * Note that we don't need to check if it's a valid cell; we only
          * receive the callback if it's a highlighted cell. */
         var moveSelectCallback = function(data) {
-            unitManager.moveUnit(selectedUnit, data.cell);
-            guiCancelHighlight();
+            var savedUnit = selectedUnit;
+            cancelHighlight();
             vis.deselect();
+            var path = terrain.reconstructPath(savedUnit.getCell(), data.cell, lastBFSResult);
+            vis.highlightCells(path);
+            vis.selectCell(data.cell);
+            vis.selectMode('confirm');
+            transition(moveConfirmCallback);
+        }
+
+        /* Selection callback when the user has selected a cell to move a
+         * unit to and we're waiting on confirmation. Transitions to
+         * freeSelectCallback. */
+        var moveConfirmCallback = function(data) {
+            unitManager.moveUnit(selectedUnit, data.cell);
+            cancelHighlight();
+            selectedUnit = null;
+            vis.deselect();
+            vis.selectMode('free');
             transition(freeSelectCallback);
         }
 
@@ -138,14 +157,27 @@ define(['crafty', './Util'], function(Crafty, u) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
             if(unitOnCell) {
-                unitOnCell.damage(selectedUnit.getAttack().damage);
-                guiCancelHighlight();
+                vis.
                 vis.deselect();
-                transition(freeSelectCallback);
+                vis.selectCell(cell);
+                vis.selectMode('confirm');
+                transition(attackConfirmCallback);
             } else {
                 /* XXX: Actually display an error to user */
                 console.log('No unit!');
             }
+        }
+
+        var attackConfirmCallback = function(data) {
+            var unitOnCell = unitManager.getUnitForCell(cell);
+            u.assert(unitOnCell);
+
+            unitOnCell.damage(selectedUnit.getAttack().damage);
+            cancelHighlight();
+            selectedUnit = null;
+            vis.deselect();
+            vis.selectMode('free');
+            transition(freeSelectCallback);
         }
 
         currentSelectCallback = freeSelectCallback;

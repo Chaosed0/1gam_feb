@@ -2,7 +2,8 @@
 define(['seedrandom'], function(seedrandom) {
     const epsilon = 0.001;
 
-    var seed = Math.random();
+    //var seed = Math.random();
+    var seed = 0.015642045298591256;
     Math.seedrandom(seed);
     console.log(seed);
 

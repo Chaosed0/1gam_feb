@@ -213,8 +213,11 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             }
         });
         var visitedCells = new Set();
+        var came_from = {};
 
         prioq.queue({cell: cell, prio: 0});
+        came_from[cell.site.voronoiId] = cell;
+        visitedCells.add(cell);
 
         while(prioq.length > 0) {
             var data = prioq.dequeue();
@@ -222,7 +225,6 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             var prio = data.prio;
             var result = condition(this, cell);
 
-            visitedCells.add(cell);
             if(result == true || result > 0) {
                 //We want this cell
                 action(cell);
@@ -239,17 +241,124 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
 
             for(var i = 0; i < cell.halfedges.length; i++) {
                 var halfedge = cell.halfedges[i];
-                var othersite = this.getOtherSite(cell.halfedges[i].edge, cell.site);
+                var neighborsite = this.getOtherSite(cell.halfedges[i].edge, cell.site);
                 //Other site must be valid
-                if(othersite) {
-                    var othercell = this.getCellForId(othersite.voronoiId);
+                if(neighborsite) {
+                    var neighbor = this.getCellForId(neighborsite.voronoiId);
                     //Cell must meet condition and not be visited already
-                    if(!visitedCells.has(othercell)) {
-                        prioq.queue({cell: othercell, prio: prio + 1});
+                    if(!visitedCells.has(neighbor)) {
+                        prioq.queue({cell: neighbor, prio: prio + 1});
+                        came_from[neighbor.site.voronoiId] = cell;
+                        visitedCells.add(neighbor);
                     }
                 }
             }
         }
+
+        return came_from;
+    }
+
+    VoronoiTerrain.prototype.astar_h = function(cell, dest) {
+        var rel = new vec2((dest.site.x - cell.site.x),
+                           (dest.site.y - cell.site.y));
+        return Math.sqrt(rel.y * rel.y + rel.x * rel.x);
+    }
+
+    /* Technically a specialization of bfs, but a few too many changes to
+     * share code */
+    VoronoiTerrain.prototype.astar = function(start, dest, limit, condition) {
+        var iter = 0;
+        var found = false;
+        var closedset = new Set();
+        var openset = new Set();
+        var came_from = {};
+        var g_scores = {};
+        var prioq = new PriorityQueue({
+            comparator: function(a, b) {
+                /* Low to high priority */
+                return a.prio - b.prio;
+            }
+        });
+
+        var startobj = {cell: start, gscore: 0, prio: this.astar_h(start, dest)};
+        prioq.queue(startobj);
+        openset.add(startobj);
+        g_scores[start.site.voronoiId] = 0;
+        came_from[start.site.voronoiId] = start;
+
+        while(prioq.length > 0 && !found) {
+            var data = prioq.dequeue();
+            var cell = data.cell;
+            var prio = data.prio;
+            var gscore = data.gscore;
+            var result = condition(this, cell);
+            openset.delete(cell);
+            closedset.add(cell);
+
+            if(cell === dest) {
+                //Reconstruct the path
+                found = true;
+                break;
+            } else if(limit > 0 && ++iter > limit) {
+                break;
+            }
+
+            if(!result) {
+                //We don't want this cell
+                continue;
+            }
+
+            for(var i = 0; i < cell.halfedges.length; i++) {
+                var halfedge = cell.halfedges[i];
+                var neighborsite = this.getOtherSite(cell.halfedges[i].edge, cell.site);
+                //Other site must be valid
+                if(neighborsite) {
+                    var neighbor = this.getCellForId(neighborsite.voronoiId);
+                    //Cell must meet condition and not be visited already
+                    if(closedset.has(neighbor)) {
+                        continue;
+                    }
+                    var gscore = gscore + 1;
+                    if(!openset.has(neighbor) || gscore < g_scores[neighbor.site.voronoiId]) {
+                        prioq.queue({cell: neighbor, gscore: gscore, prio: gscore});
+                        g_scores[neighbor.site.voronoiId] = gscore;
+                        came_from[neighbor.site.voronoiId] = cell;
+                        if(!openset.has(neighbor)) {
+                            openset.add(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+        
+        //Reconstruct path
+        if(found) {
+            return this.reconstructPath(start, dest, came_from);
+        } else if(prioq.length > 0) {
+            //Maybe we hit the limit; pick the closest cell we got to
+            dest = prioq.dequeue().cell;
+            return this.reconstructPath(start, dest, came_from);
+        } else {
+            //No path
+            return null;
+        }
+    }
+
+
+    VoronoiTerrain.prototype.reconstructPath = function(start, dest, came_from) {
+        u.assert(dest.site.voronoiId in came_from);
+        u.assert(start.site.voronoiId in came_from);
+        u.assert(came_from[start.site.voronoiId] === start);
+
+        var reversed_path = [];
+        var cell = dest;
+        while(cell != start) {
+            var savedcell = cell;
+            cell = came_from[cell.site.voronoiId];
+            reversed_path.push(savedcell);
+        }
+
+        return reversed_path;
     }
 
     VoronoiTerrain.prototype.annotateElevation = function() {
@@ -413,6 +522,15 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         this.rivers = rivers;
     }
 
+    VoronoiTerrain.prototype.getGridForCell = function(cell) {
+        return this.getGridForPos(cell.site);
+    }
+
+    VoronoiTerrain.prototype.getGridForPos = function(pos) {
+        return new vec2(Math.round(pos.x / this.pointData.size.x),
+                        Math.round(pos.y / this.pointData.size.y));
+    }
+
     VoronoiTerrain.prototype.getCellForPos = function(pos) {
         if(pos.x < 0 || pos.y < 0 || pos.x > this.size.w || pos.y > this.size.h) {
             return null;
@@ -421,8 +539,7 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         //Exploit a property of the voronoi cells we generate; since we generate
         // a grid of points for the sites, try the grid cell the coord would
         // correspond to and then spiral out from there
-        var gridLoc = new vec2(Math.round(pos.x / this.pointData.size.x),
-                               Math.round(pos.y / this.pointData.size.y));
+        var gridLoc = this.getGridForPos(pos);
         var rel = new vec2(0, 0);
         var point = this.pointData.points[gridLoc.y * this.pointData.dimensions.x + gridLoc.x];
         var found = false;

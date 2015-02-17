@@ -60,7 +60,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .fill(1);
         this.healthAmtText = Crafty.e("2D, Canvas, HUD, Text")
             .textFont({family: fontFamily, size: '12px'})
-            .text("100/100");
+            .text("10/10");
 
         this.manaText = Crafty.e("2D, Canvas, HUD, Text")
             .textFont({family: fontFamily, size: '12px'})
@@ -71,7 +71,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .fill(1);
         this.manaAmtText = Crafty.e("2D, Canvas, HUD, Text")
             .textFont({family: fontFamily, size: '12px'})
-            .text("100/100");
+            .text("10/10");
 
         var metersLeft = this.infoBounds.x + (this.infoBounds.w - this.healthText.w
                 - this.healthMeter.w - this.healthAmtText.w - smallPadding)/2;

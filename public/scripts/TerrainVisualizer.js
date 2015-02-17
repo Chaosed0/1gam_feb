@@ -51,9 +51,13 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         if(this._mousedownpos && u.close({x: e.clientX, y: e.clientY}, this._mousedownpos, 8)) {
             /* User might have selected a cell of the map */
             var cell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
-            if(cell && (!this._highlightcells || this._highlightcells.indexOf(cell) >= 0)) {
-                /* Valid cell, trigger */
-                this.trigger("CellSelected", {mouseButton: e.mouseButton, cell: cell});
+            if(cell) {
+                if(this._selectmode === 'free' ||
+                        (this._selectmode === 'highlight' && this._highlightcells.indexOf(cell) >= 0) ||
+                        (this._selectmode === 'confirm' && this._selectedcell === cell)) {
+                    /* Valid cell, trigger */
+                    this.trigger("CellSelected", {mouseButton: e.mouseButton, cell: cell});
+                }
             }
         }
     }
@@ -64,6 +68,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         _mousedownpos: null,
         _prerender: null,
         _highlightcells: null,
+        _selectmode: 'free',
         ready: false,
 
         init: function() {
@@ -104,6 +109,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         },
 
         selectCell: function(cell) {
+            u.assert(cell.site);
             this._selectedcell = cell;
             this.trigger("Invalidate");
         },
@@ -111,6 +117,10 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         deselect: function() {
             this._selectedcell = null;
             this.trigger("Invalidate");
+        },
+
+        selectMode: function(mode) {
+            this._selectmode = mode;
         }
     });
 });
