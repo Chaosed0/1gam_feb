@@ -1,22 +1,43 @@
 
 define(['crafty'], function(Crafty) {
     Crafty.c("Unit", {
+        _maxhealth: 0,
+        _curhealth: 0,
         _movespeed: 4,
         _faction: 1,
+        _attack: null,
         _cell: null,
 
         init: function() {
         },
 
-        unit: function(name, speed, faction) {
+        unit: function(name, faction, data) {
             this._name = name;
-            this._movespeed = speed;
             this._faction = faction;
+            if(data) {
+                this._maxhealth = data.health;
+                this._curhealth = data.health;
+                this._movespeed = data.speed;
+                this._attack = data.attack;
+                this.reel('idle', 2000, data.animation)
+            }
             return this;
+        },
+
+        damage: function(dmg) {
+            this._curhealth = Math.max(0, this._curhealth - dmg);
+        },
+
+        isDead: function() {
+            return this._curhealth < 0;
         },
 
         getName: function() {
             return this._name;
+        },
+
+        getAttack: function() {
+            return this._attack;
         },
 
         getSpeed: function() {

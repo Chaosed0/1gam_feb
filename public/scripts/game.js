@@ -36,8 +36,6 @@ require(['crafty',
         drawEdges: false,
         drawCoasts: true,
     };
-
-    const TEMPunitspeed = 2;
     
     var width = $(document).width();
     var height = $(document).height();
@@ -49,7 +47,7 @@ require(['crafty',
 
     var selectedUnit = null;
     var highlightedCells = null;
-    var unitAnims = null;
+    var unitInfo = null;
     var unitClasses = null;
 
     Crafty.init(width, height, gameElem);
@@ -91,8 +89,7 @@ require(['crafty',
                     /* Note that we're trusting in addUnit to set the unit location */
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(className + ' ' + i, TEMPunitspeed, faction)
-                        .reel('idle', 2000, unitInfo[className].animation)
+                        .unit(className + ' ' + i, faction, unitInfo[className])
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
                     placed = true;
@@ -116,7 +113,18 @@ require(['crafty',
             gui.setButtons([{
                 text: 'Move',
                 callback: guiMoveCallback
+            }, {
+                text: 'Attack',
+                callback: guiAttackCallback
             }]);
+        }
+
+        var unhighlightButKeepSelected = function() {
+            /* We want to keep the previously selected unit selected */
+            var savedUnit = selectedUnit;
+            guiCancelHighlight();
+            selectUnit(selectedUnit);
+            transition(freeSelectCallback);
         }
 
         /* Callback for when "cancel" button is hit in gui. Transitions to
@@ -128,7 +136,7 @@ require(['crafty',
         }
 
         /* Callback for when "move" button is hit in gui. Transitions to 
-         * freeSelectCallback. */
+         * moveSelectCallback */
         var guiMoveCallback = function() {
             gui.hideButtons();
             highlightedCells = [];
@@ -158,17 +166,32 @@ require(['crafty',
 
             gui.setButtons([{
                 text: 'Cancel',
-                callback: function() {
-                    /* We want to keep the previously selected unit selected */
-                    var savedUnit = selectedUnit;
-                    guiCancelHighlight();
-                    selectUnit(selectedUnit);
-                    transition(freeSelectCallback);
-                }
+                callback: unhighlightButKeepSelected
             }]);
 
             terrainVis.highlightCells(highlightedCells);
             transition(moveSelectCallback);
+        }
+
+        /* Callback for when "move" button is hit in gui. Transitions to 
+         * freeSelectCallback, eventually. */
+        var guiAttackCallback = function() {
+            gui.hideButtons();
+            highlightedCells = [];
+            terrain.bfs(selectedUnit.getCell(), selectedUnit.getAttack().range, function(terrain, cell) {
+                /* Allow target to be anything passable */
+                return terrain.isGround(cell.site);
+            }, function(cell) {
+                highlightedCells.push(cell);
+            });
+
+            gui.setButtons([{
+                text: 'Cancel',
+                callback: unhighlightButKeepSelected
+            }]);
+
+            terrainVis.highlightCells(highlightedCells);
+            transition(attackSelectCallback);
         }
 
         /* Select callback when user is selecting any tile. If a unit is selected,
@@ -198,11 +221,28 @@ require(['crafty',
          * receive the callback if it's a highlighted cell. */
         var moveSelectCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            gui.hideButtons();
-            terrainVis.clearHighlight();
+            guiCancelHighlight();
             terrainVis.deselect();
-            selectedUnit = null;
             transition(freeSelectCallback);
+        }
+
+        /* Select callback when user has chosen to attack a unit. Deals
+         * damage depending on the selected unit's attack, then transitions
+         * to freeSelectCallback.
+         * XXX: Only supports single-target attacks for now.
+         */
+        var attackSelectCallback = function(data) {
+            var cell = data.cell;
+            var unitOnCell = unitManager.getUnitForCell(cell);
+            if(unitOnCell) {
+                unitOnCell.damage(selectedUnit.getAttack().damage);
+                guiCancelHighlight();
+                terrainVis.deselect();
+                transition(freeSelectCallback);
+            } else {
+                /* XXX: Actually display an error to user */
+                console.log('No unit!');
+            }
         }
 
         currentSelectCallback = freeSelectCallback;
