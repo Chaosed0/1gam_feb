@@ -5,6 +5,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         var currentSelectCallback;
         var selectedUnit = null;
+        var enemyUnit = null;
         var lastBFSResult = null;
         var currentButtons = null;
 
@@ -51,6 +52,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 highlight: vis.highlight(),
                 buttons: currentButtons,
                 selectedunit: selectedUnit,
+                enemyunit: enemyUnit,
                 selectcb: currentSelectCallback,
             }
             stack.push(state);
@@ -216,7 +218,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             var unitOnCell = unitManager.getUnitForCell(data.cell);
             u.assert(unitOnCell);
 
-            unitOnCell.damage(selectedUnit.getAttack().damage);
+            unitOnCell.damage(selectedUnit.getAttack().magnitude);
             rewindStates();
         }
 

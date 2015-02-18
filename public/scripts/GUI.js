@@ -34,84 +34,72 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .hud(true)
             .color('#EEEEEE');
 
-        this.titleText = Crafty.e("2D, Canvas, HUD, Text")
-            .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
-                y: this.infoBounds.y + this.infoBounds.h * 1/16,
-                z: menuElemZ })
-            .hud(true)
-            .textFont({family: fontFamily, size: '30px'})
-            .textAlign('center')
-            .text('a');
-
-        this.subtitleText = Crafty.e("2D, Canvas, HUD, Text")
-            .attr({x: this.infoBounds.x + this.infoBounds.w / 2,
-                y: this.titleText.y + this.titleText.h + smallPadding,
-                z: menuElemZ })
-            .hud(true)
-            .textFont({family: fontFamily, size: '15px'})
-            .textAlign('center');
-
-        this.healthText = Crafty.e("2D, Canvas, HUD, Text")
-            .textFont({family: fontFamily, size: '12px'})
-            .text("HP");
-        this.healthMeter = Crafty.e("2D, Canvas, HUD, Meter")
-            .attr({w: 200, h: 5})
-            .meter('#FF0000')
-            .fill(1);
-        this.healthAmtText = Crafty.e("2D, Canvas, HUD, Text")
-            .textFont({family: fontFamily, size: '12px'})
-            .text("10/10");
-
-        this.manaText = Crafty.e("2D, Canvas, HUD, Text")
-            .textFont({family: fontFamily, size: '12px'})
-            .text('MP');
-        this.manaMeter = Crafty.e("2D, Canvas, HUD, Meter")
-            .attr({w: 200, h: 5})
-            .meter('#0000FF')
-            .fill(1);
-        this.manaAmtText = Crafty.e("2D, Canvas, HUD, Text")
-            .textFont({family: fontFamily, size: '12px'})
-            .text("10/10");
-
-        var metersLeft = this.infoBounds.x + (this.infoBounds.w - this.healthText.w
-                - this.healthMeter.w - this.healthAmtText.w - smallPadding)/2;
-        this.healthText.x = metersLeft;
-        this.healthText.y = this.subtitleText.y + this.subtitleText.h + padding;
-        this.healthText.z = menuElemZ;
-        this.healthText.visible = false;
-        this.healthText.hud(true);
-        this.healthMeter.x = this.healthText.x + this.healthText.w + smallPadding;
-        this.healthMeter.y = this.healthText.y + this.healthText.h / 2 - this.healthMeter.h / 2;
-        this.healthMeter.z = menuElemZ;
-        this.healthMeter.visible = false;
-        this.healthMeter.hud(true);
-        this.healthAmtText.x = this.healthMeter.x + this.healthMeter.w + smallPadding;
-        this.healthAmtText.y = this.healthText.y;
-        this.healthAmtText.z = menuElemZ;
-        this.healthAmtText.visible = false;
-        this.healthAmtText.hud(true);
-
-        this.manaText.x = metersLeft;
-        this.manaText.y = this.healthText.y + this.healthText.h + smallPadding;
-        this.manaText.z = menuElemZ;
-        this.manaText.visible = false;
-        this.manaText.hud(true);
-        this.manaMeter.x = this.healthMeter.x;
-        this.manaMeter.y = this.manaText.y + this.manaText.h / 2 - this.manaMeter.h / 2;
-        this.manaMeter.z = menuElemZ;
-        this.manaMeter.visible = false;
-        this.manaMeter.hud(true);
-        this.manaAmtText.x = this.healthAmtText.x;
-        this.manaAmtText.y = this.manaText.y;
-        this.manaAmtText.visible = false;
-        this.manaAmtText.z = menuElemZ;
-        this.manaAmtText.hud(true);
+        var startpos = {x: this.infoBounds.x + padding, y: this.infoBounds.y + padding};
+        var curpos = {x: startpos.x, y: startpos.y};
 
         this.classImage = Crafty.e("2D, Canvas, HUD, ClassSprite")
-            .attr({x: this.titleText.x - 100,
-                   y: this.titleText.y, w: this.titleText.h - 2, h: this.titleText.h, z: menuElemZ})
+            .attr({x: curpos.x, y: curpos.y, w: 36, h: 39, z: menuElemZ})
             .hud(true);
         this.classImage.visible = false;
+        curpos.x += this.classImage.w + smallPadding;
+
+        this.titleText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: curpos.x , y: curpos.y, z: menuElemZ })
+            .textFont({family: fontFamily, size: '30px'})
+            .text('LOLWTFBBQ!?');
+        this.titleText.y += this.classImage.h/2 - this.titleText.h/2;
+        this.titleText.hud(true);
+        curpos.x = startpos.x;
+        curpos.y += this.classImage.h + smallPadding;
+
+        this.subtitleText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: curpos.x, y: curpos.y, z: menuElemZ })
+            .textFont({family: fontFamily, size: '15px'})
+            .text('LOLWTFBBQ!?')
+            .hud(true);
+        curpos.x = startpos.x;
+        curpos.y += this.subtitleText.h + padding;
+
+        this.healthText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: curpos.x, y: curpos.y, z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text("HP")
+            .hud(true);
+        curpos.x += this.healthText.w + smallPadding;
+        this.healthMeter = Crafty.e("2D, Canvas, HUD, Meter")
+            .attr({x: curpos.x, y: curpos.y + this.healthText.h/2 - 2.5, z: menuElemZ, w: 200, h: 5})
+            .meter('#FF0000')
+            .fill(1)
+            .hud(true);
+        curpos.x += this.healthMeter.w + smallPadding;
+        this.healthAmtText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: curpos.x, y: curpos.y, z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text("10/10")
+            .hud(true);
+        curpos.x = startpos.x;
+        curpos.y += this.healthText.h + smallPadding;
+
+        this.manaText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: curpos.x, y: curpos.y, z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text('MP')
+            .hud(true);
+        curpos.x += this.manaText.w + smallPadding;
+        this.manaMeter = Crafty.e("2D, Canvas, HUD, Meter")
+            .attr({x: curpos.x, y: curpos.y + this.manaText.h/2 - 2.5, z: menuElemZ, w: 200, h: 5})
+            .attr({w: 200, h: 5})
+            .meter('#0000FF')
+            .fill(1)
+            .hud(true);
+        curpos.x += this.manaMeter.w + smallPadding;
+        this.manaAmtText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({x: curpos.x, y: curpos.y, z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text("10/10")
+            .hud(true);
+        curpos.x = startpos.x;
+        curpos.y += padding;
 
         this.menuBounds = {
             x: Crafty.viewport.width - this.minimapSize,

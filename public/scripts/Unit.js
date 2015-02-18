@@ -1,5 +1,5 @@
 
-define(['crafty'], function(Crafty) {
+define(['crafty', './Util'], function(Crafty, u) {
     Crafty.c("Unit", {
         _maxhealth: 1,
         _curhealth: 0,
@@ -28,6 +28,7 @@ define(['crafty'], function(Crafty) {
         },
 
         damage: function(dmg) {
+            u.assert(typeof dmg === 'number');
             this._curhealth = Math.max(0, this._curhealth - dmg);
         },
 

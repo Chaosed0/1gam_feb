@@ -61,6 +61,12 @@ define(['crafty', ], function(Crafty) {
             this.unbind("InvalidateViewport", viewportchanged);
         },
 
+        updateWidthHeight: function() {
+            this._clientbounds.w = this.w;
+            this._clientbounds.h = this.h;
+            viewportchanged.call(this);
+        },
+
         hud: function(bounds) {
             if(typeof bounds === 'boolean') {
                 this._savebounds = true;
