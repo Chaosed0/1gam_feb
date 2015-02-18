@@ -111,17 +111,17 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
 
     UnitInfoContainer.prototype.displayUnitInfo = function(unit) {
         this.titleText.text(unit.getName());
-        this.titleText.updateHudTextWidth();
+        this.titleText.updateHudTextSize();
         this.subtitleText.text(unit.getClassName() + ' of ' + unit.getFaction());
-        this.subtitleText.updateHudTextWidth();
+        this.subtitleText.updateHudTextSize();
         this.updateClassImage(unit.getClassName());
 
         this.healthMeter.fill(unit.getHealth() / unit.getMaxHealth());
         this.manaMeter.fill(unit.getMana() / unit.getMaxMana());
         this.healthAmtText.text(unit.getHealth() + "/" + unit.getMaxHealth());
-        this.healthAmtText.updateHudTextWidth();
+        this.healthAmtText.updateHudTextSize();
         this.manaAmtText.text(unit.getMana() + "/" + unit.getMaxMana());
-        this.manaAmtText.updateHudTextWidth();
+        this.manaAmtText.updateHudTextSize();
 
         this.titleText.visible = true;
         this.subtitleText.visible = true;
@@ -187,6 +187,12 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             left: new UnitInfoContainer(this.infoBounds, 'left'),
             right: new UnitInfoContainer(this.infoBounds, 'right')
         };
+
+        this.centerText = Crafty.e("2D, Canvas, HUD, Text")
+            .textFont({family: fontFamily, size: '20px'})
+            .hud(true);
+        this.centerText.z = menuElemZ;
+        this.centerText.visible = false;
 
         this.menuBounds = {
             x: Crafty.viewport.width - this.minimapSize,
@@ -281,6 +287,21 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     GUI.prototype.hideButtons = function() {
         for(var i = 0; i < 4; i++) {
             this.buttons[i].setVisible(false);
+        }
+    }
+
+    GUI.prototype.setCenterText = function(text) {
+        if(text !== null) {
+            /* A ton of cheating going on here */
+            this.centerText.text(text);
+            this.centerText.updateHudTextSize();
+            this.centerText._clientbounds.x = this.infoBounds.x + this.infoBounds.w/2 -
+                this.centerText._clientbounds.w/2;
+            this.centerText._clientbounds.y = this.infoBounds.y + this.infoBounds.h/2;
+            this.centerText.trigger("InvalidateViewport");
+            this.centerText.visible = true;
+        } else {
+            this.centerText.visible = false;
         }
     }
 

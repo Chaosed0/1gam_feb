@@ -140,7 +140,7 @@
             "attack": {
                 "range": 3,
                 "magnitude": 10,
-                "type": "heal"
+                "type": "holy"
             },
             "animation": [[5,1],[5,2]],
             "classImageMap": [0,0]

@@ -8,6 +8,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         var enemyUnit = null;
         var lastBFSResult = null;
         var currentButtons = null;
+        var centerText = null;
 
         var cancelButton = {
             text: 'Cancel',
@@ -17,6 +18,11 @@ define(['crafty', './Util'], function(Crafty, u) {
         var setButtons = function(buttons) {
             currentButtons = buttons;
             gui.setButtons(currentButtons);
+        }
+
+        var setCenterText = function(text) {
+            centerText = text;
+            gui.setCenterText(centerText);
         }
 
         var hideButtons = function(buttons) {
@@ -34,7 +40,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             vis.selectMode(state.selectmode);
             vis.selection(state.selection);
             vis.highlight(state.highlight);
-            gui.setButtons(state.buttons);
+            setButtons(state.buttons);
+            setCenterText(state.centertext);
             newSelectCallback(state.selectcb);
             selectedUnit = state.selectedunit;
             enemyUnit = state.enemyunit;
@@ -58,6 +65,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 selection: vis.selection(),
                 highlight: vis.highlight(),
                 buttons: currentButtons,
+                centertext: centerText,
                 selectedunit: selectedUnit,
                 enemyunit: enemyUnit,
                 selectcb: currentSelectCallback,
@@ -230,11 +238,13 @@ define(['crafty', './Util'], function(Crafty, u) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
             if(unitOnCell) {
+                var attack = selectedUnit.getAttack();
                 enemyUnit = unitOnCell;
                 vis.selection(cell);
                 vis.selectMode('confirm');
                 vis.highlight(null);
                 setButtons([ cancelButton ]);
+                setCenterText(attack.magnitude + " " + attack.type + " damage");
                 newSelectCallback(attackConfirmCallback);
                 pushState();
             } else {

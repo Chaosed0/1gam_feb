@@ -10,8 +10,6 @@ define(['crafty', './Util'], function(Crafty, u) {
             this.y = -Crafty.viewport.y + this._clientbounds.y / Crafty.viewport._scale;
             this.w = this._clientbounds.w / Crafty.viewport._scale;
             this.h = this._clientbounds.h / Crafty.viewport._scale;
-            if(this.textAlign) {
-            }
         }
     }
 
@@ -66,11 +64,14 @@ define(['crafty', './Util'], function(Crafty, u) {
             this.unbind("InvalidateViewport", viewportchanged);
         },
 
-        updateHudTextWidth: function() {
+        updateHudTextSize: function() {
             u.assert(this._text);
             var ctx = tmpcanvas.getContext('2d');
             ctx.font = this._fontString();
             this._clientbounds.w = ctx.measureText(this._text).width;
+
+            var size = (this._textFont.size || this.defaultSize);
+            this._clientbounds.h = 1.1 * this._getFontHeight(size);
             viewportchanged.call(this);
         },
 
