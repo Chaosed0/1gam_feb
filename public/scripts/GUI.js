@@ -36,7 +36,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.subtitleText = Crafty.e("2D, Canvas, HUD, Text")
             .attr({z: menuElemZ })
             .textFont({family: fontFamily, size: '15px'})
-            .text('LOLWTFBBQ!?')
+            .text('LOTSOFTEXTWHEEEEEEEEEEEEEE')
             .textAlign(align);
         this.positionElem(this.subtitleText, padding, true);
 
@@ -111,7 +111,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
 
     UnitInfoContainer.prototype.displayUnitInfo = function(unit) {
         this.titleText.text(unit.getName());
-        this.subtitleText.text('of ' + unit.getFaction());
+        this.subtitleText.text(unit.getClassName() + ' of ' + unit.getFaction());
         this.updateClassImage(unit.getClassName());
 
         this.healthMeter.fill(unit.getHealth() / unit.getMaxHealth());
