@@ -152,7 +152,7 @@ require(['crafty',
             unitClasses = Object.keys(unitInfo);
             names = data.names;
             /* Generate terrain */
-            terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents, 'hex');
+            terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents);
             /* Render the terrain */
             terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
             /* Switch over to the main scene */

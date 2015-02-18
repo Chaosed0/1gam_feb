@@ -71,7 +71,6 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
     VoronoiTerrain.prototype.generateDiagram = function(width, height) {
         var v = new Voronoi();
         this.diagram = v.compute(this.pointData.points, {xl: 0, xr: width, yt: 0, yb: height});
-        console.log(this.diagram);
     }
 
     //Annotates land and sea coast tiles with isCoast, and the edges
@@ -165,7 +164,6 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                 point.type = type;
             }
         }
-        console.log(this.bodies);
     }
     
     VoronoiTerrain.prototype.isGround = function(point) {

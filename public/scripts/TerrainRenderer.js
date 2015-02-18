@@ -54,7 +54,6 @@ define(['./Util'], function(u) {
     
     var renderTerrain = function(terrain, bounds, terrainPercents, options) {
         var elevationRange = terrain.getElevationRange();
-        console.log(elevationRange);
 
         var pointData = terrain.getPointData();
         var diagram = terrain.getDiagram();
