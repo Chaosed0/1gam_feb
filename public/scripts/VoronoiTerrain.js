@@ -46,9 +46,20 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         for (var y = 0; y < gridDimensions.y; y++) {
             for (var x = 0; x < gridDimensions.x; x++) {
                 var point = new vec2((x + 0.5) * gridSize.x, (y + 0.5) * gridSize.y);
-                var perturb = new vec2(u.getRandom(-gridSize.x / perturbConst, gridSize.x / perturbConst),
-                                       u.getRandom(-gridSize.y / perturbConst, gridSize.y / perturbConst));
-                point.add(perturb);
+                var offset;
+                if(this.mode === 'perturb') {
+                    offset = new vec2(u.getRandom(-gridSize.x / perturbConst, gridSize.x / perturbConst),
+                                      u.getRandom(-gridSize.y / perturbConst, gridSize.y / perturbConst));
+                } else if(this.mode === 'hex') {
+                    if(y%2 == 1) {
+                        offset = new vec2(gridSize.x/2, 0);
+                    } else {
+                        offset = new vec2(0, 0);
+                    }
+                } else {
+                    u.assert(false, 'Unknown terrain generation mode');
+                }
+                point.add(offset);
                 points[y * gridDimensions.x + x] = point;
             }
         }
@@ -609,7 +620,13 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         }
     }
 
-    VoronoiTerrain.prototype.generateTerrain = function(width, height, density, terrainPercentages) {
+    VoronoiTerrain.prototype.generateTerrain = function(width, height, density, terrainPercentages, mode) {
+        if(mode === undefined) {
+            this.mode = 'perturb'
+        } else {
+            this.mode = mode;
+        }
+
         this.size.w = width;
         this.size.h = height;
         this.generatePoints(width, height, density);
