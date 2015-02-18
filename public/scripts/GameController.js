@@ -1,6 +1,6 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
-    var GameController = function(unitManager, terrain, gui, vis) {
+    var GameController = function(unitManager, terrain, gui, vis, faction) {
         var stack = [];
 
         var currentSelectCallback;
@@ -87,24 +87,24 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         cancelButton.callback = popState;
 
-        /* ---- */
-
-        /* Callback for when "move" button is hit in gui. Transitions to 
-         * moveSelectCallback */
-        var guiMoveCallback = function() {
-            hideButtons();
-            highlightedCells = [];
-            lastBFSResult = terrain.bfs(selectedUnit.getCell(), selectedUnit.getSpeed(), function(terrain, cell) {
+        var getMoveAndAttack = function(unit) {
+            highlightedCells = {main: [], extra: []};
+            var totalLimit = unit.getSpeed() + unit.getAttack().range;
+            lastBFSResult = terrain.bfs(unit.getCell(), totalLimit, function(terrain, cell, num) {
                 var unitOnPoint = unitManager.getUnitForCell(cell);
                 var passable = terrain.isGround(cell.site);
                 var skip = false;
                 if (passable && unitOnPoint) {
-                    if(selectedUnit.getFaction() !== unitOnPoint.getFaction()) {
-                        /* Other unit is not of our faction, we cannot pass this tile */
-                        passable = false;
-                    } else {
-                        /* Other unit is of our faction; we can't move here but we can
-                         * pass through it */
+                    /* We want to show that we can attack units of other factions, but
+                     * not attack units of our faction; additionally, we want to move
+                     * through units of our faction, but not through units of other factions */
+                    if(num <= unit.getSpeed()) {
+                        if((selectedUnit.getFaction() !== unitOnPoint.getFaction())) {
+                            passable = false;
+                        } else {
+                            skip = true;
+                        }
+                    } else if((selectedUnit.getFaction() === unitOnPoint.getFaction())) {
                         skip = true;
                     }
                 }
@@ -114,13 +114,27 @@ define(['crafty', './Util'], function(Crafty, u) {
                 } else {
                     return passable;
                 }
-            }, function(cell) {
-                highlightedCells.push(cell);
+            }, function(cell, num) {
+                if(num <= unit.getSpeed()) {
+                    highlightedCells.main.push(cell);
+                } else {
+                    highlightedCells.extra.push(cell);
+                }
             });
+            return highlightedCells;
+        }
 
-            setButtons([ cancelButton ]);
+        /* ---- */
+
+        /* Callback for when "move" button is hit in gui. Transitions to 
+         * moveSelectCallback */
+        var guiMoveCallback = function() {
+            hideButtons();
+            highlightedCells = getMoveAndAttack(selectedUnit);
             vis.highlight(highlightedCells);
             vis.selectMode('highlight');
+
+            setButtons([ cancelButton ]);
             newSelectCallback(moveSelectCallback);
             pushState();
         }
@@ -157,15 +171,23 @@ define(['crafty', './Util'], function(Crafty, u) {
                 if(unitOnCell !== null) {
                     selectedUnit = unitOnCell;
                     gui.displayUnitInfo(selectedUnit, 'left');
-                    gui.setButtons([{
-                        text: 'Move',
-                        callback: guiMoveCallback
-                    }, {
-                        text: 'Attack',
-                        callback: guiAttackCallback
-                    }]);
+                    if(selectedUnit.getFaction() === faction) {
+                        gui.setButtons([{
+                            text: 'Move',
+                            callback: guiMoveCallback
+                        }, {
+                            text: 'Attack',
+                            callback: guiAttackCallback
+                        }]);
+                        vis.highlight(null);
+                    } else {
+                        highlightedCells = getMoveAndAttack(selectedUnit);
+                        vis.highlight(highlightedCells);
+                        gui.setButtons(null);
+                    }
                 } else {
                     selectedUnit = null;
+                    vis.highlight(null);
                     gui.hideInfo();
                     gui.setButtons(null);
                 }
@@ -228,10 +250,18 @@ define(['crafty', './Util'], function(Crafty, u) {
             rewindStates();
         }
 
+        this.setActive = function(active) {
+            if(active) {
+                vis.bind("CellSelected", currentSelectCallback);
+            } else {
+                vis.unbind("CellSelected", currentSelectCallback);
+            }
+        }
+
         currentSelectCallback = freeSelectCallback;
-        vis.bind("CellSelected", currentSelectCallback);
         /* Push initial state */
         pushState();
+        vis.unbind("CellSelected", currentSelectCallback);
     };
 
     return GameController;

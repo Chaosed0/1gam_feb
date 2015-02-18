@@ -1,25 +1,34 @@
 
 define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrain) {
+    
+    var drawCells = function(ctx, cells, color) {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#000000';
+        for(var i = 0; i < cells.length; i++) {
+            var halfedges = cells[i].halfedges;
+            ctx.beginPath();
+            ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
+            for(var j = 1; j < halfedges.length; j++) {
+                ctx.lineTo(halfedges[j].getStartpoint().x, halfedges[j].getStartpoint().y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
     var draw = function(e) {
         if(e.type == 'canvas') {
             e.ctx.drawImage(this._prerender, this.x, this.y);
 
             if(this._highlightcells) {
-                e.ctx.save();
-                e.ctx.fillStyle = 'rgba(200, 200, 200, .25)';
-                e.ctx.strokeStyle = '#000000';
-                for(var i = 0; i < this._highlightcells.length; i++) {
-                    var halfedges = this._highlightcells[i].halfedges;
-                    e.ctx.beginPath();
-                    e.ctx.moveTo(halfedges[0].getStartpoint().x, halfedges[0].getStartpoint().y);
-                    for(var j = 1; j < halfedges.length; j++) {
-                        e.ctx.lineTo(halfedges[j].getStartpoint().x, halfedges[j].getStartpoint().y);
-                    }
-                    e.ctx.closePath();
-                    e.ctx.stroke();
-                    e.ctx.fill();
-                }
-                e.ctx.restore();
+                drawCells(e.ctx, this._highlightcells, 'rgba(200, 200, 200, .25)');
+            }
+
+            if(this._extrahighlightcells) {
+                drawCells(e.ctx, this._extrahighlightcells, 'rgba(200, 0, 0, .25)');
             }
 
             if(this._selectedcell) {
@@ -68,6 +77,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         _mousedownpos: null,
         _prerender: null,
         _highlightcells: null,
+        _extrahighlightcells: null,
         _selectmode: 'free',
         ready: false,
 
@@ -98,8 +108,12 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
             } else {
                 if(cells !== null && cells.constructor === Array) {
                     this._highlightcells = cells;
+                } else if(cells !== null && cells.constructor === Object) {
+                    this._highlightcells = cells.main;
+                    this._extrahighlightcells = cells.extra;
                 } else {
                     this._highlightcells = null;
+                    this._extrahighlightcells = null;
                 }
                 this.trigger("Invalidate");
             }

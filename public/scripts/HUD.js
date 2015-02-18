@@ -1,5 +1,8 @@
 
-define(['crafty', ], function(Crafty) {
+define(['crafty', './Util'], function(Crafty, u) {
+
+    /* Huge hack */
+    var tmpcanvas = document.createElement('canvas');
 
     var viewportchanged = function() {
         if(this._clientbounds) {
@@ -7,6 +10,8 @@ define(['crafty', ], function(Crafty) {
             this.y = -Crafty.viewport.y + this._clientbounds.y / Crafty.viewport._scale;
             this.w = this._clientbounds.w / Crafty.viewport._scale;
             this.h = this._clientbounds.h / Crafty.viewport._scale;
+            if(this.textAlign) {
+            }
         }
     }
 
@@ -61,9 +66,11 @@ define(['crafty', ], function(Crafty) {
             this.unbind("InvalidateViewport", viewportchanged);
         },
 
-        updateWidthHeight: function() {
-            this._clientbounds.w = this.w;
-            this._clientbounds.h = this.h;
+        updateHudTextWidth: function() {
+            u.assert(this._text);
+            var ctx = tmpcanvas.getContext('2d');
+            ctx.font = this._fontString();
+            this._clientbounds.w = ctx.measureText(this._text).width;
             viewportchanged.call(this);
         },
 

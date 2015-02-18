@@ -232,11 +232,11 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             var data = prioq.dequeue();
             var cell = data.cell;
             var prio = data.prio;
-            var result = condition(this, cell);
+            var result = condition(this, cell, prio);
 
             if(result == true || result > 0) {
                 //We want this cell
-                action(cell);
+                action(cell, prio);
             } else if(result == false || result == 0) {
                 //We don't want this cell
                 continue;
@@ -300,7 +300,7 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             var cell = data.cell;
             var prio = data.prio;
             var gscore = data.gscore;
-            var result = condition(this, cell);
+            var result = condition(this, cell, prio);
             openset.delete(cell);
             closedset.add(cell);
 
@@ -362,10 +362,11 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         var reversed_path = [];
         var cell = dest;
         while(cell != start) {
-            var savedcell = cell;
+            reversed_path.push(cell);
             cell = came_from[cell.site.voronoiId];
-            reversed_path.push(savedcell);
         }
+        //Also add the start cell
+        reversed_path.push(start);
 
         return reversed_path;
     }

@@ -8,6 +8,7 @@ require(['crafty',
         './TerrainRenderer',
         './GameController',
         './Util',
+    './Expires',
     './Meter',
     './TerrainVisualizer',
     './Minimap',
@@ -51,6 +52,9 @@ require(['crafty',
     var unitInfo = null;
     var unitClasses = null;
 
+    var activeFactions = [];
+    var controllers = null;
+
     Crafty.init(width, height, gameElem);
     Crafty.pixelart(true);
 
@@ -68,6 +72,7 @@ require(['crafty',
         var centerCell;
 
         var factionName = u.randomElem(names.groups);
+        activeFactions.push(factionName);
 
         /* Make sure we're not sticking the unit on a mountain */
         do {
@@ -133,8 +138,23 @@ require(['crafty',
             generateSomeUnits(5, i);
         }
 
-        /* Create the game controller */
-        var gameController = new GameController(unitManager, terrain, gui, terrainVis);
+        /* Create game controllers */
+        controllers = new Array(activeFactions.length);
+        for(var i = 0; i < activeFactions.length; i++) {
+            controllers[i] = new GameController(unitManager, terrain, gui, terrainVis, activeFactions[i])
+        }
+        
+        var turnText = Crafty.e("2D, HUD, Canvas, Text, Expires")
+            .attr({x: Crafty.viewport.width/2, y: Crafty.viewport.height/4, z: 1000})
+            .textFont({family: 'Georgia', size: '50px'})
+            .text(activeFactions[0])
+            .expires(5000);
+        turnText.x -= turnText.w/2;
+        turnText.y = Crafty.viewport.height/16;
+        turnText.hud(true);
+
+        /* Activate the first one */
+        controllers[0].setActive(true);
     });
 
     Crafty.scene("Load", function() {

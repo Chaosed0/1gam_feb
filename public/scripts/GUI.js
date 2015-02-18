@@ -111,13 +111,17 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
 
     UnitInfoContainer.prototype.displayUnitInfo = function(unit) {
         this.titleText.text(unit.getName());
+        this.titleText.updateHudTextWidth();
         this.subtitleText.text(unit.getClassName() + ' of ' + unit.getFaction());
+        this.subtitleText.updateHudTextWidth();
         this.updateClassImage(unit.getClassName());
 
         this.healthMeter.fill(unit.getHealth() / unit.getMaxHealth());
         this.manaMeter.fill(unit.getMana() / unit.getMaxMana());
         this.healthAmtText.text(unit.getHealth() + "/" + unit.getMaxHealth());
+        this.healthAmtText.updateHudTextWidth();
         this.manaAmtText.text(unit.getMana() + "/" + unit.getMaxMana());
+        this.manaAmtText.updateHudTextWidth();
 
         this.titleText.visible = true;
         this.subtitleText.visible = true;

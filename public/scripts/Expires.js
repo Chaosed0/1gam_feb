@@ -8,6 +8,8 @@ define(['crafty'], function(Crafty) {
         _enterframe: function(data) {
             this._timer += data.dt;
             if(this._timer > this._time) {
+                this.visible = false;
+                this.trigger("Invalidate");
                 this.destroy();
             }
         },
