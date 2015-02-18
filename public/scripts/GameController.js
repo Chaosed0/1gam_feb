@@ -37,11 +37,18 @@ define(['crafty', './Util'], function(Crafty, u) {
             gui.setButtons(state.buttons);
             newSelectCallback(state.selectcb);
             selectedUnit = state.selectedunit;
+            enemyUnit = state.enemyunit;
 
             if(selectedUnit) {
-                gui.displayUnitInfo(selectedUnit);
+                gui.displayUnitInfo(selectedUnit, 'left');
             } else {
-                gui.hideInfo();
+                gui.hideInfo('left');
+            }
+
+            if(enemyUnit) {
+                gui.displayUnitInfo(enemyUnit, 'right');
+            } else {
+                gui.hideInfo('right');
             }
         }
 
@@ -149,7 +156,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
                 if(unitOnCell !== null) {
                     selectedUnit = unitOnCell;
-                    gui.displayUnitInfo(selectedUnit);
+                    gui.displayUnitInfo(selectedUnit, 'left');
                     gui.setButtons([{
                         text: 'Move',
                         callback: guiMoveCallback
@@ -201,7 +208,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
             if(unitOnCell) {
-                selectedUnit = unitOnCell;
+                enemyUnit = unitOnCell;
                 vis.selection(cell);
                 vis.selectMode('confirm');
                 vis.highlight(null);
@@ -215,10 +222,9 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         var attackConfirmCallback = function(data) {
-            var unitOnCell = unitManager.getUnitForCell(data.cell);
-            u.assert(unitOnCell);
+            u.assert(enemyUnit);
 
-            unitOnCell.damage(selectedUnit.getAttack().magnitude);
+            enemyUnit.damage(selectedUnit.getAttack().magnitude);
             rewindStates();
         }
 

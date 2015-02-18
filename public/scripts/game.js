@@ -123,7 +123,7 @@ require(['crafty',
 
         /* Create the actual gui */
         var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
-        gui.setClassMapCallback(function(className) {
+        GUI.setClassMapCallback(function(className) {
             u.assert(unitClasses.indexOf(className) >= 0);
             return unitInfo[className].classImageMap;
         });
