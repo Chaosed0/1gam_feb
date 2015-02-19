@@ -231,7 +231,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.announceText.visible = false;
 
         this.overlayColor = Crafty.e("2D, Canvas, Color, HUD")
-            .attr({x: 0, y: 0, w: 10000, h: 10000, z: 2000})
+            .attr({x: 0, y: 0, w: Crafty.viewport.w, h: Crafty.viewport.h, z: 2000})
             .color('#000000')
             .hud(true);
         this.overlayColor.visible = false;
