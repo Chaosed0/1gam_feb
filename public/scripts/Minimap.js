@@ -5,8 +5,7 @@ define(['crafty', './Util',], function(Crafty, u) {
         if(e.type == 'canvas') {
             /* Draw a black backing, then the minimap */
             e.ctx.fillStyle = '#000000';
-            e.ctx.fillRect(this._clientbounds.x, this._clientbounds.y,
-                    this._clientbounds.w, this._clientbounds.h);
+            e.ctx.fillRect(e.pos._x, e.pos._y, e.pos._w, e.pos._h);
             e.ctx.drawImage(this._prerender, this._interiorbounds.x, this._interiorbounds.y,
                     this._interiorbounds.w, this._interiorbounds.h);
 
@@ -77,7 +76,6 @@ define(['crafty', './Util',], function(Crafty, u) {
         _prerender: null,
         _lastmouse: {x: 0, y: 0},
         _mapbounds: {x: 0, y: 0, w: 100, h: 100},
-        _clientbounds: {x: 0, y: 0, w: 0, h: 0},
         _interiorbounds: {x: 0, y: 0, w: 0, h: 0},
         _dragging: false,
         ready: false,
@@ -105,24 +103,21 @@ define(['crafty', './Util',], function(Crafty, u) {
         minimap: function(prerender, mapbounds) {
             this._prerender = prerender;
             this._mapbounds = mapbounds;
-            this._clientbounds = {
-                x: 0,
-                y: Crafty.viewport.height - this.h,
-                w: this.w, h: this.h
-            };
 
-            /* We want the actual minimap to be the same scale as the real map, but we want
-             * it to fit inside the bounding box specified by _clientbounds. Calculate these
-             * interior bounds. */
-            if(mapbounds.w > mapbounds.h) {
-                this._interiorbounds.h = this.h * mapbounds.h / mapbounds.w;
-                this._interiorbounds.w = this.w;
-            } else {
-                this._interiorbounds.w = this.w * mapbounds.w / mapbounds.h;
-                this._interiorbounds.h = this.h;
-            }
-            this._interiorbounds.x = this._clientbounds.x + this._clientbounds.w/2.0 - this._interiorbounds.w/2.0;
-            this._interiorbounds.y = this._clientbounds.y + this._clientbounds.h/2.0 - this._interiorbounds.h/2.0;
+            this.bind("ClientBoundsChanged", function() {
+                /* We want the actual minimap to be the same scale as the real map, but we want
+                 * it to fit inside the bounding box specified by _clientbounds. Calculate these
+                 * interior bounds. */
+                if(this._mapbounds.w > this._mapbounds.h) {
+                    this._interiorbounds.h = this.h * this._mapbounds.h / this._mapbounds.w;
+                    this._interiorbounds.w = this.w;
+                } else {
+                    this._interiorbounds.w = this.w * this._mapbounds.w / this._mapbounds.h;
+                    this._interiorbounds.h = this.h;
+                }
+                this._interiorbounds.x = this._clientbounds.x + this._clientbounds.w/2.0 - this._interiorbounds.w/2.0;
+                this._interiorbounds.y = this._clientbounds.y + this._clientbounds.h/2.0 - this._interiorbounds.h/2.0;
+            });
 
             return this;
         }

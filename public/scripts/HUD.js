@@ -52,16 +52,17 @@ define(['crafty', './Util'], function(Crafty, u) {
         _savebounds: false,
 
         init: function() {
-            viewportchanged.call(this);
             this.bind("PreDraw", predraw);
             this.bind("PostDraw", postdraw);
             this.bind("InvalidateViewport", viewportchanged);
+            this.bind("ClientBoundsChanged", viewportchanged);
         },
 
         remove: function() {
             this.unbind("PreDraw", predraw);
             this.unbind("PostDraw", postdraw);
             this.unbind("InvalidateViewport", viewportchanged);
+            this.unbind("ClientBoundsChanged", viewportchanged);
         },
 
         updateHudTextSize: function() {
@@ -76,17 +77,59 @@ define(['crafty', './Util'], function(Crafty, u) {
         },
 
         hud: function(bounds) {
+            var self = this;
+            this._clientbounds = { };
+            Object.defineProperty(this._clientbounds, 'x', {
+                set: function(v) {
+                    this._x = v;
+                    self.trigger("ClientBoundsChanged");
+                }, get: function() {
+                    return this._x;
+                }, configurable: true,
+                enumerable: true
+            });
+            Object.defineProperty(this._clientbounds, 'y', {
+                set: function(v) {
+                    this._y = v;
+                    self.trigger("ClientBoundsChanged");
+                }, get: function() {
+                    return this._y;
+                }, configurable: true,
+                enumerable: true
+            });
+            Object.defineProperty(this._clientbounds, 'w', {
+                set: function(v) {
+                    this._w = v;
+                    self.trigger("ClientBoundsChanged");
+                }, get: function() {
+                    return this._w;
+                }, configurable: true,
+                enumerable: true
+            });
+            Object.defineProperty(this._clientbounds, 'h', {
+                set: function(v) {
+                    this._h = v;
+                    self.trigger("ClientBoundsChanged");
+                }, get: function() {
+                    return this._h;
+                }, configurable: true,
+                enumerable: true
+            });
+
             if(typeof bounds === 'boolean') {
                 this._savebounds = true;
-                this._clientbounds = {
-                    x: this.x,
-                    y: this.y,
-                    w: this.w,
-                    h: this.h
-                };
+                this._clientbounds._x = this.x;
+                this._clientbounds._y = this.y;
+                this._clientbounds._w = this.w;
+                this._clientbounds._h = this.h;
+                this.trigger("ClientBoundsChanged");
             } else if(bounds) {
                 this._savebounds = true;
-                this._clientbounds = bounds;
+                this._clientbounds._x = bounds.x;
+                this._clientbounds._y = bounds.y;
+                this._clientbounds._w = bounds.w;
+                this._clientbounds._h = bounds.h;
+                this.trigger("ClientBoundsChanged");
             }
             return this;
         },

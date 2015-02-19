@@ -157,12 +157,18 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     }
 
     var GUI = function(size, camera, prerender, terrainSize) {
-        this.minimapSize = size.h;
+        this.minimapBounds = {
+            x: 0,
+            y: Crafty.viewport.height - size.h,
+            w: size.h,
+            h: size.h,
+            z: menuZ
+        };
 
         this.minimap = Crafty.e("2D, Canvas, Minimap, HUD, Mouse")
-            .attr({w: this.minimapSize, h: this.minimapSize, z: menuZ})
+            .attr(this.minimapBounds)
             .minimap(prerender, terrainSize)
-            .hud()
+            .hud(true)
             .bind("MinimapDown", function(point) {
                 camera.mouselook(false);
                 camera.centerOn(point);
@@ -171,9 +177,9 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             });
 
         this.infoBounds = {
-            x: this.minimapSize,
+            x: this.minimapBounds.w,
             y: Crafty.viewport.height - size.h,
-            w: Crafty.viewport.width - this.minimapSize * 2,
+            w: Crafty.viewport.width - this.minimapBounds.w * 2,
             h: size.h,
             z: menuZ
         };
@@ -195,9 +201,9 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.centerText.visible = false;
 
         this.menuBounds = {
-            x: Crafty.viewport.width - this.minimapSize,
+            x: Crafty.viewport.width - this.minimapBounds.w,
             y: Crafty.viewport.height - size.h,
-            w: this.minimapSize,
+            w: this.minimapBounds.w,
             h: size.h,
             z: menuZ 
         };
@@ -217,6 +223,18 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             this.buttons[i] = new Button('dummy', '#EEEEEE', buttonBounds);
             this.buttons[i].setVisible(false);
         }
+        
+        this.announceText = Crafty.e("2D, Canvas, Text, HUD, Tween")
+            .attr({x: Crafty.viewport.width/2, y: Crafty.viewport.height/2, z: 3000})
+            .textFont({family: 'Georgia', size: '50px'});
+        this.announceText.hud(true);
+        this.announceText.visible = false;
+
+        this.overlayColor = Crafty.e("2D, Canvas, Color, HUD")
+            .attr({x: 0, y: 0, w: 10000, h: 10000, z: 2000})
+            .color('#000000')
+            .hud(true);
+        this.overlayColor.visible = false;
 
         var aboutButton = new Button('?', 'rgba(238, 238, 238, 0.25)', {
             x: Crafty.viewport.width - smallPadding - 25,
@@ -302,6 +320,43 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             this.centerText.visible = true;
         } else {
             this.centerText.visible = false;
+        }
+    }
+
+    GUI.prototype.announce = function(text, callback) {
+        var self = this;
+        self.announceText.text(text);
+        self.announceText.updateHudTextSize();
+        self.announceText._clientbounds.x = Crafty.viewport.width;
+        self.announceText.visible = true;
+        self.announceText.tween({_clientbounds: {x: Crafty.viewport.width/2 -
+            self.announceText._clientbounds.w/2}}, 1000, 'easeInQuad');
+
+        var tweenEnd2 = function() {
+            self.announceText.unbind("TweenEnd", tweenEnd2);
+            console.log('tweenend2');
+            callback();
+        }
+
+        var tweenEnd1 = function() {
+            console.log('tweenend1');
+            self.announceText.unbind("TweenEnd", tweenEnd1);
+            self.announceText.tween({_clientbounds: {x: Crafty.viewport.x -
+                self.announceText._clientbounds._w}}, 1000, 'easeInQuad');
+            console.log('tweenstart2');
+            self.announceText.bind("TweenEnd", tweenEnd2);
+        }
+
+        console.log('tweenstart1');
+        self.announceText.bind("TweenEnd", tweenEnd1);
+    }
+
+    GUI.prototype.overlay = function(color) {
+        if(color !== null) {
+            this.overlayColor.visible = true;
+            this.overlayColor.color(color);
+        } else {
+            this.overlayColor.visible = false;
         }
     }
 

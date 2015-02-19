@@ -141,20 +141,15 @@ require(['crafty',
         /* Create game controllers */
         controllers = new Array(activeFactions.length);
         for(var i = 0; i < activeFactions.length; i++) {
-            controllers[i] = new GameController(unitManager, terrain, gui, terrainVis, activeFactions[i])
+            controllers[i] = new GameController(unitManager, terrain, gui, terrainVis, camera, activeFactions[i])
         }
-        
-        var turnText = Crafty.e("2D, HUD, Canvas, Text, Expires")
-            .attr({x: Crafty.viewport.width/2, y: Crafty.viewport.height/4, z: 1000})
-            .textFont({family: 'Georgia', size: '50px'})
-            .text(activeFactions[0])
-            .expires(5000);
-        turnText.x -= turnText.w/2;
-        turnText.y = Crafty.viewport.height/16;
-        turnText.hud(true);
 
-        /* Activate the first one */
-        controllers[0].setActive(true);
+        /* Hack - wait a bit, it seems like the loading switchover can't keep up */
+        gui.overlay('rgba(0,0,0,0.75)');
+        window.setTimeout(function() {
+            /* Activate the first controller */
+            controllers[0].setActive(true);
+        }, 500);
     });
 
     Crafty.scene("Load", function() {

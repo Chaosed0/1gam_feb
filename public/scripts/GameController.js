@@ -1,6 +1,6 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
-    var GameController = function(unitManager, terrain, gui, vis, faction) {
+    var GameController = function(unitManager, terrain, gui, vis, camera, faction) {
         var stack = [];
 
         var currentSelectCallback;
@@ -262,7 +262,13 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         this.setActive = function(active) {
             if(active) {
-                vis.bind("CellSelected", currentSelectCallback);
+                gui.overlay('rgba(0,0,0,0.75)');
+                camera.mouselook(false);
+                gui.announce(faction, function() {
+                    vis.bind("CellSelected", currentSelectCallback);
+                    gui.overlay(null);
+                    camera.mouselook(true);
+                });
             } else {
                 vis.unbind("CellSelected", currentSelectCallback);
             }
