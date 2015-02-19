@@ -334,20 +334,16 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
 
         var tweenEnd2 = function() {
             self.announceText.unbind("TweenEnd", tweenEnd2);
-            console.log('tweenend2');
             callback();
         }
 
         var tweenEnd1 = function() {
-            console.log('tweenend1');
             self.announceText.unbind("TweenEnd", tweenEnd1);
             self.announceText.tween({_clientbounds: {x: Crafty.viewport.x -
                 self.announceText._clientbounds._w}}, 1000, 'easeInQuad');
-            console.log('tweenstart2');
             self.announceText.bind("TweenEnd", tweenEnd2);
         }
 
-        console.log('tweenstart1');
         self.announceText.bind("TweenEnd", tweenEnd1);
     }
 
