@@ -225,16 +225,24 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         }
         
         this.announceText = Crafty.e("2D, Canvas, Text, HUD, Tween")
-            .attr({x: Crafty.viewport.width/2, y: Crafty.viewport.height/2, z: 3000})
-            .textFont({family: 'Georgia', size: '50px'});
+            .attr({x: Crafty.viewport.width/2, y: (Crafty.viewport.height - size.h)/2, z: 3000})
+            .textFont({family: 'Georgia', size: '50px'})
+            .textColor('#FFFFFF')
+            .text('a');
         this.announceText.hud(true);
         this.announceText.visible = false;
 
-        this.overlayColor = Crafty.e("2D, Canvas, Color, HUD")
-            .attr({x: 0, y: 0, w: Crafty.viewport.w, h: Crafty.viewport.h, z: 2000})
-            .color('#000000')
+        this.announceBacking = Crafty.e("2D, Canvas, Color, HUD")
+            .attr({
+                x: 0,
+                y: (Crafty.viewport.height - size.h)/2 - padding*2,
+                w: Crafty.viewport.width,
+                h: this.announceText.h + padding*4,
+                z: 2000
+            })
+            .color('rgba(0,0,0,0.7)')
             .hud(true);
-        this.overlayColor.visible = false;
+        this.announceBacking.visible = false;
 
         var aboutButton = new Button('?', 'rgba(238, 238, 238, 0.25)', {
             x: Crafty.viewport.width - smallPadding - 25,
@@ -329,11 +337,14 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         self.announceText.updateHudTextSize();
         self.announceText._clientbounds.x = Crafty.viewport.width;
         self.announceText.visible = true;
+        self.announceBacking.visible = true;
         self.announceText.tween({_clientbounds: {x: Crafty.viewport.width/2 -
             self.announceText._clientbounds.w/2}}, 1000, 'easeInQuad');
 
         var tweenEnd2 = function() {
             self.announceText.unbind("TweenEnd", tweenEnd2);
+            self.announceBacking.visible = false;
+            self.announceText.visible = false;
             callback();
         }
 
@@ -345,15 +356,6 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         }
 
         self.announceText.bind("TweenEnd", tweenEnd1);
-    }
-
-    GUI.prototype.overlay = function(color) {
-        if(color !== null) {
-            this.overlayColor.visible = true;
-            this.overlayColor.color(color);
-        } else {
-            this.overlayColor.visible = false;
-        }
     }
 
     return GUI;
