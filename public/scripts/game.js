@@ -53,6 +53,7 @@ require(['crafty',
     var unitClasses = null;
 
     var activeFactions = [];
+    var startCenters = [];
     var controllers = null;
 
     Crafty.init(width, height, gameElem);
@@ -78,6 +79,7 @@ require(['crafty',
         do {
             centerCell = u.randomElem(continent.cells);
         } while(!terrain.isGround(centerCell.site));
+        startCenters.push(centerCell);
 
         terrain.bfs(centerCell, 3, function(terrain, cell) {
             return terrain.isGround(cell.site);
@@ -147,6 +149,7 @@ require(['crafty',
         /* Hack - wait a bit, it seems like the loading switchover can't keep up */
         window.setTimeout(function() {
             /* Activate the first controller */
+            camera.centerOn({x: startCenters[0].site.x, y: startCenters[0].site.y});
             controllers[0].setActive(true);
         }, 500);
     });
