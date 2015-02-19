@@ -44,9 +44,6 @@ define(['crafty', './Util'], function(Crafty, u) {
      * the values of this._clientbounds which you need to set in some other
      * component on the current entity. this._clientbounds should be the bounds
      * of the HUD element as it is drawn on the screen.
-     * XXX: BIG FLAW is that when the entity's size changes, this._clientbounds
-     * does not update. Doesn't matter for now, but it could be a bad thing in
-     * the future...
      */
     Crafty.c("HUD", {
         _savebounds: false,
