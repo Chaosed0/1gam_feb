@@ -145,7 +145,7 @@ require(['crafty',
         }
 
         /* Hack - wait a bit, it seems like the loading switchover can't keep up */
-        gui.overlay('rgba(0,0,0,0.75)');
+        gui.overlay('rgba(0,0,0,0.3)');
         window.setTimeout(function() {
             /* Activate the first controller */
             controllers[0].setActive(true);

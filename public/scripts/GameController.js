@@ -262,7 +262,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         this.setActive = function(active) {
             if(active) {
-                gui.overlay('rgba(0,0,0,0.75)');
+                gui.overlay('rgba(0,0,0,0.3)');
                 camera.mouselook(false);
                 gui.announce(faction, function() {
                     vis.bind("CellSelected", currentSelectCallback);
