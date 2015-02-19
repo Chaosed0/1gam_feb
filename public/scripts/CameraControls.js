@@ -12,9 +12,15 @@ define(['crafty'], function(Crafty) {
     var mousemove = function(e) {
         if(this._lastmouse) {
             var scroll = {x: this._lastmouse.x - e.clientX, y: this._lastmouse.y - e.clientY};
-            Crafty.viewport.x -= scroll.x / Crafty.viewport._scale
-            Crafty.viewport.y -= scroll.y / Crafty.viewport._scale;
-            this.clampViewportPos();
+            var newPos = {
+                x: Crafty.viewport.x - scroll.x / Crafty.viewport._scale,
+                y: Crafty.viewport.y - scroll.y / Crafty.viewport._scale
+            };
+            newPos = this.clampViewportPos(newPos);
+            
+            Crafty.viewport.x = newPos.x;
+            Crafty.viewport.y = newPos.y;
+
             this._lastmouse = {x: e.clientX, y: e.clientY};
         }
     }
@@ -34,19 +40,25 @@ define(['crafty'], function(Crafty) {
     var wheel = function(e) {
         var oldScale = Crafty.viewport._scale;
         var scaleFactor = (1 - Math.sign(e.deltaY) * 0.1);
-        Crafty.viewport.scale(Crafty.viewport._scale * scaleFactor);
-        this.clampViewportScale();
+        var newScale = oldScale * scaleFactor;
+        newScale = this.clampViewportScale(newScale);
+        //After clamping, we might not have scaled as much; correct accordingly
+        scaleFactor = newScale / oldScale;
 
-        //After clamping, we might not actually have scaled; correct accordingly
-        scaleFactor = Crafty.viewport._scale / oldScale;
-        //Zoom in on a point, i.e. keep that point at the same place on the screen
-        Crafty.viewport.x = - (e.realX - (Crafty.viewport.x + e.realX) / scaleFactor);
-        Crafty.viewport.y = - (e.realY - (Crafty.viewport.y + e.realY) / scaleFactor);
+        /* Zoom in on the point the cursor is on, i.e. keep that point at the
+         * same place on the screen */
+        var newPos = {
+            x: - (e.realX - (Crafty.viewport.x + e.realX) / scaleFactor),
+            y: - (e.realY - (Crafty.viewport.y + e.realY) / scaleFactor),
+        }
+        newPos = this.clampViewportPos(newPos);
 
-        this.clampViewportPos();
+        Crafty.viewport.x = newPos.x;
+        Crafty.viewport.y = newPos.y;
+        Crafty.viewport.scale(newScale);
     }
 
-    CameraControls.prototype.clampViewportPos = function() {
+    CameraControls.prototype.clampViewportPos = function(newPos) {
         if(this.bounds) {
             var bounds;
             if(this.padding) {
@@ -78,27 +90,32 @@ define(['crafty'], function(Crafty) {
                 bounds = this.bounds;
             }
 
-            Crafty.viewport.x = Math.min(Crafty.viewport.x, bounds.x);
-            Crafty.viewport.y = Math.min(Crafty.viewport.y, bounds.y);
-            Crafty.viewport.x = Math.max(Crafty.viewport.x,
-                    Crafty.viewport.width / Crafty.viewport._scale - bounds.w);
-            Crafty.viewport.y = Math.max(Crafty.viewport.y,
-                    Crafty.viewport.height / Crafty.viewport._scale - bounds.h);
+            newPos.x = Math.min(newPos.x, bounds.x);
+            newPos.y = Math.min(newPos.y, bounds.y);
+            newPos.x = Math.max(newPos.x, Crafty.viewport.width / Crafty.viewport._scale - bounds.w);
+            newPos.y = Math.max(newPos.y, Crafty.viewport.height / Crafty.viewport._scale - bounds.h);
         }
+        return newPos;
     }
     
-    CameraControls.prototype.clampViewportScale = function() {
-        if(Crafty.viewport._scale > 1.0) {
-            Crafty.viewport.scale(1.0);
-        } else if(Crafty.viewport._scale < this.maxScale) {
-            Crafty.viewport.scale(this.maxScale);
+    CameraControls.prototype.clampViewportScale = function(newScale) {
+        if(newScale > 1.0) {
+            newScale = 1.0;
+        } else if(newScale < this.maxScale) {
+            newScale = this.maxScale;
         }
+        return newScale;
     }
 
     CameraControls.prototype.centerOn = function(point) {
-        Crafty.viewport.x = -point.x + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0;
-        Crafty.viewport.y = -point.y + (Crafty.viewport.height / Crafty.viewport._scale) / 2.0;
-        this.clampViewportPos();
+        var newPos = {
+            x: -point.x + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0,
+            y: -point.y + (Crafty.viewport.height / Crafty.viewport._scale) / 2.0
+        }
+        newPos = this.clampViewportPos(newPos);
+
+        Crafty.viewport.x = newPos.x;
+        Crafty.viewport.y = newPos.y;
     }
 
     CameraControls.prototype.mouselook = function(active) {
