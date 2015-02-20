@@ -1,8 +1,8 @@
 
 {
     "names":{
-        "heroes": {
-            "male_human": [
+        "units": {
+            "good": [
                 "Georguy",
                 "Cyne",
                 "Gery",
@@ -25,40 +25,67 @@
                 "Gauwilh",
                 "Parray",
                 "Eadwean"
+            ],
+            "bad": [
+                "Niree",
+                "Rhalo",
+                "Drynalf",
+                "Wynduil",
+                "Cale",
+                "Vrymmmin",
+                "Elkar",
+                "Cobor",
+                "Sabree",
+                "Harno",
+                "Belgelr",
+                "Jhalo",
+                "Alild",
+                "Vrivvae",
+                "Lica",
+                "Jhalo",
+                "Elgozz",
+                "Mlaerae",
+                "Naree",
+                "Bluene"
             ]
         },
-        "groups": [
-            "Joane's Guild",
-            "The Ruby Circle",
-            "The Demons of Wrebury",
-            "Bryany's Circle",
-            "The Legion of the Arcane Fang",
-            "Ralphye's Guild",
-            "The Jade Saints",
-            "The Fellowship of the Lost Thorn",
-            "The Crimson Hounds",
-            "Gery's Company",
-            "The Demons of Ciburh",
-            "Hilip's Order",
-            "The Ruby Council",
-            "The Council of the Shield",
-            "Suse's Fellowship",
-            "The Gray Fellowship",
-            "Mesym's Circle",
-            "The Golden Heroes",
-            "Ellen's Fangs",
-            "The Adventurers of Simor",
-            "The Covenant of the Iron Hound",
-            "The Silver Dragons",
-            "The Angels of Crothorp",
-            "The Ravens of Weestone",
-            "Rarder's Swords",
-            "The Legion of the Black Crown",
-            "The Jade Arrows",
-            "The Wolves of Haford",
-            "Arthur's Fellowship",
-            "Annen's Knights"
-        ]
+        "groups": {
+            "good": [
+                "Joane's Guild",
+                "The Ruby Circle",
+                "The Demons of Wrebury",
+                "Bryany's Circle",
+                "The Legion of the Arcane Fang",
+                "Ralphye's Guild",
+                "The Jade Saints",
+                "The Fellowship of the Lost Thorn",
+                "The Crimson Hounds",
+                "Gery's Company",
+                "The Demons of Ciburh",
+                "Hilip's Order",
+                "The Ruby Council",
+                "The Council of the Shield",
+                "Suse's Fellowship",
+                "The Gray Fellowship",
+                "Mesym's Circle",
+                "The Golden Heroes",
+                "Ellen's Fangs",
+                "The Adventurers of Simor",
+                "The Covenant of the Iron Hound",
+                "The Silver Dragons",
+                "The Angels of Crothorp",
+                "The Ravens of Weestone",
+                "Rarder's Swords",
+                "The Legion of the Black Crown",
+                "The Jade Arrows",
+                "The Wolves of Haford",
+                "Arthur's Fellowship",
+                "Annen's Knights"
+            ],
+            "bad": [
+                "The Legion of Evil"
+            ]
+        }
     },
     "units": {
         "Knight": {
@@ -70,8 +97,14 @@
                 "magnitude": 15,
                 "type": "piercing"
             },
-            "animation": [[1,1],[1,2]],
-            "classImageMap": [5,1]
+            "good": {
+                "animation": [[1,1],[1,2]],
+                "classImageMap": [5,1]
+            },
+            "bad": {
+                "animation": [[1,9],[1,10]],
+                "classImageMap": [5,5]
+            }
         },
         "Berserker": {
             "health": 70,
@@ -82,8 +115,14 @@
                 "magnitude": 10,
                 "type": "piercing"
             },
-            "animation": [[7,1],[7,2]],
-            "classImageMap": [3,3]
+            "good": {
+                "animation": [[7,1],[7,2]],
+                "classImageMap": [3,3]
+            },
+            "bad": {
+                "animation": [[5,11],[5,12]],
+                "classImageMap": [3,7]
+            }
         },
         "Paladin": {
             "health": 40,
@@ -94,8 +133,14 @@
                 "magnitude": 10,
                 "type": "blunt"
             },
-            "animation": [[9,1],[9,2]],
-            "classImageMap": [4,1]
+            "good": {
+                "animation": [[9,1],[9,2]],
+                "classImageMap": [4,1]
+            },
+            "bad": {
+                "animation": [[2,9],[2,10]],
+                "classImageMap": [4,5]
+            }
         },
         "Rogue": {
             "health": 30,
@@ -106,8 +151,14 @@
                 "magnitude": 7,
                 "type": "piercing"
             },
-            "animation": [[1,3],[1,4]],
-            "classImageMap": [0,1]
+            "good": {
+                "animation": [[1,3],[1,4]],
+                "classImageMap": [0,1]
+            },
+            "bad": {
+                "animation": [[6,7],[6,8]],
+                "classImageMap": [0,5]
+            }
         },
         "Ranger": {
             "health": 30,
@@ -118,8 +169,14 @@
                 "magnitude": 5,
                 "type": "piercing"
             },
-            "animation": [[3,1],[3,2]],
-            "classImageMap": [1,2]
+            "good": {
+                "animation": [[3,1],[3,2]],
+                "classImageMap": [1,2]
+            },
+            "bad": {
+                "animation": [[8,7],[8,8]],
+                "classImageMap": [1,6]
+            }
         },
         "Wizard": {
             "health": 20,
@@ -130,8 +187,14 @@
                 "magnitude": 10,
                 "type": "fire"
             },
-            "animation": [[4,1],[4,2]],
-            "classImageMap": [1,0]
+            "good": {
+                "animation": [[4,1],[4,2]],
+                "classImageMap": [1,0]
+            },
+            "bad": {
+                "animation": [[9,7],[9,8]],
+                "classImageMap": [1,4]
+            }
         },
         "Priest": {
             "health": 20,
@@ -142,8 +205,14 @@
                 "magnitude": 10,
                 "type": "holy"
             },
-            "animation": [[5,1],[5,2]],
-            "classImageMap": [0,0]
+            "good": {
+                "animation": [[5,1],[5,2]],
+                "classImageMap": [0,0]
+            },
+            "bad": {
+                "animation": [[10,7],[10,8]],
+                "classImageMap": [0,4]
+            }
         },
         "Shaman": {
             "health": 20,
@@ -154,8 +223,14 @@
                 "magnitude": 10,
                 "type": "earth"
             },
-            "animation": [[6,1],[6,2]],
-            "classImageMap": [0,3]
+            "good": {
+                "animation": [[6,1],[6,2]],
+                "classImageMap": [0,3]
+            },
+            "bad": {
+                "animation": [[8,9],[8,10]],
+                "classImageMap": [0,7]
+            }
         }
     },
     "preload": {
@@ -168,10 +243,10 @@
                 }
             },
             "img/oryx_16bit_fantasy_classes_trans_mod.png": {
-                "tile": 24,
-                "tileh": 26,
-                "paddingX": 7,
-                "paddingY": 7,
+                "tile": 26,
+                "tileh": 28,
+                "paddingX": 5,
+                "paddingY": 5,
                 "map": {
                     "ClassSprite": [0,0]
                 }

@@ -4,12 +4,13 @@ define(['crafty', './Util'], function(Crafty, u) {
     var vec2 = Crafty.math.Vector2D;
 
     var UnitManager = function() {
-        this.map = {};
+        this.locationMap = {};
+        this.ownerMap = {};
     }
 
     UnitManager.prototype.addUnit = function(cell, unit) {
-        u.assert(!(cell.site.voronoiId in this.map));
-        this.map[cell.site.voronoiId] = unit;
+        u.assert(!(cell.site.voronoiId in this.locationMap));
+        this.locationMap[cell.site.voronoiId] = unit;
         unit.setCell(cell);
     }
 
@@ -18,8 +19,8 @@ define(['crafty', './Util'], function(Crafty, u) {
     }
 
     UnitManager.prototype.getUnitForId = function(id) {
-        if(id in this.map) {
-            return this.map[id];
+        if(id in this.locationMap) {
+            return this.locationMap[id];
         } else {
             return null;
         }
@@ -29,8 +30,8 @@ define(['crafty', './Util'], function(Crafty, u) {
         u.assert(!this.getUnitForCell(cell));
         var curCell = unit.getCell();
         u.assert(this.getUnitForCell(curCell) === unit);
-        delete this.map[curCell.site.voronoiId];
-        this.map[cell.site.voronoiId] = unit;
+        delete this.locationMap[curCell.site.voronoiId];
+        this.locationMap[cell.site.voronoiId] = unit;
         unit.setCell(cell);
     }
 

@@ -7,8 +7,6 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     const padding = 10;
     const smallPadding = 5;
 
-    var getClassMap = null;
-
     var UnitInfoContainer = function(bounds, align) {
         if(align === 'left') {
             this.startpos = {x: bounds.x + padding, y: bounds.y + padding};
@@ -114,7 +112,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.titleText.updateHudTextSize();
         this.subtitleText.text(unit.getClassName() + ' of ' + unit.getFaction());
         this.subtitleText.updateHudTextSize();
-        this.updateClassImage(unit.getClassName());
+        this.updateClassImage(unit);
 
         this.healthMeter.fill(unit.getHealth() / unit.getMaxHealth());
         this.manaMeter.fill(unit.getMana() / unit.getMaxMana());
@@ -146,10 +144,10 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.manaAmtText.visible = visible;
     }
 
-    UnitInfoContainer.prototype.updateClassImage = function(className) {
-        if(className && getClassMap) {
-            var index = getClassMap(className);
-            this.classImage.sprite(index[0], index[1]);
+    UnitInfoContainer.prototype.updateClassImage = function(unit) {
+        if(unit) {
+            var loc = unit.getClassImageLoc();
+            this.classImage.sprite(loc[0], loc[1]);
             this.classImage.visible = true;
         } else {
             this.classImage.visible = false;
@@ -259,10 +257,6 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         aboutButton.text.textColor('rgba(0,0,0,0.25)');
         aboutButton.text.textFont({family: fontFamily, size: '20px'});
         aboutButton.textBaselineCenter();
-    }
-
-    GUI.setClassMapCallback = function(cb) {
-        getClassMap = cb;
     }
 
     /* Display info about a cell in the center GUI element. */

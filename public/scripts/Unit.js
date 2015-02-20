@@ -9,20 +9,26 @@ define(['crafty', './Util'], function(Crafty, u) {
         _faction: 1,
         _attack: null,
         _cell: null,
+        _isgood: null,
+        _alignment: null,
+        _classimageloc: null,
 
         init: function() {
         },
 
-        unit: function(name, faction, className, data) {
+        unit: function(name, faction, className, good, data) {
             this._name = name;
             this._faction = faction;
             this._className = className;
+            this._isgood = good;
+            this._alignment = good ? "good" : "bad";
             if(data) {
                 this._maxhealth = data.health;
                 this._curhealth = data.health;
                 this._movespeed = data.speed;
                 this._attack = data.attack;
-                this.reel('idle', 2000, data.animation)
+                this._classimageloc = data[this._alignment].classImageMap;
+                this.reel('idle', 2000, data[this._alignment].animation)
             }
             return this;
         },
@@ -34,6 +40,11 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         isDead: function() {
             return this._curhealth < 0;
+        },
+
+        isGood: function() {
+            u.assert(this._isgood !== null);
+            return this._isgood;
         },
 
         getHealth: function() {
@@ -54,6 +65,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         getClassName: function() {
             return this._className;
+        },
+
+        getClassImageLoc: function() {
+            return this._classimageloc;
         },
 
         getName: function() {

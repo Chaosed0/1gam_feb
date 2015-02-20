@@ -62,17 +62,19 @@ require(['crafty',
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
 
-    var generateSomeUnits = function(num) {
-        // Terrain better be generated at the time of calling
+    var generateSomeUnits = function(num, good) {
+        /* Terrain better be generated at the time of calling */
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
 
-        //Pick a random continent and stick some guys on it
+        /* Pick a random continent and stick some guys on it */
         var continent = u.randomElem(bodies.continents);
         var cells = [];
         var centerCell;
 
-        var factionName = u.randomElem(names.groups);
+        /* Pick a faction name for this group */
+        var alignment = good ? "good" : "bad";
+        var factionName = u.randomElem(names.groups[alignment]);
         activeFactions.push(factionName);
 
         /* Make sure we're not sticking the unit on a mountain */
@@ -81,14 +83,16 @@ require(['crafty',
         } while(!terrain.isGround(centerCell.site));
         startCenters.push(centerCell);
 
+        /* Get a relatively close area to place the units in */
         terrain.bfs(centerCell, 3, function(terrain, cell) {
             return terrain.isGround(cell.site);
         }, function(cell) {
             cells.push(cell);
         });
 
+        /* Place the units */
         for(var i = 0; i < num; i++) {
-            var unitName = u.randomElem(names.heroes.male_human);
+            var unitName = u.randomElem(names.units[alignment]);
             var className = u.randomElem(unitClasses);
             var placed = false;
             while(!placed) {
@@ -99,7 +103,7 @@ require(['crafty',
                     /* Note that we're trusting in addUnit to set the unit location */
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(unitName, factionName, className, unitInfo[className])
+                        .unit(unitName, factionName, className, good, unitInfo[className])
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
                     placed = true;
@@ -130,14 +134,13 @@ require(['crafty',
 
         /* Create the actual gui */
         var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
-        GUI.setClassMapCallback(function(className) {
-            u.assert(unitClasses.indexOf(className) >= 0);
-            return unitInfo[className].classImageMap;
-        });
 
         /* Generate some units (placeholder) */
+        /* We want the first faction to be good */
+        var good = true;
         for(var i = 0; i < 5; i++) {
-            generateSomeUnits(5, i);
+            generateSomeUnits(5, good);
+            good = false;
         }
 
         /* Create game controllers */
