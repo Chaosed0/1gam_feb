@@ -218,7 +218,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         for(var i = 0; i < 4; i++) {
             buttonBounds.x = this.menuBounds.x + padding;
             buttonBounds.y = this.menuBounds.y + padding + i * (buttonBounds.h + padding);
-            this.buttons[i] = new Button('dummy', '#EEEEEE', buttonBounds);
+            this.buttons[i] = new Button('dummy', '#EEEEEE', '#AAAAAA', buttonBounds);
             this.buttons[i].setVisible(false);
         }
         
@@ -294,9 +294,14 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
                     if(buttons[i].text) {
                         this.buttons[i].setText(buttons[i].text);
                     }
-                    if(buttons[i].callback) {
-                        this.buttons[i].unbind("MouseDown");
-                        this.buttons[i].bind("MouseDown", buttons[i].callback);
+                    if(buttons[i].active === undefined || buttons[i].active === true) {
+                        this.buttons[i].grey(false);
+                        if(buttons[i].callback) {
+                            this.buttons[i].unbind("MouseDown");
+                            this.buttons[i].bind("MouseDown", buttons[i].callback);
+                        }
+                    } else {
+                        this.buttons[i].grey(true);
                     }
                     this.buttons[i].setVisible(true);
                 } else {
