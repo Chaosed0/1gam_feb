@@ -24,7 +24,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
 
         this.titleText = Crafty.e("2D, Canvas, HUD, Text")
             .attr({ z: menuElemZ })
-            .textFont({family: fontFamily, size: '30px'})
+            .textFont({family: fontFamily, size: '30px', weight: 'bold'})
             .text('LOLWTFBBQ!?')
             .textAlign(align);
         this.positionElem(this.titleText, smallPadding, true);
@@ -193,7 +193,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         };
 
         this.centerText = Crafty.e("2D, Canvas, HUD, Text")
-            .textFont({family: fontFamily, size: '20px'})
+            .textFont({family: fontFamily, size: '20px', variant: 'italic', weight: 'bold'})
             .hud(true);
         this.centerText.z = menuElemZ;
         this.centerText.visible = false;
@@ -322,7 +322,6 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             this.centerText._clientbounds.x = this.infoBounds.x + this.infoBounds.w/2 -
                 this.centerText._clientbounds.w/2;
             this.centerText._clientbounds.y = this.infoBounds.y + this.infoBounds.h/2;
-            this.centerText.trigger("InvalidateViewport");
             this.centerText.visible = true;
         } else {
             this.centerText.visible = false;
