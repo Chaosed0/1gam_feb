@@ -148,7 +148,15 @@ require(['crafty',
         }
 
         /* Create user game controller */
-        controller = new GameController(unitManager, terrain, gui, terrainVis, camera, activeFactions[0]);
+        controller = new GameController({
+            unitManager: unitManager,
+            terrain: terrain,
+            gui: gui,
+            vis: terrainVis,
+            camera: camera
+        }, activeFactions[0], function() {
+            console.log("Player turn over");
+        });
 
         /* Hack - wait a bit, it seems like the loading switchover can't keep up */
         window.setTimeout(function() {

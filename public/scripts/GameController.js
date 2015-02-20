@@ -1,10 +1,23 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
-    var GameController = function(unitManager, terrain, gui, vis, camera, faction) {
+    var GameController = function(objects, faction, doneCallback) {
+        var unitManager = objects.unitManager;
+        var terrain = objects.terrain;
+        var gui = objects.gui;
+        var vis = objects.vis;
+        var camera = objects.camera;
+
+        u.assert(unitManager, 'No UnitManager passed to GameController');
+        u.assert(terrain, 'No Terrain passed to GameController');
+        u.assert(gui, 'No GUI passed to GameController');
+        u.assert(vis, 'No TerrainVisualizer passed to GameController');
+        u.assert(camera, 'No CameraControls passed to GameController');
+
         var stack = [];
 
         var unitList = null;
         var curUnit = null;
+        var curUnitIndex = 0;
         var lastSelectCallback = null;
         var lastBFSResult = null;
 
@@ -17,6 +30,9 @@ define(['crafty', './Util'], function(Crafty, u) {
         var selectedUnit = null;
         var enemyUnit = null;
         var selectCallback = null;
+
+        var advanceAndCheckUnit = function() {
+        }
 
         /* Cancel button; it's the same for all cancels */
         var cancelButton = {
@@ -284,7 +300,9 @@ define(['crafty', './Util'], function(Crafty, u) {
             return u2.getSpeed() - u1.getSpeed();
         });
         /* First unit is the unit with the highest speed */
-        curUnit = unitList[0];
+        u.assert(unitList.length > 0, 'No units in the unit list for faction ' + faction);
+        curUnitIndex = 0;
+        curUnit = unitList[curUnitIndex];
 
         /* Set the state, but don't use it until we're active */
         selectCallback = freeSelectCallback;
