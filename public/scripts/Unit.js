@@ -5,13 +5,17 @@ define(['crafty', './Util'], function(Crafty, u) {
         _curhealth: 0,
         _maxmana: 1,
         _curmana: 0,
-        _movespeed: 4,
+        _moverange: 4,
+        _speed: 0,
         _faction: 1,
         _attack: null,
         _cell: null,
         _isgood: null,
         _alignment: null,
         _classimageloc: null,
+
+        _moved: false,
+        _attacked: false,
 
         init: function() {
         },
@@ -25,7 +29,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             if(data) {
                 this._maxhealth = data.health;
                 this._curhealth = data.health;
-                this._movespeed = data.speed;
+                this._moverange = data.moverange;
+                this._speed = data.speed;
                 this._attack = data.attack;
                 this._classimageloc = data[this._alignment].classImageMap;
                 this.reel('idle', 2000, data[this._alignment].animation)
@@ -79,8 +84,12 @@ define(['crafty', './Util'], function(Crafty, u) {
             return this._attack;
         },
 
+        getMoveRange: function() {
+            return this._moverange;
+        },
+
         getSpeed: function() {
-            return this._movespeed;
+            return this._speed;
         },
 
         getFaction: function() {

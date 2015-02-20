@@ -106,7 +106,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         var getMoveAndAttack = function(unit) {
             highlightedCells = {main: [], extra: []};
-            var totalLimit = unit.getSpeed() + unit.getAttack().range;
+            var totalLimit = unit.getMoveRange() + unit.getAttack().range;
             lastBFSResult = terrain.bfs(unit.getCell(), totalLimit, function(terrain, cell, num) {
                 var unitOnPoint = unitManager.getUnitForCell(cell);
                 var passable = terrain.isGround(cell.site);
@@ -115,7 +115,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     /* We want to show that we can attack units of other factions, but
                      * not attack units of our faction; additionally, we want to move
                      * through units of our faction, but not through units of other factions */
-                    if(num <= unit.getSpeed()) {
+                    if(num <= unit.getMoveRange()) {
                         if((selectedUnit.getFaction() !== unitOnPoint.getFaction())) {
                             passable = false;
                         } else {
@@ -132,7 +132,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     return passable;
                 }
             }, function(cell, num) {
-                if(num <= unit.getSpeed()) {
+                if(num <= unit.getMoveRange()) {
                     highlightedCells.main.push(cell);
                 } else {
                     highlightedCells.extra.push(cell);
@@ -288,6 +288,15 @@ define(['crafty', './Util'], function(Crafty, u) {
         selectCallback = freeSelectCallback;
         selectMode = 'free';
         lastSelectCallback = null;
+
+        /* Grab the unit list for this faction */
+        unitList = unitManager.getUnitListForFaction(faction);
+        /* Sort it by descending speed */
+        unitList.sort(function(u1,u2) {
+            return u2.getSpeed() - u1.getSpeed();
+        });
+        /* First unit is the unit with the highest speed */
+        curUnit = unitList[0];
     };
 
     return GameController;

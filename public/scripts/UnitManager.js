@@ -11,6 +11,10 @@ define(['crafty', './Util'], function(Crafty, u) {
     UnitManager.prototype.addUnit = function(cell, unit) {
         u.assert(!(cell.site.voronoiId in this.locationMap));
         this.locationMap[cell.site.voronoiId] = unit;
+        if(!this.ownerMap[unit.getFaction()]) {
+            this.ownerMap[unit.getFaction()] = [];
+        }
+        this.ownerMap[unit.getFaction()].push(unit);
         unit.setCell(cell);
     }
 
@@ -33,6 +37,14 @@ define(['crafty', './Util'], function(Crafty, u) {
         delete this.locationMap[curCell.site.voronoiId];
         this.locationMap[cell.site.voronoiId] = unit;
         unit.setCell(cell);
+    }
+
+    UnitManager.prototype.getUnitListForFaction = function(faction) {
+        if(this.ownerMap[faction]) {
+            return this.ownerMap[faction];
+        } else {
+            return null;
+        }
     }
 
     return UnitManager;
