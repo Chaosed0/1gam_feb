@@ -290,14 +290,18 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         u.assert(buttons === null || buttons.length <= 4);
         for(var i = 0; i < this.buttons.length; i++) {
             if(buttons && i < buttons.length) {
-                if(buttons[i].text) {
-                    this.buttons[i].setText(buttons[i].text);
+                if(buttons[i] !== null) {
+                    if(buttons[i].text) {
+                        this.buttons[i].setText(buttons[i].text);
+                    }
+                    if(buttons[i].callback) {
+                        this.buttons[i].unbind("MouseDown");
+                        this.buttons[i].bind("MouseDown", buttons[i].callback);
+                    }
+                    this.buttons[i].setVisible(true);
+                } else {
+                    this.buttons[i].setVisible(false);
                 }
-                if(buttons[i].callback) {
-                    this.buttons[i].unbind("MouseDown");
-                    this.buttons[i].bind("MouseDown", buttons[i].callback);
-                }
-                this.buttons[i].setVisible(true);
             } else {
                 this.buttons[i].setVisible(false);
             }
