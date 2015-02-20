@@ -217,7 +217,7 @@
                 "classImageMap": [0,0]
             },
             "bad": {
-                "animation": [[10,7],[10,8]],
+                "animation": [[8,9],[8,10]],
                 "classImageMap": [0,4]
             }
         },
@@ -236,7 +236,7 @@
                 "classImageMap": [0,3]
             },
             "bad": {
-                "animation": [[8,9],[8,10]],
+                "animation": [[10,7],[10,8]],
                 "classImageMap": [0,7]
             }
         }
