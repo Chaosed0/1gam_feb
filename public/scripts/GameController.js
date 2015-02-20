@@ -24,11 +24,6 @@ define(['crafty', './Util'], function(Crafty, u) {
             callback: null
         };
 
-        var hideButtons = function(buttons) {
-            currentButtons = [];
-            gui.hideButtons();
-        }
-
         var newSelectCallback = function(cb) {
             if(lastSelectCallback) {
                 vis.unbind("CellSelected", lastSelectCallback);
@@ -146,7 +141,6 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback for when "move" button is hit in gui. Transitions to 
          * moveSelectCallback */
         var guiMoveCallback = function() {
-            hideButtons();
             highlightedCells = getMoveAndAttack(selectedUnit);
             highlight = highlightedCells;
             selectMode = 'highlight';
@@ -159,7 +153,6 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback for when "attack" button is hit in gui. Transitions to 
          * freeSelectCallback, eventually. */
         var guiAttackCallback = function() {
-            hideButtons();
             highlightedCells = [];
             terrain.bfs(selectedUnit.getCell(),
                     selectedUnit.getAttack().range, function(terrain, cell) {
