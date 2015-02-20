@@ -3,27 +3,26 @@ define(['crafty', './Util'], function(Crafty, u) {
     var GameController = function(unitManager, terrain, gui, vis, camera, faction) {
         var stack = [];
 
-        var currentSelectCallback;
+        var unitList = null;
+        var curUnit = null;
+        var lastSelectCallback = null;
+        var lastBFSResult = null;
+
+        /* Variables comprising the state */
+        var selectMode = null;
+        var selection = null;
+        var highlight = null;
+        var buttons = null;
+        var centerText = null;
         var selectedUnit = null;
         var enemyUnit = null;
-        var lastBFSResult = null;
-        var currentButtons = null;
-        var centerText = null;
+        var selectCallback = null;
 
+        /* Cancel button; it's the same for all cancels */
         var cancelButton = {
             text: 'Cancel',
             callback: null
         };
-
-        var setButtons = function(buttons) {
-            currentButtons = buttons;
-            gui.setButtons(currentButtons);
-        }
-
-        var setCenterText = function(text) {
-            centerText = text;
-            gui.setCenterText(centerText);
-        }
 
         var hideButtons = function(buttons) {
             currentButtons = [];
@@ -31,20 +30,29 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         var newSelectCallback = function(cb) {
-            vis.unbind("CellSelected", currentSelectCallback);
-            currentSelectCallback = cb;
-            vis.bind("CellSelected", currentSelectCallback);
+            if(lastSelectCallback) {
+                vis.unbind("CellSelected", lastSelectCallback);
+            }
+            lastSelectCallback = cb;
+            vis.bind("CellSelected", cb);
         }
 
         var useState = function(state) {
-            vis.selectMode(state.selectmode);
-            vis.selection(state.selection);
-            vis.highlight(state.highlight);
-            setButtons(state.buttons);
-            setCenterText(state.centertext);
-            newSelectCallback(state.selectcb);
-            selectedUnit = state.selectedunit;
-            enemyUnit = state.enemyunit;
+            selectMode = state.selectMode;
+            selection = state.selection;
+            highlight = state.highlight;
+            buttons = state.buttons;
+            centerText = state.centerText;
+            selectedUnit = state.selectedUnit;
+            enemyUnit = state.enemyUnit;
+            selectCallback = state.selectCallback;
+
+            vis.selectMode(selectMode);
+            vis.selection(selection);
+            vis.highlight(highlight);
+            gui.setButtons(buttons);
+            gui.setCenterText(centerText);
+            newSelectCallback(selectCallback);
 
             if(selectedUnit) {
                 gui.displayUnitInfo(selectedUnit, 'left');
@@ -52,7 +60,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 gui.hideInfo('left');
             }
 
-            if(enemyUnit) {
+            if(state.enemyUnit) {
                 gui.displayUnitInfo(enemyUnit, 'right');
             } else {
                 gui.hideInfo('right');
@@ -60,28 +68,26 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         var pushState = function() {
-            var state = {
-                selectmode: vis.selectMode(),
-                selection: vis.selection(),
-                highlight: vis.highlight(),
-                buttons: currentButtons,
-                centertext: centerText,
-                selectedunit: selectedUnit,
-                enemyunit: enemyUnit,
-                selectcb: currentSelectCallback,
+            var tmpstate = {
+                selectMode: selectMode,
+                selection: selection,
+                highlight: highlight,
+                buttons: buttons,
+                centerText: centerText,
+                selectCallback: selectCallback,
+                selectedUnit: selectedUnit,
+                enemyUnit: enemyUnit
             }
-            stack.push(state);
-            useState(state);
+            stack.push(tmpstate);
+            useState(tmpstate);
         }
         
         var popState = function() {
             /* Never pop the initial state */
             if(stack.length > 1) {
                 var state = stack.pop();
-                useState(stack[stack.length-1]);
                 return state;
             } else {
-                useState(stack[0]);
                 return stack[0];
             }
         }
@@ -93,7 +99,10 @@ define(['crafty', './Util'], function(Crafty, u) {
             useState(stack[0]);
         }
 
-        cancelButton.callback = popState;
+        cancelButton.callback = function() {
+            popState();
+            useState(stack[stack.length-1]);
+        }
 
         var getMoveAndAttack = function(unit) {
             highlightedCells = {main: [], extra: []};
@@ -139,30 +148,31 @@ define(['crafty', './Util'], function(Crafty, u) {
         var guiMoveCallback = function() {
             hideButtons();
             highlightedCells = getMoveAndAttack(selectedUnit);
-            vis.highlight(highlightedCells);
-            vis.selectMode('highlight');
+            highlight = highlightedCells;
+            selectMode = 'highlight';
+            buttons = [ cancelButton ];
+            selectCallback = moveSelectCallback;
 
-            setButtons([ cancelButton ]);
-            newSelectCallback(moveSelectCallback);
             pushState();
         }
 
-        /* Callback for when "move" button is hit in gui. Transitions to 
+        /* Callback for when "attack" button is hit in gui. Transitions to 
          * freeSelectCallback, eventually. */
         var guiAttackCallback = function() {
             hideButtons();
             highlightedCells = [];
-            came_from = terrain.bfs(selectedUnit.getCell(), selectedUnit.getAttack().range, function(terrain, cell) {
+            terrain.bfs(selectedUnit.getCell(),
+                    selectedUnit.getAttack().range, function(terrain, cell) {
                 /* Allow target to be anything passable */
                 return terrain.isGround(cell.site);
             }, function(cell) {
                 highlightedCells.push(cell);
             });
 
-            setButtons([cancelButton]); 
-            vis.highlight(highlightedCells);
-            vis.selectMode('highlight');
-            newSelectCallback(attackSelectCallback);
+            buttons = [cancelButton]; 
+            highlight = highlightedCells;
+            selectMode = 'highlight';
+            selectCallback = attackSelectCallback;
             pushState();
         }
 
@@ -173,32 +183,32 @@ define(['crafty', './Util'], function(Crafty, u) {
 
             if(data.mouseButton == 0) {
                 /* Left click, highlight the map cell */
-                vis.selection(cell);
+                selection = cell;
                 var unitOnCell = unitManager.getUnitForCell(cell);
 
                 if(unitOnCell !== null) {
                     selectedUnit = unitOnCell;
-                    gui.displayUnitInfo(selectedUnit, 'left');
                     if(selectedUnit.getFaction() === faction) {
-                        gui.setButtons([{
+                        buttons = [{
                             text: 'Move',
                             callback: guiMoveCallback
                         }, {
                             text: 'Attack',
                             callback: guiAttackCallback
-                        }]);
-                        vis.highlight(null);
+                        }];
+                        highlight = null;
                     } else {
                         highlightedCells = getMoveAndAttack(selectedUnit);
-                        vis.highlight(highlightedCells);
-                        gui.setButtons(null);
+                        highlight = highlightedCells;
+                        buttons = null;
                     }
                 } else {
                     selectedUnit = null;
-                    vis.highlight(null);
-                    gui.hideInfo();
-                    gui.setButtons(null);
+                    highlight = null;
+                    buttons = null;
                 }
+                popState();
+                pushState();
             }
         }
 
@@ -209,11 +219,11 @@ define(['crafty', './Util'], function(Crafty, u) {
          * receive the callback if it's a highlighted cell. */
         var moveSelectCallback = function(data) {
             var path = terrain.reconstructPath(selectedUnit.getCell(), data.cell, lastBFSResult);
-            vis.highlight(path);
-            vis.selection(data.cell);
-            vis.selectMode('confirm');
-            setButtons([ cancelButton ]);
-            newSelectCallback(moveConfirmCallback);
+            highlight = path;
+            selection = data.cell;
+            selectMode = 'confirm';
+            buttons = [ cancelButton ];
+            selectCallback = moveConfirmCallback;
             pushState();
         }
 
@@ -222,10 +232,6 @@ define(['crafty', './Util'], function(Crafty, u) {
          * freeSelectCallback. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            selectedUnit = null;
-            vis.selection(null);
-            vis.selectMode('free');
-            newSelectCallback(freeSelectCallback);
             rewindStates();
         }
 
@@ -240,12 +246,12 @@ define(['crafty', './Util'], function(Crafty, u) {
             if(unitOnCell) {
                 var attack = selectedUnit.getAttack();
                 enemyUnit = unitOnCell;
-                vis.selection(cell);
-                vis.selectMode('confirm');
-                vis.highlight(null);
-                setButtons([ cancelButton ]);
-                setCenterText(attack.magnitude + " " + attack.type + " damage");
-                newSelectCallback(attackConfirmCallback);
+                selection = cell;
+                selectMode = 'confirm';
+                highlight = null;
+                buttons = [ cancelButton ];
+                centerText = attack.magnitude + " " + attack.type + " damage";
+                selectCallback = attackConfirmCallback;
                 pushState();
             } else {
                 /* XXX: Actually display an error to user */
@@ -255,7 +261,6 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         var attackConfirmCallback = function(data) {
             u.assert(enemyUnit);
-
             enemyUnit.damage(selectedUnit.getAttack().magnitude);
             rewindStates();
         }
@@ -264,18 +269,25 @@ define(['crafty', './Util'], function(Crafty, u) {
             if(active) {
                 camera.mouselook(false);
                 gui.announce(faction, function() {
-                    vis.bind("CellSelected", currentSelectCallback);
+                    if(stack.length <= 0) {
+                        /* Push initial state if it isn't there already*/
+                        pushState();
+                    } else {
+                        /* Otherwise, use the initial state */
+                        rewindStates();
+                    }
                     camera.mouselook(true);
                 });
             } else {
-                vis.unbind("CellSelected", currentSelectCallback);
+                vis.unbind("CellSelected", lastSelectCallback);
+                lastSelectCallback = null;
             }
         }
 
-        currentSelectCallback = freeSelectCallback;
-        /* Push initial state */
-        pushState();
-        vis.unbind("CellSelected", currentSelectCallback);
+        /* Set the callback, but don't push state until we're active */
+        selectCallback = freeSelectCallback;
+        selectMode = 'free';
+        lastSelectCallback = null;
     };
 
     return GameController;

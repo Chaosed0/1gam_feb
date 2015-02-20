@@ -56,7 +56,7 @@ require(['crafty',
 
     var activeFactions = [];
     var startCenters = [];
-    var controllers = null;
+    var controller = null;
 
     Crafty.init(width, height, gameElem);
     Crafty.pixelart(true);
@@ -145,17 +145,14 @@ require(['crafty',
             good = false;
         }
 
-        /* Create game controllers */
-        controllers = new Array(activeFactions.length);
-        for(var i = 0; i < activeFactions.length; i++) {
-            controllers[i] = new GameController(unitManager, terrain, gui, terrainVis, camera, activeFactions[i])
-        }
+        /* Create user game controller */
+        controller = new GameController(unitManager, terrain, gui, terrainVis, camera, activeFactions[0]);
 
         /* Hack - wait a bit, it seems like the loading switchover can't keep up */
         window.setTimeout(function() {
-            /* Activate the first controller */
+            /* Activate the player controller */
             camera.centerOn({x: startCenters[0].site.x, y: startCenters[0].site.y});
-            controllers[0].setActive(true);
+            controller.setActive(true);
         }, 500);
     });
 
