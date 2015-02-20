@@ -91,6 +91,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             while(stack.length > 1) {
                 stack.pop();
             }
+            /* Cheat and get re-select current unit's cell */
+            stack[0].selection = curUnit.getCell();
             useState(stack[0]);
         }
 
@@ -181,10 +183,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
                 if(unitOnCell !== null) {
                     selectedUnit = unitOnCell;
-                    if(selectedUnit.getFaction() === faction) {
+                    if(selectedUnit === curUnit) {
                         buttons = [{
                             text: 'Move',
-                            callback: guiMoveCallback
+                            callback: guiMoveCallback,
                         }, {
                             text: 'Attack',
                             callback: guiAttackCallback
@@ -193,13 +195,15 @@ define(['crafty', './Util'], function(Crafty, u) {
                     } else {
                         highlightedCells = getMoveAndAttack(selectedUnit);
                         highlight = highlightedCells;
-                        buttons = null;
+                        buttons = [ cancelButton ];
                     }
                 } else {
                     selectedUnit = null;
                     highlight = null;
-                    buttons = null;
+                    buttons = [ cancelButton ];
                 }
+                /* If we selected another cell, we don't want to push more
+                 * states onto the stack - pop the previous one */
                 popState();
                 pushState();
             }
@@ -261,14 +265,10 @@ define(['crafty', './Util'], function(Crafty, u) {
         this.setActive = function(active) {
             if(active) {
                 camera.mouselook(false);
+                camera.centerOn(curUnit);
                 gui.announce(faction, function() {
-                    if(stack.length <= 0) {
-                        /* Push initial state if it isn't there already*/
-                        pushState();
-                    } else {
-                        /* Otherwise, use the initial state */
-                        rewindStates();
-                    }
+                    /* Act as if we just selected the first unit's cell */
+                    selectCallback({mouseButton: 0, cell: selection});
                     camera.mouselook(true);
                 });
             } else {
@@ -276,11 +276,6 @@ define(['crafty', './Util'], function(Crafty, u) {
                 lastSelectCallback = null;
             }
         }
-
-        /* Set the callback, but don't push state until we're active */
-        selectCallback = freeSelectCallback;
-        selectMode = 'free';
-        lastSelectCallback = null;
 
         /* Grab the unit list for this faction */
         unitList = unitManager.getUnitListForFaction(faction);
@@ -290,6 +285,12 @@ define(['crafty', './Util'], function(Crafty, u) {
         });
         /* First unit is the unit with the highest speed */
         curUnit = unitList[0];
+
+        /* Set the state, but don't use it until we're active */
+        selectCallback = freeSelectCallback;
+        selectMode = 'free';
+        selection = curUnit.getCell();
+        lastSelectCallback = null;
     };
 
     return GameController;
