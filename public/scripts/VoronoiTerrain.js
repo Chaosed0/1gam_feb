@@ -56,6 +56,8 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                     } else {
                         offset = new vec2(0, 0);
                     }
+                } else if(this.mode === 'square') {
+                    offset = new vec2(0,0);
                 } else {
                     u.assert(false, 'Unknown terrain generation mode');
                 }
