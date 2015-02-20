@@ -25,8 +25,9 @@ require(['crafty',
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
     const unitSize = 48;
-    const numParties = 10;
-    const numUnitsInParty = 5;
+    const playerPartySize = 5;
+    const enemyPartyNum = 5;
+    const enemyPartySize = 5;
 
     const terrainPercents = {
         water: waterPercent,
@@ -54,9 +55,8 @@ require(['crafty',
     var unitInfo = null;
     var unitClasses = null;
 
-    var activeFactions = [];
-    var startCenters = [];
-    var controller = null;
+    var enemyFaction = null;
+    var enemyController = null;
 
     Crafty.init(width, height, gameElem);
     Crafty.pixelart(true);
@@ -64,7 +64,7 @@ require(['crafty',
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
 
-    var generateSomeUnits = function(num, good) {
+    var generateSomeUnits = function(num, faction, good) {
         /* Terrain better be generated at the time of calling */
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
@@ -74,16 +74,10 @@ require(['crafty',
         var cells = [];
         var centerCell;
 
-        /* Pick a faction name for this group */
-        var alignment = good ? "good" : "bad";
-        var factionName = u.randomElem(names.groups[alignment]);
-        activeFactions.push(factionName);
-
         /* Make sure we're not sticking the unit on a mountain */
         do {
             centerCell = u.randomElem(continent.cells);
         } while(!terrain.isGround(centerCell.site));
-        startCenters.push(centerCell);
 
         /* Get a relatively close area to place the units in */
         while(cells.length < num) {
@@ -96,7 +90,7 @@ require(['crafty',
 
         /* Place the units */
         for(var i = 0; i < num; i++) {
-            var unitName = u.randomElem(names.units[alignment]);
+            var unitName = u.randomElem(names.units[good?"good":"bad"]);
             var className = u.randomElem(unitClasses);
             var placed = false;
             while(!placed) {
@@ -107,7 +101,7 @@ require(['crafty',
                     /* Note that we're trusting in addUnit to set the unit location */
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
-                        .unit(unitName, factionName, className, good, unitInfo[className])
+                        .unit(unitName, faction, className, good, unitInfo[className])
                         .animate('idle', -1);
                     unitManager.addUnit(cell, unit);
                     placed = true;
@@ -139,30 +133,42 @@ require(['crafty',
         /* Create the actual gui */
         var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
 
-        /* Generate some units (placeholder) */
-        /* We want the first faction to be good */
-        var good = true;
-        for(var i = 0; i < numParties; i++) {
-            generateSomeUnits(numUnitsInParty, good);
-            good = false;
+        /* Pick a random faction name for player and enemy */
+        var playerFaction = u.randomElem(names.groups.good);
+        var enemyFaction = u.randomElem(names.groups.bad);
+
+        /* Generate some units for the player */
+        generateSomeUnits(playerPartySize, playerFaction, true);
+        /* Generate some units for the bad guys */
+        for(var i = 0; i < enemyPartyNum; i++) {
+            generateSomeUnits(enemyPartySize, enemyFaction, false);
         }
 
-        /* Create user game controller */
-        controller = new GameController(activeFactions[0], {
+        /* Wrap up objects the GameController needs */
+        var stateObjects = {
             unitManager: unitManager,
             terrain: terrain,
             gui: gui,
             vis: terrainVis,
             camera: camera
-        }, function() {
-            console.log("Player turn over");
+        }
+
+        /* Create user game controller */
+        playerController = new GameController(playerFaction, stateObjects, function() {
+            /* When the player's done, switch to the enemy */
+            enemyController.setActive();
         });
 
-        /* Hack - wait a bit, it seems like the loading switchover can't keep up */
+        /* Create enemy game controller */
+        enemyController = new GameController(enemyFaction, stateObjects, function() {
+            /* When the enemy's done, switch to the player */
+            playerController.setActive();
+        });
+
+        /* Fire up the player GameController and let it take over
+         * Hack - wait a bit, it's hard for us to keep up */
         window.setTimeout(function() {
-            /* Activate the player controller */
-            camera.centerOn({x: startCenters[0].site.x, y: startCenters[0].site.y});
-            controller.setActive(true);
+            playerController.setActive();
         }, 500);
     });
 

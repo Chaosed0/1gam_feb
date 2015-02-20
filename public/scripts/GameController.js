@@ -1,6 +1,8 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
     var GameController = function(faction, objects, doneCallback) {
+        var self = this;
+
         var unitManager = objects.unitManager;
         var terrain = objects.terrain;
         var gui = objects.gui;
@@ -15,13 +17,17 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         var stack = [];
 
+        /* Overarching state for the controller; stays around
+         * when the temp state changes */
         var unitList = null;
         var curUnit = null;
         var curUnitIndex = 0;
         var lastSelectCallback = null;
         var lastBFSResult = null;
 
-        /* Variables comprising the state */
+        /* Variables comprising the state; changes nearly every time
+         * the selected cell on the map changes, or when a button
+         * is pressed */
         var selectMode = null;
         var selection = null;
         var highlight = null;
@@ -31,7 +37,37 @@ define(['crafty', './Util'], function(Crafty, u) {
         var enemyUnit = null;
         var selectCallback = null;
 
-        var advanceAndCheckUnit = function() {
+        /* Called when the current unit's turn is over, and
+         * we should change to the next one */
+        var nextUnit = function() {
+            curUnitIndex++;
+            if(curUnitIndex < unitList.length) {
+                curUnit = unitList[curUnitIndex];
+                /* Center camera on new unit */
+                camera.centerOn(curUnit);
+                /* Select new unit */
+                stack[0].selection = curUnit;
+                stack[0].selectedUnit = curUnit;
+                /* Go back to initial state */
+                useState(rewindStates());
+            } else {
+                /* This faction's turn is done, we're passing off control.
+                 * Go back to initial state, but don't use it */
+                rewindStates();
+                /* Null out the current state */
+                useState({
+                    selectMode: null,
+                    selection: null,
+                    highlight: null,
+                    buttons: null,
+                    centerText: null,
+                    selectedUnit: null,
+                    enemyUnit: null,
+                    selectCallback: null,
+                });
+                /* We're done */
+                doneCallback();
+            }
         }
 
         /* Cancel button; it's the same for all cancels */
@@ -44,8 +80,12 @@ define(['crafty', './Util'], function(Crafty, u) {
             if(lastSelectCallback) {
                 vis.unbind("CellSelected", lastSelectCallback);
             }
+
             lastSelectCallback = cb;
-            vis.bind("CellSelected", cb);
+
+            if(cb) {
+                vis.bind("CellSelected", cb);
+            }
         }
 
         var useState = function(state) {
@@ -107,9 +147,10 @@ define(['crafty', './Util'], function(Crafty, u) {
             while(stack.length > 1) {
                 stack.pop();
             }
-            /* Cheat and get re-select current unit's cell */
+            /* Cheat and get re-select current unit's cell,
+             * in case the selected unit has moved */
             stack[0].selection = curUnit.getCell();
-            useState(stack[0]);
+            return stack[0];
         }
 
         cancelButton.callback = function() {
@@ -206,6 +247,11 @@ define(['crafty', './Util'], function(Crafty, u) {
                         }, {
                             text: 'Attack',
                             callback: guiAttackCallback
+                        },
+                        null,
+                        {
+                            text: 'Skip Unit',
+                            callback: nextUnit
                         }];
                         highlight = null;
                     } else {
@@ -245,7 +291,7 @@ define(['crafty', './Util'], function(Crafty, u) {
          * freeSelectCallback. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            rewindStates();
+            useState(rewindStates());
         }
 
         /* Select callback when user has chosen to attack a unit. Deals
@@ -274,41 +320,50 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         var attackConfirmCallback = function(data) {
             u.assert(enemyUnit);
-            enemyUnit.damage(selectedUnit.getAttack().magnitude);
-            rewindStates();
+            curUnit.attack(enemyUnit);
+            /* This unit has attacked, it's time to advance to the next unit */
+            nextUnit();
         }
 
-        this.setActive = function(active) {
-            if(active) {
-                camera.mouselook(false);
-                camera.centerOn(curUnit);
-                gui.announce(faction, function() {
-                    /* Act as if we just selected the first unit's cell */
-                    selectCallback({mouseButton: 0, cell: selection});
-                    camera.mouselook(true);
-                });
-            } else {
-                vis.unbind("CellSelected", lastSelectCallback);
-                lastSelectCallback = null;
-            }
+        this.setActive = function() {
+            /* Turn mouselook off for the announcement */
+            camera.mouselook(false);
+            /* Init state */
+            /* First unit is the unit with the highest speed */
+            curUnitIndex = 0;
+            curUnit = unitList[curUnitIndex];
+            selectCallback = freeSelectCallback;
+            selectMode = 'free';
+            selection = curUnit.getCell();
+            lastSelectCallback = null;
+            /* Center on the unit being controlled */
+            camera.centerOn(curUnit);
+
+            /* Announce the new faction's turn */
+            gui.announce(faction, function() {
+                /* This is the callback when the announcement is finished
+                 * Turn mouselook back on */
+                camera.mouselook(true);
+                /* Act as if we just selected the first unit's cell */
+                selectCallback({mouseButton: 0, cell: selection});
+                /* Give all our controlled units a new turn */
+                for(var i = 0; i < unitList.length; i++) {
+                    unitList[i].newTurn();
+                }
+            });
         }
 
-        /* Grab the unit list for this faction */
-        unitList = unitManager.getUnitListForFaction(faction);
-        /* Sort it by descending speed */
-        unitList.sort(function(u1,u2) {
-            return u2.getSpeed() - u1.getSpeed();
-        });
-        /* First unit is the unit with the highest speed */
-        u.assert(unitList.length > 0, 'No units in the unit list for faction ' + faction);
-        curUnitIndex = 0;
-        curUnit = unitList[curUnitIndex];
+        this.init = function() {
+            /* Grab the unit list for this faction */
+            unitList = unitManager.getUnitListForFaction(faction);
+            u.assert(unitList.length > 0, 'Tried to create a controller for ' + faction + ' but it has no units');
+            /* Sort it by descending speed */
+            unitList.sort(function(u1,u2) {
+                return u2.getSpeed() - u1.getSpeed();
+            });
+        }
 
-        /* Set the state, but don't use it until we're active */
-        selectCallback = freeSelectCallback;
-        selectMode = 'free';
-        selection = curUnit.getCell();
-        lastSelectCallback = null;
+        this.init();
     };
 
     return GameController;

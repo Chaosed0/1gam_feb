@@ -36,7 +36,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         u.assert(this.getUnitForCell(curCell) === unit);
         delete this.locationMap[curCell.site.voronoiId];
         this.locationMap[cell.site.voronoiId] = unit;
-        unit.setCell(cell);
+        unit.moveToCell(cell);
     }
 
     UnitManager.prototype.getUnitListForFaction = function(faction) {

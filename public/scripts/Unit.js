@@ -39,7 +39,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         },
 
         damage: function(dmg) {
-            u.assert(typeof dmg === 'number');
+            u.assert(typeof dmg === 'number', 'Attack damage magnitude was not a number');
             this._curhealth = Math.max(0, this._curhealth - dmg);
         },
 
@@ -110,6 +110,30 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
             this.x = center.x - this.w/2;
             this.y = center.y - this.h/2;
+        },
+
+        moveToCell: function(cell) {
+            this.setCell(cell);
+            this._moved = true;
+        },
+
+        attack: function(unit) {
+            u.assert(unit.damage, "Tried to attack something that doesn't look like a unit");
+            unit.damage(this._attack.magnitude);
+            this._attacked = true;
+        },
+
+        hasAttacked: function() {
+            return this._attacked;
+        },
+
+        hasMoved: function() {
+            return this._moved;
+        },
+
+        newTurn: function() {
+            this._moved = false;
+            this._attacked = false;
         }
     });
 });
