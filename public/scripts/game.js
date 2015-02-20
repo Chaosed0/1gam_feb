@@ -25,6 +25,8 @@ require(['crafty',
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
     const unitSize = 48;
+    const numParties = 10;
+    const numUnitsInParty = 5;
 
     const terrainPercents = {
         water: waterPercent,
@@ -138,8 +140,8 @@ require(['crafty',
         /* Generate some units (placeholder) */
         /* We want the first faction to be good */
         var good = true;
-        for(var i = 0; i < 5; i++) {
-            generateSomeUnits(5, good);
+        for(var i = 0; i < numParties; i++) {
+            generateSomeUnits(numUnitsInParty, good);
             good = false;
         }
 
