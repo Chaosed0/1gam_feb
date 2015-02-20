@@ -86,11 +86,13 @@ require(['crafty',
         startCenters.push(centerCell);
 
         /* Get a relatively close area to place the units in */
-        terrain.bfs(centerCell, 3, function(terrain, cell) {
-            return terrain.isGround(cell.site);
-        }, function(cell) {
-            cells.push(cell);
-        });
+        while(cells.length < num) {
+            terrain.bfs(centerCell, 3, function(terrain, cell) {
+                return terrain.isGround(cell.site);
+            }, function(cell) {
+                cells.push(cell);
+            });
+        }
 
         /* Place the units */
         for(var i = 0; i < num; i++) {
