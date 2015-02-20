@@ -2,7 +2,7 @@
 define(['crafty'], function(Crafty) {
 
     var CameraControls = function(bounds, padding) {
-        this.lastmouse = null;
+        this._lastmouse = null;
         this.bounds = bounds;
         this.padding = padding;
         this.maxScale = Math.max(Crafty.viewport.width / bounds.w, Crafty.viewport.height / bounds.h);
@@ -131,6 +131,7 @@ define(['crafty'], function(Crafty) {
             Crafty.addEvent(this, Crafty.stage.elem, "wheel", wheel);
         } else if(!active && this.mouselookactive) {
             this.mouselookactive = false;
+            this._lastmouse = null;
             Crafty.removeEvent(this, Crafty.stage.elem, "mousemove", mousemove);
             Crafty.removeEvent(this, Crafty.stage.elem, "mouseup", mouseup);
             Crafty.removeEvent(this, Crafty.stage.elem, "mousedown", mousedown);
