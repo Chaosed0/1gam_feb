@@ -1,6 +1,6 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
-    var GameController = function(objects, faction, doneCallback) {
+    var GameController = function(faction, objects, doneCallback) {
         var unitManager = objects.unitManager;
         var terrain = objects.terrain;
         var gui = objects.gui;

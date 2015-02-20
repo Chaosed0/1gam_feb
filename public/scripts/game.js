@@ -148,13 +148,13 @@ require(['crafty',
         }
 
         /* Create user game controller */
-        controller = new GameController({
+        controller = new GameController(activeFactions[0], {
             unitManager: unitManager,
             terrain: terrain,
             gui: gui,
             vis: terrainVis,
             camera: camera
-        }, activeFactions[0], function() {
+        }, function() {
             console.log("Player turn over");
         });
 
