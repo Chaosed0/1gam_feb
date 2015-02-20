@@ -51,14 +51,18 @@ define(['crafty'], function(Crafty) {
             x: - (e.realX - (Crafty.viewport.x + e.realX) / scaleFactor),
             y: - (e.realY - (Crafty.viewport.y + e.realY) / scaleFactor),
         }
-        newPos = this.clampViewportPos(newPos);
+        newPos = this.clampViewportPos(newPos, newScale);
 
         Crafty.viewport.x = newPos.x;
         Crafty.viewport.y = newPos.y;
         Crafty.viewport.scale(newScale);
     }
 
-    CameraControls.prototype.clampViewportPos = function(newPos) {
+    CameraControls.prototype.clampViewportPos = function(newPos, newScale) {
+        if(newScale === undefined) {
+            newScale = Crafty.viewport._scale;
+        }
+
         if(this.bounds) {
             var bounds;
             if(this.padding) {
@@ -92,8 +96,8 @@ define(['crafty'], function(Crafty) {
 
             newPos.x = Math.min(newPos.x, bounds.x);
             newPos.y = Math.min(newPos.y, bounds.y);
-            newPos.x = Math.max(newPos.x, Crafty.viewport.width / Crafty.viewport._scale - bounds.w);
-            newPos.y = Math.max(newPos.y, Crafty.viewport.height / Crafty.viewport._scale - bounds.h);
+            newPos.x = Math.max(newPos.x, Crafty.viewport.width / newScale - bounds.w);
+            newPos.y = Math.max(newPos.y, Crafty.viewport.height / newScale - bounds.h);
         }
         return newPos;
     }
