@@ -7,6 +7,7 @@ require(['crafty',
         './CameraControls',
         './TerrainRenderer',
         './GameController',
+        './NameGenerator',
         './Util',
     './Expires',
     './Meter',
@@ -15,7 +16,7 @@ require(['crafty',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, GameController, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, GameController, NameGenerator, u) {
     var self = this;
     var map;
 
@@ -55,6 +56,8 @@ require(['crafty',
     var unitInfo = null;
     var unitClasses = null;
 
+    var goodNameGenerator = null;
+    var badNameGenerator = null;
     var enemyFaction = null;
     var enemyController = null;
 
@@ -90,8 +93,9 @@ require(['crafty',
 
         /* Place the units */
         for(var i = 0; i < num; i++) {
-            var unitName = u.randomElem(names.units[good?"good":"bad"]);
             var className = u.randomElem(unitClasses);
+            var unitName = (good ? goodNameGenerator.generateName() : badNameGenerator.generateName());
+
             var placed = false;
             while(!placed) {
                 var cell = cells[Math.floor(u.getRandom(cells.length))];
@@ -186,6 +190,9 @@ require(['crafty',
             unitInfo = data.units;
             unitClasses = Object.keys(unitInfo);
             names = data.names;
+            /* Initialize name generator */
+            goodNameGenerator = new NameGenerator(names.units.good);
+            badNameGenerator = new NameGenerator(names.units.bad);
             /* Generate terrain */
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents);
             /* Render the terrain */
