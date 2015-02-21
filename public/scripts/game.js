@@ -79,7 +79,7 @@ require(['crafty',
         var centerCell;
 
         for(var i = 1; i < bodies.plains.length; i++) {
-            if(bodies.plains[i].cells.length > continent.length) {
+            if(bodies.plains[i].cells.length > continent.cells.length) {
                 continent = bodies.plains[i];
             }
         }
