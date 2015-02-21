@@ -76,7 +76,6 @@ require(['crafty',
         /* Pick the largest open space and stick some guys on a random location there */
         var continent = bodies.plains[0];
         var cells = [];
-        var centerCell;
 
         for(var i = 1; i < bodies.plains.length; i++) {
             if(bodies.plains[i].cells.length > continent.cells.length) {
@@ -84,12 +83,10 @@ require(['crafty',
             }
         }
 
-        /* Make sure we're not sticking the unit on a mountain */
-        do {
-            centerCell = u.randomElem(continent.cells);
-        } while(!terrain.isGround(centerCell.site));
+        var centerCell = u.randomElem(continent.cells);
 
-        /* Get a relatively close area to place the units in */
+        /* Get a relatively close area to place the units in
+         * that isn't too small */
         while(cells.length < num) {
             terrain.bfs(centerCell, 3, function(terrain, cell) {
                 return terrain.isGround(cell.site);
