@@ -5,13 +5,13 @@ define(['crafty', './Util'], function(Crafty, u) {
 
     const damageTextExpireTime = 1000;
 
-    var attack = function(aggressor, victim, callback) {
+    var attack = function(aggressor, defender, callback) {
         /* Do the attack */
-        var magnitude = aggressor.attack(victim);
+        var magnitude = aggressor.attack(defender);
 
         /* Make damage numbers */
         var text = Crafty.e("2D, Canvas, Text, Expires, Tween")
-            .attr({x: victim.x + victim.w/2, y: victim.y})
+            .attr({x: defender.x + defender.w/2, y: defender.y})
             .text(magnitude)
             .textFont({family: 'Georgia', size: '20px', weight: '900'})
             .expires(damageTextExpireTime)
@@ -339,15 +339,30 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback when user confirms the unit he's attacking. */
         var attackConfirmCallback = function(data) {
             u.assert(enemyUnit);
+            var attacker = curUnit;
+            var defender = enemyUnit;
 
-            attack(curUnit, enemyUnit, function() {
+            /* Null the state before we display time-consuming attack effects
+             * so that the user can't control */
+            selectMode = null;
+            selection = null;
+            highlight = null;
+            buttons = null;
+            centerText = null;
+            selectedUnit = null;
+            enemyUnit = null;
+            selectCallback = null;
+            pushState();
+
+            /* Do attack effects, like damage numbers */
+            attack(attacker, defender, function() {
                 /* Check if the unit's turn is over */
                 if(curUnit.isTurnOver()) {
                     /* It's time to advance to the next unit */
                     nextUnit();
                 } else {
                     /* Reselect the current unit */
-                    freeSelectCallback({mouseButton: 0, cell: selectedUnit.getCell()});
+                    freeSelectCallback({mouseButton: 0, cell: curUnit.getCell()});
                 }
             });
         }
