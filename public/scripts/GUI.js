@@ -341,7 +341,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         self.announceText.visible = true;
         self.announceBacking.visible = true;
         self.announceText.tween({_clientbounds: {x: Crafty.viewport.width/2 -
-            self.announceText._clientbounds.w/2}}, time/2, 'easeInOutQuad');
+            self.announceText._clientbounds.w/2}}, time/2, 'smoothStep');
 
         var tweenEnd2 = function() {
             self.announceText.unbind("TweenEnd", tweenEnd2);
@@ -352,8 +352,8 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
 
         var tweenEnd1 = function() {
             self.announceText.unbind("TweenEnd", tweenEnd1);
-            self.announceText.tween({_clientbounds: {x: Crafty.viewport.x -
-                self.announceText._clientbounds._w}}, time/2, 'easeInOutQuad');
+            self.announceText.tween({_clientbounds: {x: -self.announceText._clientbounds._w}},
+                    time/2, 'smoothStep');
             self.announceText.bind("TweenEnd", tweenEnd2);
         }
 
