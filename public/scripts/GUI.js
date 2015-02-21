@@ -268,14 +268,15 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.bottomCenterText.text('elevation: ' + cell.site.elevation.toFixed(2));
     }
 
-    /* Display info about a unit in the center GUI element,
-     * as well as displaying controls in the right menu. */
+    /* Display info about a unit in the center GUI element
+     * on either the right or left. */
     GUI.prototype.displayUnitInfo = function(unit, side) {
         u.assert(side in this.unitInfos);
         this.unitInfos[side].displayUnitInfo(unit);
         this.unitInfos[side].visible(true);
     }
 
+    /* Hide one of the info boxes */
     GUI.prototype.hideInfo = function(side) {
         if(side === undefined) {
             for(side in this.unitInfos) {
@@ -286,6 +287,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         }
     }
 
+    /* Set the buttons displayed in the right-most element. */
     GUI.prototype.setButtons = function(buttons) {
         u.assert(buttons === null || buttons.length <= 4);
         for(var i = 0; i < this.buttons.length; i++) {
@@ -313,12 +315,14 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         }
     }
 
+    /* Hide the buttons */
     GUI.prototype.hideButtons = function() {
         for(var i = 0; i < 4; i++) {
             this.buttons[i].setVisible(false);
         }
     }
 
+    /* Set center text in the center element */
     GUI.prototype.setCenterText = function(text) {
         if(text !== null) {
             /* A ton of cheating going on here */
@@ -333,6 +337,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         }
     }
 
+    /* Announce something in the center of the screen */
     GUI.prototype.announce = function(text, time, callback) {
         var self = this;
         self.announceText.text(text);
