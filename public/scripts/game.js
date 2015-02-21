@@ -38,6 +38,7 @@ require(['crafty',
 
     const terrainRenderOptions = {
         drawElevations: false,
+        drawBodyTypes: false,
         drawRivers: true,
         drawSites: false,
         drawEdges: false,
@@ -72,10 +73,16 @@ require(['crafty',
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
 
-        /* Pick a random continent and stick some guys on it */
-        var continent = u.randomElem(bodies.continents);
+        /* Pick the largest open space and stick some guys on a random location there */
+        var continent = bodies.plains[0];
         var cells = [];
         var centerCell;
+
+        for(var i = 1; i < bodies.plains.length; i++) {
+            if(bodies.plains[i].cells.length > continent.length) {
+                continent = bodies.plains[i];
+            }
+        }
 
         /* Make sure we're not sticking the unit on a mountain */
         do {

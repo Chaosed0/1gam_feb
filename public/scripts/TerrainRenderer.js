@@ -58,6 +58,7 @@ define(['./Util'], function(u) {
         var pointData = terrain.getPointData();
         var diagram = terrain.getDiagram();
         var rivers = terrain.getRivers();
+        var bodies = terrain.getBodies();
         var points = pointData.points;
         var edges = diagram.edges;
         var cells = diagram.cells;
@@ -90,11 +91,28 @@ define(['./Util'], function(u) {
             ctx.fill();
             ctx.stroke();
 
-            if(options.drawElevations) {
+            if(options && options.drawElevations) {
                 ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
                 ctx.font = "8px";
                 ctx.textAlign = 'center';
                 ctx.fillText(elevation.toFixed(2), cell.site.x, cell.site.y);
+            } else if(options && options.drawBodyTypes) {
+                var typestr = null;
+                for(var type in bodies) {
+                    for(var j = 0; j < bodies[type].length; j++) {
+                        if(bodies[type][j].cellset.has(cell)) {
+                            typestr = type + ' (' + j + ')';
+                            break;
+                        }
+                    }
+                    if(typestr) {
+                        break;
+                    }
+                }
+                ctx.fillStyle = 'rgb(' + (255 - color.r) + ',' + (255 - color.g) + ',' + (255 - color.b) + ')';
+                ctx.font = "8px";
+                ctx.textAlign = 'center';
+                ctx.fillText(typestr, cell.site.x, cell.site.y);
             }
         }
         ctx.restore();

@@ -10,9 +10,6 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
     const frequencyConst = 5;
     const perturbConst = 3.0;
 
-    const oceanThreshold = 100;
-    const continentThreshold = 100;
-
     var VoronoiTerrain = function() {
         this.diagram = null;
         this.pointData = null;
@@ -130,10 +127,13 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                 var cells = [];
 
                 this.floodFill(cell, set, function(terrain, ocell) {
-                    if(point.elevation > terrain.waterLine) {
-                        return ocell.site.elevation > terrain.waterLine;
-                    } else {
+                    if(point.elevation < terrain.waterLine) {
                         return ocell.site.elevation < terrain.waterLine;
+                    } else if(point.elevation < terrain.groundLine) {
+                        return ocell.site.elevation >= terrain.waterLine &&
+                            ocell.site.elevation < terrain.groundLine;
+                    } else {
+                        return ocell.site.elevation >= terrain.groundLine;
                     }
                 }, function(cell) {
                     cells.push(cell);
@@ -146,19 +146,13 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
 
                 var type, land;
                 if(point.elevation < this.waterLine) {
-                    if(cells.length > oceanThreshold) {
-                        //Large body of water
-                        type = 'oceans';
-                    } else {
-                        type = 'lakes';
-                    }
+                    type = 'water';
                     land = false;
+                } else if(point.elevation < this.groundLine) {
+                    type = 'plains';
+                    land = true;
                 } else {
-                    if(cells.length > continentThreshold) {
-                        type = 'continents';
-                    } else {
-                        type = 'islands';
-                    }
+                    type = 'mountain';
                     land = true;
                 }
 
@@ -200,7 +194,7 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
             return;
         }
 
-        var body = { cells: cells, land: land, coast: [] };
+        var body = { cells: cells, cellset: new Set(cells), land: land, coast: [] };
         var coast = body.coast;
 
         for(var i = 0; i < cells.length; i++) {
