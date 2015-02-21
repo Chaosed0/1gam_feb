@@ -46,7 +46,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 /* Center camera on new unit */
                 camera.centerOn(curUnit);
                 /* Select new unit */
-                stack[0].selection = curUnit;
+                stack[0].selection = curUnit.getCell();
                 stack[0].selectedUnit = curUnit;
                 /* Go back to initial state */
                 useState(rewindStates());
