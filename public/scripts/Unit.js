@@ -41,6 +41,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         damage: function(dmg) {
             u.assert(typeof dmg === 'number', 'Attack damage magnitude was not a number');
             this._curhealth = Math.max(0, this._curhealth - dmg);
+            this.trigger("Damaged", dmg);
         },
 
         isDead: function() {
@@ -129,6 +130,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         hasMoved: function() {
             return this._moved;
+        },
+
+        isTurnOver: function() {
+            return this._attacked;
         },
 
         newTurn: function() {
