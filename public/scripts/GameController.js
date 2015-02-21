@@ -266,7 +266,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                         },
                         null,
                         {
-                            text: 'Skip Unit',
+                            text: 'Next',
                             callback: nextUnit
                         }];
                         highlight = null;
