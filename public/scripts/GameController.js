@@ -196,8 +196,6 @@ define(['crafty', './Util'], function(Crafty, u) {
             return highlightedCells;
         }
 
-        /* ---- */
-
         /* Callback for when "move" button is hit in gui. Transitions to 
          * moveSelectCallback */
         var guiMoveCallback = function() {
@@ -211,7 +209,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         /* Callback for when "attack" button is hit in gui. Transitions to 
-         * freeSelectCallback, eventually. */
+         * freeSelectCallback. */
         var guiAttackCallback = function() {
             highlightedCells = [];
             terrain.bfs(selectedUnit.getCell(),
@@ -229,8 +227,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             pushState();
         }
 
-        /* Select callback when user is selecting any tile. If a unit is selected,
-         * adds the unit's available actions to the gui menu. */
+        /* Callback when user selects any cell, during free select mode. */
         var freeSelectCallback = function(data) {
             var cell = data.cell;
 
@@ -265,16 +262,14 @@ define(['crafty', './Util'], function(Crafty, u) {
                     highlight = null;
                     buttons = [ cancelButton ];
                 }
-                /* If we selected another cell, we don't want to push more
+                /* If we had selected a different cell, we don't want to push more
                  * states onto the stack - pop the previous one */
                 popState();
                 pushState();
             }
         }
 
-        /* Select callback when user has chosen to move the unit. Moves the
-         * selected unit to the selected cell, then newSelectCallbacks to
-         * freeSelectCallback.
+        /* Callback when user selects a cell to move a unit to.
          * Note that we don't need to check if it's a valid cell; we only
          * receive the callback if it's a highlighted cell. */
         var moveSelectCallback = function(data) {
@@ -287,8 +282,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             pushState();
         }
 
-        /* Selection callback when the user has selected a cell to move a
-         * unit to and we're waiting on confirmation. Rewinds to initial state. */
+        /* Callback when user confirms a cell to move a unit to. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
             rewindStates();
@@ -297,9 +291,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             freeSelectCallback({mouseButton: 0, cell: selectedUnit.getCell()});
         }
 
-        /* Select callback when user has chosen to attack a unit. Deals
-         * damage depending on the selected unit's attack, then newSelectCallbacks
-         * to freeSelectCallback.
+        /* Callback when user chooses a unit to attack.
          * XXX: Only supports single-target attacks for now.
          */
         var attackSelectCallback = function(data) {
@@ -321,6 +313,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
         }
 
+        /* Callback when user confirms the unit he's attacking. */
         var attackConfirmCallback = function(data) {
             u.assert(enemyUnit);
             curUnit.attack(enemyUnit);
@@ -328,6 +321,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             nextUnit();
         }
 
+        /* Sets this GameController to active. Announces the faction that was
+         * set active, then selects the first unit in the player's turn order. */
         this.setActive = function() {
             /* Turn mouselook off for the announcement */
             camera.mouselook(false);
