@@ -122,6 +122,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             u.assert(unit.damage, "Tried to attack something that doesn't look like a unit");
             unit.damage(this._attack.magnitude);
             this._attacked = true;
+            return this._attack.magnitude;
         },
 
         hasAttacked: function() {

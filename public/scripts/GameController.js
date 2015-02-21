@@ -3,6 +3,22 @@ define(['crafty', './Util'], function(Crafty, u) {
     const activateAnnounceTime = 3000;
     const unitAnnounceTime = 1000;
 
+    const damageTextExpireTime = 1000;
+
+    var attack = function(aggressor, victim, callback) {
+        /* Do the attack */
+        var magnitude = aggressor.attack(victim);
+
+        /* Make damage numbers */
+        var text = Crafty.e("2D, Canvas, Text, Expires, Tween")
+            .attr({x: victim.x + victim.w/2, y: victim.y})
+            .text(magnitude)
+            .textFont({family: 'Georgia', size: '20px', weight: '900'})
+            .expires(damageTextExpireTime)
+            .bind("Expired", callback);
+        text.tween({y: text.y - text.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
+    }
+
     var GameController = function(faction, objects, doneCallback) {
         var self = this;
 
@@ -323,15 +339,17 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback when user confirms the unit he's attacking. */
         var attackConfirmCallback = function(data) {
             u.assert(enemyUnit);
-            curUnit.attack(enemyUnit);
-            /* Check if the unit's turn is over */
-            if(curUnit.isTurnOver()) {
-                /* It's time to advance to the next unit */
-                nextUnit();
-            } else {
-                /* Reselect the current unit */
-                freeSelectCallback({mouseButton: 0, cell: selectedUnit.getCell()});
-            }
+
+            attack(curUnit, enemyUnit, function() {
+                /* Check if the unit's turn is over */
+                if(curUnit.isTurnOver()) {
+                    /* It's time to advance to the next unit */
+                    nextUnit();
+                } else {
+                    /* Reselect the current unit */
+                    freeSelectCallback({mouseButton: 0, cell: selectedUnit.getCell()});
+                }
+            });
         }
 
         /* Sets this GameController to active. Announces the faction that was
