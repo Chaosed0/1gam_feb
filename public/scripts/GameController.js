@@ -1,5 +1,8 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
+    const activateAnnounceTime = 3000;
+    const unitAnnounceTime = 1000;
+
     var GameController = function(faction, objects, doneCallback) {
         var self = this;
 
@@ -150,6 +153,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             return stack[0];
         }
 
+        /* Now that we have popState, set the cancel button callback */
         cancelButton.callback = function() {
             popState();
             useState(stack[stack.length-1]);
@@ -327,28 +331,28 @@ define(['crafty', './Util'], function(Crafty, u) {
         this.setActive = function() {
             /* Turn mouselook off for the announcement */
             camera.mouselook(false);
-            /* Init state */
+            /* Give all our controlled units a new turn */
+            for(var i = 0; i < unitList.length; i++) {
+                unitList[i].newTurn();
+            }
             /* First unit is the unit with the highest speed */
             curUnitIndex = 0;
             curUnit = unitList[curUnitIndex];
+            /* Initialize state */
             selectCallback = freeSelectCallback;
             selectMode = 'free';
             selection = curUnit.getCell();
             lastSelectCallback = null;
             /* Center on the new unit being controlled */
-            camera.centerOn(curUnit, 2000);
+            camera.centerOn(curUnit, activateAnnounceTime/3);
 
             /* Announce the new faction's turn */
-            gui.announce(faction, function() {
+            gui.announce(faction, activateAnnounceTime, function() {
                 /* This is the callback when the announcement is finished
                  * Turn mouselook back on */
                 camera.mouselook(true);
                 /* Act as if we just selected the first unit's cell */
                 selectCallback({mouseButton: 0, cell: selection});
-                /* Give all our controlled units a new turn */
-                for(var i = 0; i < unitList.length; i++) {
-                    unitList[i].newTurn();
-                }
             });
         }
 
