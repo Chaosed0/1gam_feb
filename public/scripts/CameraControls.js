@@ -7,6 +7,20 @@ define(['crafty'], function(Crafty) {
         this.padding = padding;
         this.maxScale = Math.max(Crafty.viewport.width / bounds.w, Crafty.viewport.height / bounds.h);
         this.mouselookactive = false;
+
+        /* Correct padding, if the user didn't specify everything */
+        if(!padding.l) {
+            padding.l = 0;
+        }
+        if(!padding.r) {
+            padding.r = 0;
+        }
+        if(!padding.b) {
+            padding.b = 0;
+        }
+        if(!padding.t) {
+            padding.t = 0;
+        }
     }
 
     var mousemove = function(e) {
@@ -72,24 +86,16 @@ define(['crafty'], function(Crafty) {
                     w: this.bounds.w,
                     h: this.bounds.h
                 };
-                if(this.padding.l) {
-                    var realPadding = this.padding.l / Crafty.viewport._scale
-                    bounds.x -= realPadding;
-                    bounds.w += realPadding;
-                }
-                if(this.padding.r) {
-                    var realPadding = this.padding.r / Crafty.viewport._scale
-                    bounds.w += realPadding;
-                }
-                if(this.padding.t) {
-                    var realPadding = this.padding.t / Crafty.viewport._scale
-                    bounds.y -= realPadding;
-                    bounds.h += realPadding;
-                }
-                if(this.padding.b) {
-                    var realPadding = this.padding.b / Crafty.viewport._scale
-                    bounds.h += realPadding;
-                }
+                var realPadding = this.padding.l / Crafty.viewport._scale;
+                bounds.x -= realPadding;
+                bounds.w += realPadding;
+                realPadding = this.padding.r / Crafty.viewport._scale;
+                bounds.w += realPadding;
+                realPadding = this.padding.t / Crafty.viewport._scale;
+                bounds.y -= realPadding;
+                bounds.h += realPadding;
+                realPadding = this.padding.b / Crafty.viewport._scale;
+                bounds.h += realPadding;
             } else {
                 bounds = this.bounds;
             }
@@ -113,8 +119,8 @@ define(['crafty'], function(Crafty) {
 
     CameraControls.prototype.centerOn = function(point) {
         var newPos = {
-            x: -point.x + (Crafty.viewport.width / Crafty.viewport._scale) / 2.0,
-            y: -point.y + (Crafty.viewport.height / Crafty.viewport._scale) / 2.0
+            x: -point.x + ((Crafty.viewport.width + this.padding.l - this.padding.r)/ Crafty.viewport._scale) / 2.0,
+            y: -point.y + ((Crafty.viewport.height + this.padding.t - this.padding.b)/ Crafty.viewport._scale) / 2.0
         }
         newPos = this.clampViewportPos(newPos);
 
