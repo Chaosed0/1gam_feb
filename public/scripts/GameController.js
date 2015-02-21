@@ -43,8 +43,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             curUnitIndex++;
             if(curUnitIndex < unitList.length) {
                 curUnit = unitList[curUnitIndex];
-                /* Center camera on new unit */
-                camera.centerOn(curUnit);
+                /* Center camera on new unit over some time */
+                camera.centerOn(curUnit, 1000);
                 /* Select new unit */
                 stack[0].selection = curUnit.getCell();
                 stack[0].selectedUnit = curUnit;
@@ -335,8 +335,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             selectMode = 'free';
             selection = curUnit.getCell();
             lastSelectCallback = null;
-            /* Center on the unit being controlled */
-            camera.centerOn(curUnit);
+            /* Center on the new unit being controlled */
+            camera.centerOn(curUnit, 2000);
 
             /* Announce the new faction's turn */
             gui.announce(faction, function() {

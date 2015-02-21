@@ -117,15 +117,59 @@ define(['crafty'], function(Crafty) {
         return newScale;
     }
 
-    CameraControls.prototype.centerOn = function(point) {
+    CameraControls.prototype.centerOn = function(point, time, easing) {
         var newPos = {
-            x: -point.x + ((Crafty.viewport.width + this.padding.l - this.padding.r)/ Crafty.viewport._scale) / 2.0,
-            y: -point.y + ((Crafty.viewport.height + this.padding.t - this.padding.b)/ Crafty.viewport._scale) / 2.0
+            x: -point.x + ((Crafty.viewport.width + this.padding.l - this.padding.r)
+                       / Crafty.viewport._scale) / 2.0,
+            y: -point.y + ((Crafty.viewport.height + this.padding.t - this.padding.b)
+                       / Crafty.viewport._scale) / 2.0
         }
         newPos = this.clampViewportPos(newPos);
 
-        Crafty.viewport.x = newPos.x;
-        Crafty.viewport.y = newPos.y;
+        if(time === undefined) {
+            Crafty.viewport.x = newPos.x;
+            Crafty.viewport.y = newPos.y;
+        } else {
+            /* This is copied nearly wholesale from Crafty.viewport.pan().
+             * We'd just use that, but unfortunately, Crafty.viewport._clamp()
+             * modifies the viewport attributes way too many times, causing our
+             * HUD component to call viewportmodified a ton, resulting in lots
+             * of lag. Our clampViewportPos is specifically made not to do that */
+            var self = this;
+            var dx = Crafty.viewport.x - newPos.x;
+            var dy = Crafty.viewport.y - newPos.y;
+            var startingX = Crafty.viewport._x;
+            var startingY = Crafty.viewport._y;
+            var targetX = startingX - dx;
+            var targetY = startingY - dy;
+
+            if(easing === undefined) {
+                easing = 'easeInOutQuad';
+            }
+            var easingObj = new Crafty.easing(time, easing);
+
+            /* Cancel any current camera control */
+            Crafty.trigger("StopCamera");
+
+            /* Make function that moves the camera every frame */
+            var enterFrame = function(data) {
+                easingObj.tick(data.dt);
+                var v = easingObj.value();
+                var newPos = {x: (1-v) * startingX + v * targetX, y: (1-v) * startingY+ v * targetY};
+                newPos = self.clampViewportPos(newPos);
+                
+                Crafty.viewport.x = newPos.x;
+                Crafty.viewport.y = newPos.y;
+
+                if (easingObj.complete) {
+                    Crafty.unbind("EnterFrame", enterFrame);
+                    Crafty.trigger("CameraAnimationDone");
+                }
+            }
+            /* Bind to event - using uniqueBind prevents multiple copies from
+             * being bound */
+            Crafty.uniqueBind("EnterFrame", enterFrame);
+        }
     }
 
     CameraControls.prototype.mouselook = function(active) {
