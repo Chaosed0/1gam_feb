@@ -147,9 +147,6 @@ define(['crafty', './Util'], function(Crafty, u) {
             while(stack.length > 1) {
                 stack.pop();
             }
-            /* Cheat and get re-select current unit's cell,
-             * in case the selected unit has moved */
-            stack[0].selection = curUnit.getCell();
             return stack[0];
         }
 
@@ -243,7 +240,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     if(selectedUnit === curUnit) {
                         buttons = [{
                             text: 'Move',
-                            callback: guiMoveCallback,
+                            callback: selectedUnit.hasMoved() ? null : guiMoveCallback,
                         }, {
                             text: 'Attack',
                             callback: guiAttackCallback
@@ -287,11 +284,13 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         /* Selection callback when the user has selected a cell to move a
-         * unit to and we're waiting on confirmation. Transitions to
-         * freeSelectCallback. */
+         * unit to and we're waiting on confirmation. Rewinds to initial state. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            useState(rewindStates());
+            rewindStates();
+            /* Cheat and call freeSelectCallback, because we need to re-select
+             * the current unit */
+            freeSelectCallback({mouseButton: 0, cell: selectedUnit.getCell()});
         }
 
         /* Select callback when user has chosen to attack a unit. Deals
