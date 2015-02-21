@@ -1,14 +1,13 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
 
-    var Button = function(text, color, greycolor, bounds) {
+    var Button = function(text, color, bounds) {
         if(bounds === undefined) {
             bounds = greycolor;
             greycolor = '#888888';
         }
 
-        this.originalcolor = color;
-        this.greycolor = greycolor;
+        this.backcolor = color;
         this.background = Crafty.e("2D, Canvas, Color, HUD, Mouse")
             .attr(bounds)
             .color(color)
@@ -46,11 +45,9 @@ define(['crafty', './Util'], function(Crafty, u) {
 
     Button.prototype.grey = function(grey) {
         if(grey) {
-            this.background.color = this.greycolor;
-            this.text.textColor = 'rgba(0,0,0,0.7)';
+            this.text.textColor('rgba(0,0,0,0.25)');
         } else {
-            this.background.color = this.originalcolor;
-            this.text.textColor = '#000000';
+            this.text.textColor('rgba(0,0,0,1.0)');
         }
     }
 
