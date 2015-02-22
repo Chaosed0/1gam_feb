@@ -65,7 +65,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
                         (this._selectmode === 'highlight' && this._highlightcells.indexOf(cell) >= 0) ||
                         (this._selectmode === 'confirm' && this._selectedcell === cell)) {
                     /* Valid cell, trigger */
-                    this.trigger("CellSelected", {mouseButton: e.mouseButton, cell: cell});
+                    this.trigger("CellSelected", {cell: cell});
                 }
             }
         }

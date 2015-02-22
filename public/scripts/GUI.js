@@ -293,8 +293,8 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         for(var i = 0; i < this.buttons.length; i++) {
             if(buttons && i < buttons.length) {
                 if(buttons[i] !== null) {
-                    if(buttons[i].text) {
-                        this.buttons[i].setText(buttons[i].text);
+                    if(buttons[i].name) {
+                        this.buttons[i].setText(buttons[i].name);
                     }
 
                     if(buttons[i].callback) {

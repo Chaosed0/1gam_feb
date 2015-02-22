@@ -6,6 +6,8 @@ require(['crafty',
         './UnitManager',
         './CameraControls',
         './TerrainRenderer',
+        './ComputerInputs',
+        './LocalInputs',
         './GameController',
         './NameGenerator',
         './Util',
@@ -16,7 +18,7 @@ require(['crafty',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, GameController, NameGenerator, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, ComputerInputs, LocalInputs, GameController, NameGenerator, u) {
     var self = this;
     var map;
 
@@ -152,7 +154,7 @@ require(['crafty',
             generateSomeUnits(enemyPartySize, enemyFaction, false);
         }
 
-        /* Wrap up objects the GameController needs */
+        /* Wrap up objects the GameControllers need */
         var stateObjects = {
             unitManager: unitManager,
             terrain: terrain,
@@ -161,14 +163,20 @@ require(['crafty',
             camera: camera
         }
 
+        /* Create an input handler for the local user */
+        var localInputs = new LocalInputs(terrainVis, gui);
+
+        /* Create an input handler for the AI enemy */
+        var comInputs = new ComputerInputs();
+
         /* Create user game controller */
-        playerController = new GameController(playerFaction, stateObjects, function() {
+        playerController = new GameController(playerFaction, localInputs, stateObjects, function() {
             /* When the player's done, switch to the enemy */
             enemyController.setActive();
         });
 
         /* Create enemy game controller */
-        enemyController = new GameController(enemyFaction, stateObjects, function() {
+        enemyController = new GameController(enemyFaction, comInputs, stateObjects, function() {
             /* When the enemy's done, switch to the player */
             playerController.setActive();
         });
