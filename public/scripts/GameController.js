@@ -143,6 +143,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             } else {
                 gui.hideInfo('right');
             }
+
+            inputs.doAction(objects, state);
         }
 
         var pushState = function() {
@@ -272,7 +274,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     },
                     null,
                     {
-                        name: 'Next',
+                        name: 'Skip',
                         callback: nextUnit
                     }];
                     highlight = null;
