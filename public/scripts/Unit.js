@@ -45,7 +45,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         },
 
         isDead: function() {
-            return this._curhealth < 0;
+            return this._curhealth <= 0;
         },
 
         isGood: function() {

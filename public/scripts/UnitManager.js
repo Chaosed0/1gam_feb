@@ -16,6 +16,15 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
         this.ownerMap[unit.getFaction()].push(unit);
         unit.setCell(cell);
+
+        var self = this;
+        unit.bind("Remove", function() { self.removeUnit(this) });
+    }
+
+    UnitManager.prototype.removeUnit = function(unit) {
+        /* Remove all references to the unit */
+        delete this.locationMap[unit.getCell().site.voronoiId];
+        delete this.ownerMap[unit.getFaction()];
     }
 
     UnitManager.prototype.getUnitForCell = function(cell) {

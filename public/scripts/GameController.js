@@ -17,6 +17,15 @@ define(['crafty', './Util'], function(Crafty, u) {
             .expires(damageTextExpireTime)
             .bind("Expired", callback);
         text.tween({y: text.y - text.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
+
+        /* Check if we need to kill the unit off */
+        if(defender.isDead()) {
+            defender.addComponent("Tween");
+            defender.tween({alpha: 0}, damageTextExpireTime/2, 'easeOutQuad');
+            defender.bind("TweenEnd", function() {
+                this.destroy();
+            });
+        }
     }
 
     var GameController = function(faction, inputs, objects, doneCallback) {
@@ -396,6 +405,16 @@ define(['crafty', './Util'], function(Crafty, u) {
             unitList.sort(function(u1,u2) {
                 return u2.getSpeed() - u1.getSpeed();
             });
+
+            /* Bind events occuring on unit deaths */
+            for(var i = 0 ; i < unitList.length; i++) {
+                unitList[i].bind("Remove", function() {
+                    /* Remove the dead unit from our list */
+                    var index = unitList.indexOf(this);
+                    u.assert(index >= 0);
+                    unitList.splice(index, 1);
+                });
+            }
         }
 
         this.init();
