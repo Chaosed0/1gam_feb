@@ -1,5 +1,5 @@
 
-define(['crafty'], function(Crafty) {
+define(['crafty', './Util'], function(Crafty, u) {
 
     var CameraControls = function(bounds, padding) {
         this._lastmouse = null;
@@ -115,6 +115,14 @@ define(['crafty'], function(Crafty) {
             newScale = this.maxScale;
         }
         return newScale;
+    }
+
+    CameraControls.prototype.inBounds = function(point) {
+        u.assert(point.x !== undefined && point.y !== undefined);
+        return point.x >= -Crafty.viewport._x + this.padding.l &&
+               point.x <= -Crafty.viewport._x + Crafty.viewport._width / Crafty.viewport._scale - this.padding.r &&
+               point.y >= -Crafty.viewport._y + this.padding.t &&
+               point.y <= -Crafty.viewport._y + Crafty.viewport._height / Crafty.viewport._scale - this.padding.b;
     }
 
     CameraControls.prototype.centerOn = function(point, time, easing) {

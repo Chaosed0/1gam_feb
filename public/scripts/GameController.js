@@ -1,7 +1,7 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
     const activateAnnounceTime = 3000;
-    const unitAnnounceTime = 1000;
+    const unitAnnounceTime = 500;
 
     const damageTextExpireTime = 1000;
 
@@ -62,13 +62,25 @@ define(['crafty', './Util'], function(Crafty, u) {
             curUnitIndex++;
             if(curUnitIndex < unitList.length) {
                 curUnit = unitList[curUnitIndex];
-                /* Center camera on new unit over some time */
-                camera.centerOn(curUnit, 1000);
-                /* Select new unit */
-                stack[0].selection = curUnit.getCell();
-                stack[0].selectedUnit = curUnit;
-                /* Go back to initial state */
-                useState(rewindStates());
+
+                var cameraAnimationDone = function() {
+                    /* Select new unit */
+                    stack[0].selection = curUnit.getCell();
+                    stack[0].selectedUnit = curUnit;
+                    /* Go back to initial state */
+                    useState(rewindStates());
+                    Crafty.unbind("CameraAnimationDone", cameraAnimationDone);
+                }
+
+                if(!camera.inBounds(curUnit)) {
+                    /* Center camera on new unit over some time */
+                    camera.centerOn(curUnit, unitAnnounceTime);
+                    /* Only pass control back when animation is done */
+                    Crafty.bind("CameraAnimationDone", cameraAnimationDone);
+                } else {
+                    /* If the camera didn't have to animate, just pass control */
+                    cameraAnimationDone();
+                }
             } else {
                 /* This faction's turn is done, we're passing off control.
                  * Go back to initial state, but don't use it */
