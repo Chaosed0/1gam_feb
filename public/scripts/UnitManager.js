@@ -23,8 +23,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
     UnitManager.prototype.removeUnit = function(unit) {
         /* Remove all references to the unit */
+        var ownerMapIndex = this.ownerMap[unit.getFaction()].indexOf(unit);
+        u.assert(ownerMapIndex >= 0);
         delete this.locationMap[unit.getCell().site.voronoiId];
-        delete this.ownerMap[unit.getFaction()];
+        this.ownerMap[unit.getFaction()].splice(ownerMapIndex, 1);
     }
 
     UnitManager.prototype.getUnitForCell = function(cell) {

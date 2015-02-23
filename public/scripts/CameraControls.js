@@ -119,10 +119,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
     CameraControls.prototype.inBounds = function(point) {
         u.assert(point.x !== undefined && point.y !== undefined);
-        return point.x >= -Crafty.viewport._x + this.padding.l &&
-               point.x <= -Crafty.viewport._x + Crafty.viewport._width / Crafty.viewport._scale - this.padding.r &&
-               point.y >= -Crafty.viewport._y + this.padding.t &&
-               point.y <= -Crafty.viewport._y + Crafty.viewport._height / Crafty.viewport._scale - this.padding.b;
+        return point.x >= -Crafty.viewport._x + this.padding.l / Crafty.viewport._scale &&
+               point.x <= -Crafty.viewport._x + (Crafty.viewport._width - this.padding.r) / Crafty.viewport._scale &&
+               point.y >= -Crafty.viewport._y + this.padding.t / Crafty.viewport._scale &&
+               point.y <= -Crafty.viewport._y + (Crafty.viewport._height - this.padding.b) / Crafty.viewport._scale;
     }
 
     CameraControls.prototype.centerOn = function(point, time, easing) {

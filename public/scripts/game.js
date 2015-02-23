@@ -63,6 +63,8 @@ require(['crafty',
     var badNameGenerator = null;
     var enemyFaction = null;
     var enemyController = null;
+    var playerFaction = null;
+    var playerController = null;
 
     Crafty.init(width, height, gameElem);
     Crafty.pixelart(true);
@@ -144,8 +146,8 @@ require(['crafty',
         var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
 
         /* Pick a random faction name for player and enemy */
-        var playerFaction = u.randomElem(names.groups.good);
-        var enemyFaction = u.randomElem(names.groups.bad);
+        playerFaction = u.randomElem(names.groups.good);
+        enemyFaction = u.randomElem(names.groups.bad);
 
         /* Generate some units for the player */
         generateSomeUnits(playerPartySize, playerFaction, true);
@@ -164,19 +166,19 @@ require(['crafty',
         }
 
         /* Create an input handler for the local user */
-        var localInputs = new LocalInputs(terrainVis, gui);
+        var playerInputs = new LocalInputs(terrainVis, gui);
 
-        /* Create an input handler for the AI enemy */
-        var comInputs = new ComputerInputs();
+        /* Create an input handler for the AI villains */
+        var enemyInputs = new ComputerInputs(enemyFaction, playerFaction);
 
         /* Create user game controller */
-        playerController = new GameController(playerFaction, localInputs, stateObjects, function() {
+        playerController = new GameController(playerFaction, playerInputs, stateObjects, function() {
             /* When the player's done, switch to the enemy */
             enemyController.setActive();
         });
 
         /* Create enemy game controller */
-        enemyController = new GameController(enemyFaction, comInputs, stateObjects, function() {
+        enemyController = new GameController(enemyFaction, enemyInputs, stateObjects, function() {
             /* When the enemy's done, switch to the player */
             playerController.setActive();
         });

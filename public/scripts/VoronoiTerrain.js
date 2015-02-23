@@ -305,6 +305,8 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
                 found = true;
                 break;
             } else if(limit > 0 && ++iter > limit) {
+                //No path found, but we might be able to get close
+                //to the target
                 break;
             }
 

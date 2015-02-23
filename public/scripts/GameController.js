@@ -400,10 +400,10 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         this.init = function() {
-            /* Grab the unit list for this faction */
-            unitList = unitManager.getUnitListForFaction(faction);
+            /* Grab the unit list for this faction and copy it */
+            unitList = unitManager.getUnitListForFaction(faction).slice();
             u.assert(unitList.length > 0, 'Tried to create a controller for ' + faction + ' but it has no units');
-            /* Sort it by descending speed */
+            /* Sort it by descending speed (this, incidentally, is why we copied) */
             unitList.sort(function(u1,u2) {
                 return u2.getSpeed() - u1.getSpeed();
             });
