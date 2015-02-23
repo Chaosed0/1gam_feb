@@ -72,41 +72,50 @@ require(['crafty',
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
 
-    var generateSomeUnits = function(num, faction, good) {
-        /* Terrain better be generated at the time of calling */
+    var generateUnitCamp = function(num, faction, good) {
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
+        var oneOfEach = false;
+
+        if(num === null) {
+            /* Special case - we're to generate one of each class */
+            num = unitClasses.length;
+            oneOfEach = true;
+        }
 
         /* Pick the largest open space and stick some guys on a random location there */
         var continent = bodies.plains[0];
-        var cells = [];
-
         for(var i = 1; i < bodies.plains.length; i++) {
             if(bodies.plains[i].cells.length > continent.cells.length) {
                 continent = bodies.plains[i];
             }
         }
 
-        var centerCell = u.randomElem(continent.cells);
-
         /* Get a relatively close area to place the units in
          * that isn't too small */
-        while(cells.length < num) {
+        var centerCell = u.randomElem(continent.cells);
+        var campCells = [];
+        while(campCells.length < num) {
             terrain.bfs(centerCell, 3, function(terrain, cell) {
                 return terrain.isGround(cell.site);
             }, function(cell) {
-                cells.push(cell);
+                campCells.push(cell);
             });
         }
 
         /* Place the units */
         for(var i = 0; i < num; i++) {
-            var className = u.randomElem(unitClasses);
             var unitName = (good ? goodNameGenerator.generateName() : badNameGenerator.generateName());
+            var className = null;
+            if(oneOfEach) {
+                className = unitClasses[i];
+            } else {
+                className = u.randomElem(unitClasses);
+            }
 
             var placed = false;
             while(!placed) {
-                var cell = cells[Math.floor(u.getRandom(cells.length))];
+                var cell = u.randomElem(campCells);
                 var site = cell.site;
 
                 if(!unitManager.getUnitForCell(cell)) {
@@ -149,11 +158,11 @@ require(['crafty',
         playerFaction = u.randomElem(names.groups.good);
         enemyFaction = u.randomElem(names.groups.bad);
 
-        /* Generate some units for the player */
-        generateSomeUnits(playerPartySize, playerFaction, true);
-        /* Generate some units for the bad guys */
+        /* Generate one unit of each class for the player */
+        generateUnitCamp(null, playerFaction, true);
+        /* Generate some random units for the bad guys */
         for(var i = 0; i < enemyPartyNum; i++) {
-            generateSomeUnits(enemyPartySize, enemyFaction, false);
+            generateUnitCamp(enemyPartySize, enemyFaction, false);
         }
 
         /* Wrap up objects the GameControllers need */
