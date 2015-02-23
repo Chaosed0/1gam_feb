@@ -1,7 +1,7 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
 
-    /* Huge hack */
+    /* Huge hack to get text width before scaling */
     var tmpcanvas = document.createElement('canvas');
 
     var viewportchanged = function() {
@@ -64,6 +64,8 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         updateHudTextSize: function() {
             u.assert(this._text);
+            /* We can't rely on the Text component's width - it'll have been
+             * modified by scale and such. */
             var ctx = tmpcanvas.getContext('2d');
             ctx.font = this._fontString();
             this._clientbounds.w = ctx.measureText(this._text).width;
