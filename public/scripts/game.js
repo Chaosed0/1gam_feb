@@ -184,7 +184,8 @@ require(['crafty',
         });
 
         /* Fire up the player GameController and let it take over
-         * Hack - wait a bit, it's hard for us to keep up */
+         * Hack - wait a bit, it's hard for us to keep up with the
+         * resulting announcement that comes on-screen otherwise */
         window.setTimeout(function() {
             playerController.setActive();
         }, 500);
