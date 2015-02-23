@@ -53,7 +53,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
                 var cameraAnimationDone = function() {
                     /* Go back to initial state */
-                    useState(rewindStates());
+                    rewindStates();
                     /* Select new unit */
                     freeSelectCallback({cell: curUnit.getCell()});
                     /* Unbind us for next time */
