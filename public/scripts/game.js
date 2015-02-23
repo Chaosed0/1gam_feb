@@ -10,6 +10,7 @@ require(['crafty',
         './LocalInputs',
         './GameController',
         './NameGenerator',
+        './ObjectParser',
         './Util',
     './Expires',
     './Meter',
@@ -18,7 +19,7 @@ require(['crafty',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, ComputerInputs, LocalInputs, GameController, NameGenerator, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, ComputerInputs, LocalInputs, GameController, NameGenerator, ObjectParser, u) {
     var self = this;
     var map;
 
@@ -28,9 +29,10 @@ require(['crafty',
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
     const unitSize = 48;
-    const playerPartySize = 5;
     const enemyPartyNum = 5;
     const enemyPartySize = 5;
+
+    const damageTextExpireTime = 1000;
 
     const terrainPercents = {
         water: waterPercent,
@@ -59,6 +61,7 @@ require(['crafty',
     var unitInfo = null;
     var unitClasses = null;
 
+    var effectParser = null;
     var goodNameGenerator = null;
     var badNameGenerator = null;
     var enemyFaction = null;
@@ -71,6 +74,32 @@ require(['crafty',
 
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
+
+    var createDamageNumbers = function(magnitude, color) {
+        /* Make damage numbers; we expect this func to be called with
+         * this === unit being damaged */
+        var text = Crafty.e("2D, Canvas, Text, Expires, Tween")
+            .attr({x: this.x + this.w/2, y: this.y})
+            .text(magnitude)
+            .textFont({family: 'Georgia', size: '20px', weight: '900'})
+            .expires(damageTextExpireTime);
+        if(color !== undefined) {
+            text.textColor(color);
+        }
+        text.tween({y: text.y - text.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
+    }
+
+    var checkAndHandleUnitDeath = function() {
+        /* Check if we need to kill the unit off */
+        if(this.isDead()) {
+            /* Do the deed */
+            this.addComponent("Tween");
+            this.tween({alpha: 0}, damageTextExpireTime/2, 'easeOutQuad');
+            this.bind("TweenEnd", function() {
+                this.destroy();
+            });
+        }
+    }
 
     var generateUnitCamp = function(num, faction, good) {
         var bodies = terrain.getBodies();
@@ -97,7 +126,9 @@ require(['crafty',
         var campCells = [];
         while(campCells.length < num) {
             terrain.bfs(centerCell, 3, function(terrain, cell) {
-                return terrain.isGround(cell.site);
+                /* Can't place units on water, mountain or occupied ground */
+                return terrain.isGround(cell.site) &&
+                    !unitManager.getUnitForCell(cell);
             }, function(cell) {
                 campCells.push(cell);
             });
@@ -123,7 +154,10 @@ require(['crafty',
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
                         .unit(unitName, faction, className, good, unitInfo[className])
-                        .animate('idle', -1);
+                        .animate('idle', -1)
+                        .bind("Damaged", createDamageNumbers)
+                        .bind("Damaged", checkAndHandleUnitDeath)
+                        .bind("Healed", function(v) { createDamageNumbers.call(this, v, '#00FF00'); });
                     unitManager.addUnit(cell, unit);
                     placed = true;
                 }
@@ -171,7 +205,8 @@ require(['crafty',
             terrain: terrain,
             gui: gui,
             vis: terrainVis,
-            camera: camera
+            camera: camera,
+            effectParser: effectParser,
         }
 
         /* Create an input handler for the local user */
@@ -221,6 +256,8 @@ require(['crafty',
             terrain.generateTerrain(terrainSize.w, terrainSize.h, tileDensity, terrainPercents);
             /* Render the terrain */
             terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
+            /* Initialize effect stringifier */
+            effectParser = new ObjectParser(data.strings.effects);
             /* Switch over to the main scene */
             Crafty.scene("Main");
         }).fail(function(jqxhr, textStatus, error) {

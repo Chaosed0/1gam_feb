@@ -3,30 +3,7 @@ define(['crafty', './Util'], function(Crafty, u) {
     const activateAnnounceTime = 3000;
     const unitAnnounceTime = 500;
 
-    const damageTextExpireTime = 1000;
-
-    var attack = function(aggressor, defender, callback) {
-        /* Do the attack */
-        var magnitude = aggressor.attack(defender);
-
-        /* Make damage numbers */
-        var text = Crafty.e("2D, Canvas, Text, Expires, Tween")
-            .attr({x: defender.x + defender.w/2, y: defender.y})
-            .text(magnitude)
-            .textFont({family: 'Georgia', size: '20px', weight: '900'})
-            .expires(damageTextExpireTime)
-            .bind("Expired", callback);
-        text.tween({y: text.y - text.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
-
-        /* Check if we need to kill the unit off */
-        if(defender.isDead()) {
-            defender.addComponent("Tween");
-            defender.tween({alpha: 0}, damageTextExpireTime/2, 'easeOutQuad');
-            defender.bind("TweenEnd", function() {
-                this.destroy();
-            });
-        }
-    }
+    const effectHoldTime = 1000;
 
     var GameController = function(faction, inputs, objects, doneCallback) {
         var self = this;
@@ -36,12 +13,14 @@ define(['crafty', './Util'], function(Crafty, u) {
         var gui = objects.gui;
         var vis = objects.vis;
         var camera = objects.camera;
+        var effectParser = objects.effectParser;
 
         u.assert(unitManager, 'No UnitManager passed to GameController');
         u.assert(terrain, 'No Terrain passed to GameController');
         u.assert(gui, 'No GUI passed to GameController');
         u.assert(vis, 'No TerrainVisualizer passed to GameController');
         u.assert(camera, 'No CameraControls passed to GameController');
+        u.assert(effectParser, 'No EffectParser passed to GameController');
 
         var stack = [];
 
@@ -61,7 +40,8 @@ define(['crafty', './Util'], function(Crafty, u) {
         var actions = null;
         var centerText = null;
         var selectedUnit = null;
-        var enemyUnit = null;
+        var targetUnit = null;
+        var skill = null;
         var selectCallback = null;
 
         /* Called when the current unit's turn is over, and
@@ -72,11 +52,11 @@ define(['crafty', './Util'], function(Crafty, u) {
                 curUnit = unitList[curUnitIndex];
 
                 var cameraAnimationDone = function() {
-                    /* Select new unit */
-                    stack[0].selection = curUnit.getCell();
-                    stack[0].selectedUnit = curUnit;
                     /* Go back to initial state */
                     useState(rewindStates());
+                    /* Select new unit */
+                    freeSelectCallback({cell: curUnit.getCell()});
+                    /* Unbind us for next time */
                     Crafty.unbind("CameraAnimationDone", cameraAnimationDone);
                 }
 
@@ -101,7 +81,8 @@ define(['crafty', './Util'], function(Crafty, u) {
                     actions: null,
                     centerText: null,
                     selectedUnit: null,
-                    enemyUnit: null,
+                    targetUnit: null,
+                    skill: null,
                     selectCallback: null,
                 });
                 /* We're done */
@@ -122,8 +103,9 @@ define(['crafty', './Util'], function(Crafty, u) {
             actions = state.actions;
             centerText = state.centerText;
             selectedUnit = state.selectedUnit;
-            enemyUnit = state.enemyUnit;
+            targetUnit = state.targetUnit;
             selectCallback = state.selectCallback;
+            skill = state.skill;
 
             vis.selectMode(selectMode);
             vis.selection(selection);
@@ -138,8 +120,8 @@ define(['crafty', './Util'], function(Crafty, u) {
                 gui.hideInfo('left');
             }
 
-            if(state.enemyUnit) {
-                gui.displayUnitInfo(enemyUnit, 'right');
+            if(state.targetUnit) {
+                gui.displayUnitInfo(targetUnit, 'right');
             } else {
                 gui.hideInfo('right');
             }
@@ -156,7 +138,8 @@ define(['crafty', './Util'], function(Crafty, u) {
                 centerText: centerText,
                 selectCallback: selectCallback,
                 selectedUnit: selectedUnit,
-                enemyUnit: enemyUnit
+                targetUnit: targetUnit,
+                skill: skill
             }
             stack.push(tmpstate);
             useState(tmpstate);
@@ -234,23 +217,27 @@ define(['crafty', './Util'], function(Crafty, u) {
             pushState();
         }
 
-        /* Callback for when "attack" button is hit in gui. Transitions to 
-         * freeSelectCallback. */
-        var guiAttackCallback = function() {
-            highlightedCells = [];
-            terrain.bfs(selectedUnit.getCell(),
-                    selectedUnit.getAttack().range, function(terrain, cell) {
-                /* Allow target to be anything passable */
-                return terrain.isGround(cell.site);
-            }, function(cell) {
-                highlightedCells.push(cell);
-            });
+        /* Callback for when skill button is hit in gui. Transitions to 
+         * different callbacks, depending on the skill. */
+        var guiSkillCallback = function(chosenSkill) {
+            u.assert(chosenSkill);
+            if(chosenSkill.type === 'singletarget') {
+                /* Single target effect; get the target */
+                highlightedCells = [];
+                terrain.bfs(selectedUnit.getCell(), chosenSkill.range, function(terrain, cell) {
+                    /* Allow target to be anything passable */
+                    return terrain.isGround(cell.site);
+                }, function(cell) {
+                    highlightedCells.push(cell);
+                });
 
-            actions = [cancelAction]; 
-            highlight = highlightedCells;
-            selectMode = 'highlight';
-            selectCallback = attackSelectCallback;
-            pushState();
+                actions = [cancelAction]; 
+                highlight = highlightedCells;
+                selectMode = 'highlight';
+                selectCallback = singleTargetSelectCallback;
+                skill = chosenSkill;
+                pushState();
+            }
         }
 
         /* Callback when user selects any cell, during free select mode. */
@@ -265,18 +252,31 @@ define(['crafty', './Util'], function(Crafty, u) {
             if(unitOnCell !== null) {
                 selectedUnit = unitOnCell;
                 if(selectedUnit === curUnit) {
-                    actions = [{
+                    var moveAction = {
                         name: 'Move',
                         callback: selectedUnit.hasMoved() ? null : guiMoveCallback,
-                    }, {
+                    };
+                    var attackAction = {
                         name: 'Attack',
-                        callback: selectedUnit.hasAttacked() ? null : guiAttackCallback
-                    },
-                    null,
-                    {
+                        callback: selectedUnit.hasAttacked() ? null : function() {
+                            guiSkillCallback(selectedUnit.getAttack());
+                        }
+                    };
+                    var skipAction = {
                         name: 'Skip',
                         callback: nextUnit
-                    }];
+                    };
+                    var skillAction = null;
+                    if(selectedUnit.hasSkill()) {
+                        skillAction = {
+                            name: selectedUnit.getSkill().name,
+                            callback: function() {
+                                guiSkillCallback(selectedUnit.getSkill());
+                            }
+                        }
+                    }
+
+                    actions = [ moveAction, attackAction, skillAction, skipAction ];
                     highlight = null;
                 } else {
                     highlightedCells = getMoveAndAttack(selectedUnit);
@@ -321,22 +321,18 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
         }
 
-        /* Callback when user chooses a unit to attack.
-         * XXX: Only supports single-target attacks for now.
-         */
-        var attackSelectCallback = function(data) {
+        /* Callback to select target for a single-targeted skill. */
+        var singleTargetSelectCallback = function(data) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
             if(unitOnCell) {
-                var attack = selectedUnit.getAttack();
-                var attackMagnitude = unitOnCell.attackMagnitude(selectedUnit.getAttack());
-                enemyUnit = unitOnCell;
+                targetUnit = unitOnCell;
                 selection = cell;
                 selectMode = 'confirm';
                 highlight = null;
                 actions = [ cancelAction ];
-                centerText = attackMagnitude + " " + attack.type + " damage";
-                selectCallback = attackConfirmCallback;
+                centerText = effectParser.parse(skill.effect);
+                selectCallback = singleTargetConfirmCallback;
                 pushState();
             } else {
                 /* XXX: Actually display an error to user */
@@ -344,26 +340,25 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
         }
 
-        /* Callback when user confirms the unit he's attacking. */
-        var attackConfirmCallback = function(data) {
-            u.assert(enemyUnit);
-            var attacker = curUnit;
-            var defender = enemyUnit;
+        /* Callback when user confirms the unit being targeted. */
+        var singleTargetConfirmCallback = function(data) {
+            u.assert(selectedUnit && targetUnit);
+            selectedUnit.useSkill(skill, targetUnit);
 
-            /* Null the state before we display time-consuming attack effects
-             * so that the user can't control */
+            /* Null the state so that the user can't control during
+             * the time-consuming FX we're about to display */
             selectMode = null;
             selection = null;
             highlight = null;
             actions = null;
             centerText = null;
             selectedUnit = null;
-            enemyUnit = null;
+            targetUnit = null;
             selectCallback = null;
             pushState();
 
-            /* Do attack effects, like damage numbers */
-            attack(attacker, defender, function() {
+            /* Regain control after some time */
+            window.setTimeout(function() {
                 /* Check if the unit's turn is over */
                 if(curUnit.isTurnOver()) {
                     /* It's time to advance to the next unit */
@@ -372,7 +367,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     /* Reselect the current unit */
                     freeSelectCallback({cell: curUnit.getCell()});
                 }
-            });
+            }, effectHoldTime);
         }
 
         /* Sets this GameController to active. Announces the faction that was

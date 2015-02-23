@@ -1,5 +1,21 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
+    var applyEffect = function(unit, effect) {
+        if(effect.type === undefined || effect.type === 'damage') {
+            u.assert(effect.magnitude !== undefined && effect.type !== undefined);
+            var magnitude = effect.magnitude;
+            if(effect.type === 'piercing') {
+                magnitude -= unit.getArmor();
+            }
+            unit.damage(magnitude);
+        } else if(effect.type === 'heal') {
+            u.assert(effect.magnitude !== undefined);
+            unit.heal(effect.magnitude);
+        } else {
+            console.log("WARNING: Unknown effect " + effect.type);
+        }
+    }
+
     Crafty.c("Unit", {
         _maxhealth: 1,
         _curhealth: 0,
@@ -11,6 +27,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         _attack: null,
         _cell: null,
         _isgood: null,
+        _skill: null,
         _alignment: null,
         _classimageloc: null,
 
@@ -30,29 +47,55 @@ define(['crafty', './Util'], function(Crafty, u) {
                 this._maxhealth = data.health;
                 this._curhealth = data.health;
                 this._moverange = data.moverange;
-                this._attack = data.attack;
                 this._armor = data.armor;
                 this._speed = data.speed;
                 this._classimageloc = data[this._alignment].classImageMap;
+
+                this._attack = {
+                    name: 'Attack',
+                    range: data.attack.range,
+                    ends_turn: true,
+                    type: 'singletarget',
+                    effect: {
+                        type: 'damage',
+                        damage_type: data.attack.damage_type,
+                        magnitude: data.attack.magnitude,
+                    }
+                }
+
+                if(data.skill) {
+                    this._skill = data.skill;
+                }
+
                 this.reel('idle', 2000, data[this._alignment].animation)
             }
             return this;
         },
 
-        damage: function(attack) {
-            var dmg = this.attackMagnitude(attack);
-            this._curhealth = Math.max(0, this._curhealth - dmg);
-            this.trigger("Damaged", dmg);
-            return dmg;
+        damage: function(magnitude) {
+            this._curhealth = Math.max(0, this._curhealth - magnitude);
+            this.trigger("Damaged", magnitude);
+            return magnitude;
         },
 
-        attackMagnitude: function(attack) {
-            u.assert(attack.magnitude !== undefined && attack.type !== undefined);
-            var magnitude = attack.magnitude;
-            if(attack.type === 'piercing') {
-                magnitude -= this._armor;
-            }
+        heal: function(magnitude) {
+            this._curhealth = Math.min(this._maxhealth, this._curhealth + magnitude);
+            this.trigger("Healed", magnitude);
             return magnitude;
+        },
+
+        applyEffect: function(effect) {
+            applyEffect(this, effect);
+        },
+
+        /* This is a small abomination - we shouldn't be telling
+         * the unit what skill to use */
+        useSkill: function(skill, target) {
+            u.assert(skill === this._attack || skill === this._skill);
+            target.applyEffect(skill.effect);
+            if(skill.ends_turn) {
+                this._attacked = true;
+            }
         },
 
         isDead: function() {
@@ -62,6 +105,14 @@ define(['crafty', './Util'], function(Crafty, u) {
         isGood: function() {
             u.assert(this._isgood !== null);
             return this._isgood;
+        },
+
+        hasSkill: function() {
+            return this._skill !== null;
+        },
+
+        getSkill: function() {
+            return this._skill;
         },
 
         getHealth: function() {
@@ -104,6 +155,10 @@ define(['crafty', './Util'], function(Crafty, u) {
             return this._speed;
         },
 
+        getArmor: function() {
+            return this._armor;
+        },
+
         getFaction: function() {
             return this._faction;
         },
@@ -127,13 +182,6 @@ define(['crafty', './Util'], function(Crafty, u) {
         moveToCell: function(cell) {
             this.setCell(cell);
             this._moved = true;
-        },
-
-        attack: function(unit) {
-            u.assert(unit.damage, "Tried to attack something that doesn't look like a unit");
-            this._attacked = true;
-            var magnitude = unit.damage(this._attack);
-            return magnitude;
         },
 
         hasAttacked: function() {
