@@ -1,21 +1,21 @@
 {
-  "name": "1gam_jan",
+  "name": "1gam_feb",
   "version": "1.0.0",
-  "description": "#1gam january",
+  "description": "Ed Lu's February #1gam",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/chaosed0/1gam_jan.git"
+    "url": "https://github.com/chaosed0/1gam_feb.git"
   },
   "author": "Chaosed0",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/chaosed0/1gam_jan/issues"
+    "url": "https://github.com/chaosed0/1gam_feb/issues"
   },
-  "homepage": "https://github.com/chaosed0/1gam_jan",
+  "homepage": "https://github.com/chaosed0/1gam_feb",
   "dependencies": {
     "bower": "^1.3.12",
     "bower-requirejs": "^1.1.2",
