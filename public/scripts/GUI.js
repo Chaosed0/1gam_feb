@@ -7,6 +7,8 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     const padding = 10;
     const smallPadding = 5;
 
+    const meterSize = {w: 200, h: 5};
+
     var UnitInfoContainer = function(bounds, align) {
         if(align === 'left') {
             this.startpos = {x: bounds.x + padding, y: bounds.y + padding};
@@ -46,7 +48,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.positionElem(this.healthText, smallPadding);
 
         this.healthMeter = Crafty.e("2D, Canvas, HUD, Meter")
-            .attr({ z: menuElemZ, w: 200, h: 5})
+            .attr({ z: menuElemZ, w: meterSize.w, h: meterSize.h})
             .meter('#FF0000')
             .fill(1);
         this.positionElem(this.healthMeter, smallPadding);
@@ -68,7 +70,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.positionElem(this.manaText, smallPadding);
 
         this.manaMeter = Crafty.e("2D, Canvas, HUD, Meter")
-            .attr({z: menuElemZ, w: 200, h: 5})
+            .attr({z: menuElemZ, w: meterSize.w, h: meterSize.h})
             .attr({w: 200, h: 5})
             .meter('#0000FF')
             .fill(1);
