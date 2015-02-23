@@ -83,7 +83,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .textAlign(align);
         this.positionElem(this.manaAmtText, padding, true);
 
-        //this.visible(false);
+        this.visible(false);
     }
 
     UnitInfoContainer.prototype.positionElem = function(elem, padding, newline) {
