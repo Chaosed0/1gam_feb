@@ -30,18 +30,29 @@ define(['crafty', './Util'], function(Crafty, u) {
                 this._maxhealth = data.health;
                 this._curhealth = data.health;
                 this._moverange = data.moverange;
-                this._speed = data.speed;
                 this._attack = data.attack;
+                this._armor = data.armor;
+                this._speed = data.speed;
                 this._classimageloc = data[this._alignment].classImageMap;
                 this.reel('idle', 2000, data[this._alignment].animation)
             }
             return this;
         },
 
-        damage: function(dmg) {
-            u.assert(typeof dmg === 'number', 'Attack damage magnitude was not a number');
+        damage: function(attack) {
+            var dmg = this.attackMagnitude(attack);
             this._curhealth = Math.max(0, this._curhealth - dmg);
             this.trigger("Damaged", dmg);
+            return dmg;
+        },
+
+        attackMagnitude: function(attack) {
+            u.assert(attack.magnitude !== undefined && attack.type !== undefined);
+            var magnitude = attack.magnitude;
+            if(attack.type === 'piercing') {
+                magnitude -= this._armor;
+            }
+            return magnitude;
         },
 
         isDead: function() {
@@ -120,9 +131,9 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         attack: function(unit) {
             u.assert(unit.damage, "Tried to attack something that doesn't look like a unit");
-            unit.damage(this._attack.magnitude);
             this._attacked = true;
-            return this._attack.magnitude;
+            var magnitude = unit.damage(this._attack);
+            return magnitude;
         },
 
         hasAttacked: function() {

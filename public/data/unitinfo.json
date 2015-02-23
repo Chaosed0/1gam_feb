@@ -841,7 +841,7 @@
             "moverange": 2,
             "attack": {
                 "range": 1,
-                "magnitude": 15,
+                "magnitude": 13,
                 "type": "piercing"
             },
             "good": {
@@ -860,7 +860,7 @@
             "moverange": 2,
             "attack": {
                 "range": 1,
-                "magnitude": 10,
+                "magnitude": 15,
                 "type": "piercing"
             },
             "good": {
@@ -874,12 +874,12 @@
         },
         "Paladin": {
             "health": 40,
-            "armor": 5,
+            "armor": 4,
             "speed": 2,
             "moverange": 2,
             "attack": {
                 "range": 1,
-                "magnitude": 10,
+                "magnitude": 15,
                 "type": "blunt"
             },
             "good": {
@@ -898,7 +898,7 @@
             "moverange": 4,
             "attack": {
                 "range": 1,
-                "magnitude": 7,
+                "magnitude": 20,
                 "type": "piercing"
             },
             "good": {
@@ -912,12 +912,12 @@
         },
         "Ranger": {
             "health": 30,
-            "armor": 3,
+            "armor": 2,
             "speed": 3,
             "moverange": 2,
             "attack": {
                 "range": 3,
-                "magnitude": 5,
+                "magnitude": 10,
                 "type": "piercing"
             },
             "good": {

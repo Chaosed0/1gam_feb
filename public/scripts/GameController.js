@@ -329,12 +329,13 @@ define(['crafty', './Util'], function(Crafty, u) {
             var unitOnCell = unitManager.getUnitForCell(cell);
             if(unitOnCell) {
                 var attack = selectedUnit.getAttack();
+                var attackMagnitude = unitOnCell.attackMagnitude(selectedUnit.getAttack());
                 enemyUnit = unitOnCell;
                 selection = cell;
                 selectMode = 'confirm';
                 highlight = null;
                 actions = [ cancelAction ];
-                centerText = attack.magnitude + " " + attack.type + " damage";
+                centerText = attackMagnitude + " " + attack.type + " damage";
                 selectCallback = attackConfirmCallback;
                 pushState();
             } else {
