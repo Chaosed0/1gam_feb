@@ -43,6 +43,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         var self = this;
         var unitState = {};
         unitState.target = u.randomElem(unitManager.getUnitListForFaction(this.enemyFaction));
+        unitState.attackTarget = null;
         unitState.state = 'idle';
 
         /* Event triggered when the target dies */
@@ -146,9 +147,11 @@ define(['crafty', './Util'], function(Crafty, u) {
                     unitState.state = 'confirming';
                 } else if(unitState.state === 'attacking') {
                     /* Attack the targeted unit */
-                    var attackCell = targetEnemyUnit.getCell();
+                    u.assert(unitState.attackTarget,
+                            "Unit is in the attacking state, but it doesn't know what to attack");
+                    var attackCell = unitState.attackTarget.getCell();
                     u.assert(state.highlight !== null && state.highlight.indexOf(attackCell) >= 0,
-                            "We thought we could attack our target, but we can't");
+                            "We thought we could attack a target, but we can't");
                     actionCallback = function() {
                         selectCallback({cell: attackCell});
                     }
@@ -174,21 +177,32 @@ define(['crafty', './Util'], function(Crafty, u) {
                     }
                 } else if(action === 'Attack') {
                     /* Check if we can attack the target unit right now */
-                    var attackSet = new Set();
+                    var attackableCells = [];
                     objects.terrain.bfs(curUnit.getCell(), curUnit.getAttack().range,
                         function(terrain, cell) {
                             return terrain.isGround(cell.site);
                         }, function(cell) {
-                            attackSet.add(cell);
+                            attackableCells.push(cell);
                         });
-                    if(attackSet.has(targetEnemyUnit.getCell())) {
-                        /* We can reach the target; attacking is our priority */
-                        var attackCallback = this.actions.Attack;
-                        actionCallback = function() {
-                            unitState.state = 'attacking';
-                            attackCallback();
-                        }
+                    if(attackableCells.indexOf(targetEnemyUnit.getCell()) > 0) {
+                        /* We can reach the target; attacking it is our top priority */
+                        actionCallback = this.actions.Attack;
+                        unitState.state = 'attacking';
+                        unitState.attackTarget = targetEnemyUnit;
                         curValue = 100;
+                    } else {
+                        /* If we have moved and there's a unit in range, there's
+                         * no reason not to attack it */
+                        if(curUnit.hasMoved()) {
+                            for(var i = 0; i < attackableCells.length; i++) {
+                                var unitOnCell = objects.unitManager.getUnitForCell(attackableCells[i]);
+                                if(unitOnCell !== null && unitOnCell.getFaction() !== curUnit.getFaction()) {
+                                    actionCallback = this.actions.Attack;
+                                    unitState.state = 'attacking';
+                                    unitState.attackTarget = unitOnCell;
+                                }
+                            }
+                        }
                     }
                 } else if(action === 'Skip') {
                     if(actionCallback == null) {
