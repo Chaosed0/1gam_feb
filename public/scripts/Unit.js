@@ -11,6 +11,11 @@ define(['crafty', './Util'], function(Crafty, u) {
                 actual_magnitude -= target.getArmor();
             }
             target.damage(actual_magnitude);
+            /* There are a few effects that need to be applied only on
+             * Damage, so make a special event for that in addition to
+             * the generic EffectApplied */
+            target.trigger("Damaged", {actual_magnitude: actual_magnitude, effect: effect});
+            /* Check for death */
         } else if(effect.type === 'heal') {
             u.assert(effect.magnitude !== undefined);
             target.heal(effect.magnitude);
@@ -38,7 +43,17 @@ define(['crafty', './Util'], function(Crafty, u) {
         _moved: false,
         _attacked: false,
 
+        _alert: false,
+        _alertdistance: null,
+
         init: function() {
+            this.bind("Damaged", function() {
+                /* We assume that damage has already done before this event is
+                 * triggered */
+                if(this.isDead()) {
+                    this.trigger("Died");
+                }
+            });
         },
 
         unit: function(name, faction, className, good, data) {
@@ -73,6 +88,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
                 this.reel('idle', 2000, data[this._alignment].animation)
             }
+
             return this;
         },
 
@@ -179,6 +195,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
             this.x = center.x - this.w/2;
             this.y = center.y - this.h/2;
+            this.trigger("MovedCell", cell);
         },
 
         moveToCell: function(cell) {
@@ -196,6 +213,39 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         isTurnOver: function() {
             return this._attacked;
+        },
+
+        checkAlert: function(unit) {
+            if(this._alertdistance === null || this._alert === true) {
+                /* We're already alert, or we don't know how to alert */
+                return;
+            }
+
+            var relX = unit.x - this.x;
+            var relY = unit.y - this.y;
+            if(Math.sqrt(relX*relX + relY*relY) < this._alertdistance) {
+                this._alert = true;
+                this.trigger("Alerted");
+            }
+        },
+
+        alert: function(alert) {
+            if(alert !== undefined) {
+                if(this._alert !== alert) {
+                    this._alert = alert;
+                    if(this._alert) {
+                        this.trigger("Asleep");
+                    } else {
+                        this.trigger("Alerted");
+                    }
+                }
+            } else {
+                return this._alert;
+            }
+        },
+
+        setAlertDistance: function(distance) {
+            this._alertdistance = distance;
         },
 
         newTurn: function() {

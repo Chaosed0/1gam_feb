@@ -4,6 +4,7 @@ define(['crafty', './Util'], function(Crafty, u) {
     var vec2 = Crafty.math.Vector2D;
 
     var UnitManager = function() {
+        this.allUnits = [];
         this.locationMap = {};
         this.ownerMap = {};
         this.nextId = 0;
@@ -16,10 +17,18 @@ define(['crafty', './Util'], function(Crafty, u) {
             this.ownerMap[unit.getFaction()] = [];
         }
         this.ownerMap[unit.getFaction()].push(unit);
+        this.allUnits.push(unit);
+
         unit.setCell(cell);
 
         var self = this;
         unit.bind("Died", function() { self.removeUnit(this) });
+        
+        /* If a unit was moved, damaged, or itself alerted, alert all
+         * nearby units around it */
+        unit.bind("MovedCell", function() { self.cascadeAlerts(unit) });
+        unit.bind("Damaged", function() { self.cascadeAlerts(unit) });
+        unit.bind("Alerted", function() { self.cascadeAlerts(unit) });
         unit.id = this.nextId++;
     }
 
@@ -57,6 +66,14 @@ define(['crafty', './Util'], function(Crafty, u) {
             return this.ownerMap[faction];
         } else {
             return null;
+        }
+    }
+
+    UnitManager.prototype.cascadeAlerts = function(unit) {
+        /* Check all units on whether or not they should alert or not; alerts
+         * might trigger more alerts, which is why this is "cascade" */
+        for(var i = 0; i < this.allUnits.length; i++) {
+            this.allUnits[i].checkAlert(unit);
         }
     }
 

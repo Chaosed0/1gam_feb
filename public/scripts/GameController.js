@@ -45,8 +45,13 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Called when the current unit's turn is over, and
          * we should change to the next one */
         var nextUnit = function() {
-            curUnitIndex++;
+            /* Get the next unit which is alerted */
+            do {
+                curUnitIndex++;
+            } while(curUnitIndex < unitList.length && !unitList[curUnitIndex].alert());
+
             if(curUnitIndex < unitList.length) {
+                /* We have a next unit */
                 curUnit = unitList[curUnitIndex];
 
                 var cameraAnimationDone = function() {
@@ -67,6 +72,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     cameraAnimationDone();
                 }
             } else {
+                /* We've run dry on units - our turn is over */
                 clearStates();
                 /* Null out the current state */
                 useState({
@@ -376,26 +382,38 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Sets this GameController to active. Announces the faction that was
          * set active, then selects the first unit in the player's turn order. */
         this.setActive = function() {
-            /* Turn mouselook off for the announcement */
-            camera.mouselook(false);
-            /* Give all our controlled units a new turn */
-            for(var i = 0; i < unitList.length; i++) {
-                unitList[i].newTurn();
-            }
-            /* First unit is the unit with the highest speed */
+            /* Get the unit with the highest speed that isn't alerted */
             curUnitIndex = 0;
-            curUnit = unitList[curUnitIndex];
-            /* Center on the new unit being controlled */
-            camera.centerOn(curUnit, activateAnnounceTime/3);
+            while(curUnitIndex < unitList.length &&
+                    !unitList[curUnitIndex].alert()) {
+                curUnitIndex++;
+            }
 
-            /* Announce the new faction's turn */
-            gui.announce(faction, activateAnnounceTime, function() {
-                /* This is the callback when the announcement is finished
-                 * Turn mouselook back on */
-                camera.mouselook(true);
-                /* Act as if we just selected the first unit's cell */
-                freeSelectCallback({cell: curUnit.getCell()});
-            });
+            /* Check to make sure we have an alerted unit */
+            if(curUnitIndex < unitList.length) {
+                /* Give all our controlled units a new turn */
+                for(var i = 0; i < unitList.length; i++) {
+                    unitList[i].newTurn();
+                }
+
+                curUnit = unitList[curUnitIndex];
+                /* Center on the new unit being controlled */
+                camera.centerOn(curUnit, activateAnnounceTime/3);
+
+                /* Turn mouselook off for the announcement */
+                camera.mouselook(false);
+                /* Announce the new faction's turn */
+                gui.announce(faction, activateAnnounceTime, function() {
+                    /* This is the callback when the announcement is finished
+                     * Turn mouselook back on */
+                    camera.mouselook(true);
+                    /* Act as if we just selected the first unit's cell */
+                    freeSelectCallback({cell: curUnit.getCell()});
+                });
+            } else {
+                /* No alerted units; announce that and then finish */
+                gui.announce("No units alerted!", activateAnnounceTime, doneCallback);
+            }
         }
 
         this.init = function() {
@@ -409,7 +427,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
             /* Bind events occuring on unit deaths */
             for(var i = 0 ; i < unitList.length; i++) {
-                unitList[i].bind("Dead", function() {
+                unitList[i].bind("Died", function() {
                     /* "Remove" is triggered on the unit after a little bit,
                      * but we want to remove the unit right as it has no
                      * health. */

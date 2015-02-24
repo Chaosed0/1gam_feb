@@ -16,6 +16,11 @@ define(['crafty', './Util'], function(Crafty, u) {
     UnitFx.prototype.bindFx = function(unit) {
         var self = this;
         unit.bind("EffectApplied", function(data) { self.applyEffectFx(this, data) });
+        unit.bind("Alerted", function() { self.alertedFx(this); });
+        unit.bind("Asleep", function() { self.startAsleepFx(this); });
+        if(unit.alert() === false) {
+            this.startAsleepFx(unit);
+        }
     }
 
     /* Get fx data related to a specific unit. If none,
@@ -142,6 +147,39 @@ define(['crafty', './Util'], function(Crafty, u) {
             var fxId = this.newFx(unit);
             unit.bind("TweenEnd", function() { self.removeFx(unit, fxId) });
         }
+    }
+
+    UnitFx.prototype.startAsleepFx = function(unit) {
+        var sleepText = Crafty.e("2D, Canvas, Text, Expires")
+            .text("Z")
+            .textFont({family: 'Georgia', size: '20px', weight: '900'})
+            .expires(1000, -1);
+        var fxId = this.newFx(unit);
+        var randomTextLoc = function() {
+            /* Put the Z at a random location above the unit's head */
+            sleepText.x = u.getRandom(unit.x, unit.x + unit.w);
+            sleepText.y = u.getRandom(unit.y - sleepText.h, unit.y - unit.h);
+        }
+        sleepText.bind("Expired", randomTextLoc);
+        randomTextLoc();
+
+        var self = this;
+        unit.bind("Alerted", function() {
+            sleepText.destroy();
+            self.removeFx(unit, fxId);
+        });
+    }
+
+    UnitFx.prototype.alertedFx = function(unit) {
+        var self = this;
+        var alertText = Crafty.e("2D, Canvas, Text, Expires, Tween")
+            .attr({x: unit.x + unit.w/2, y: unit.y})
+            .text("!!!")
+            .textFont({family: 'Georgia', size: '20px', weight: '900'})
+            .expires(damageTextExpireTime);
+        var fxId = this.newFx(unit);
+        alertText.tween({y: alertText.y - alertText.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
+        alertText.bind("TweenEnd", function() { self.removeFx(unit, fxId); });
     }
 
     return UnitFx;

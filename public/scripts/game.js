@@ -130,19 +130,28 @@ require(['crafty',
                         .attr({w: unitSize, h: unitSize})
                         .unit(unitName, faction, className, good, unitInfo[className])
                         .animate('idle', -1)
-                        .bind("EffectApplied", function(data) {
-                            /* Check for unit death upon damage */
-                            if(data.effect.type === 'damage' && this.isDead()) {
-                                this.trigger("Dead");
-                                /* The unit is dead - destroy it once all anims are over
-                                 * XXX: How do we know that the unit has anims pending? */
-                                this.bind("FxEnd", function() {
-                                    /* Give the unit a small amount of time to finish up */
-                                    this.addComponent("Expires");
-                                    this.expires(1000);
-                                });
-                            }
+                        .bind("Died", function(data) {
+                            /* The unit is dead - destroy it once all anims are over
+                             * XXX: How do we know that the unit has anims pending? */
+                            this.bind("FxEnd", function() {
+                                /* Give the unit a small amount of time to finish up */
+                                this.addComponent("Expires");
+                                this.expires(1000);
+                            });
                         });
+
+                    /* Good units start alerted, bad ones don't */
+                    if(good) {
+                        unit.alert(true);
+                    } else {
+                        unit.alert(false);
+                    }
+                    /* Set unit alert distance
+                     * XXX: We probably shouldn't be the one doing this */
+                    var alertDistance = Math.max(terrain.getPointData().size.x, 
+                            terrain.getPointData().size.y) * 3;
+                    unit.setAlertDistance(alertDistance);
+
                     unitManager.addUnit(cell, unit);
                     unitFx.bindFx(unit);
                     placed = true;
