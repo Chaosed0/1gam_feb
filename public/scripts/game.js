@@ -122,9 +122,10 @@ require(['crafty',
 
         /* Get a relatively close area to place the units in
          * that isn't too small */
-        var centerCell = u.randomElem(continent.cells);
+        var centerCell = null;
         var campCells = [];
         while(campCells.length < num) {
+            centerCell = u.randomElem(continent.cells);
             terrain.bfs(centerCell, 3, function(terrain, cell) {
                 /* Can't place units on water, mountain or occupied ground */
                 return terrain.isGround(cell.site) &&
