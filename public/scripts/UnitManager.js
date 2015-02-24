@@ -6,6 +6,7 @@ define(['crafty', './Util'], function(Crafty, u) {
     var UnitManager = function() {
         this.locationMap = {};
         this.ownerMap = {};
+        this.nextId = 0;
     }
 
     UnitManager.prototype.addUnit = function(cell, unit) {
@@ -19,6 +20,7 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         var self = this;
         unit.bind("Remove", function() { self.removeUnit(this) });
+        unit.id = this.nextId++;
     }
 
     UnitManager.prototype.removeUnit = function(unit) {

@@ -3,8 +3,6 @@ define(['crafty', './Util'], function(Crafty, u) {
     const activateAnnounceTime = 3000;
     const unitAnnounceTime = 500;
 
-    const effectHoldTime = 1000;
-
     var GameController = function(faction, inputs, objects, doneCallback) {
         var self = this;
 
@@ -343,10 +341,29 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback when user confirms the unit being targeted. */
         var singleTargetConfirmCallback = function(data) {
             u.assert(selectedUnit && targetUnit);
-            selectedUnit.useSkill(skill, targetUnit);
+            var user = selectedUnit;
+            var target = targetUnit;
+            user.useSkill(skill, target);
 
-            /* Null the state so that the user can't control during
-             * the time-consuming FX we're about to display */
+            /* Regain control after all fx attached to the target unit have
+             * stopped playing.
+             * Note that "this" within fxEnd is the target unit, not the user
+             * unit. */
+            var fxEnd = function() {
+                /* Unbind this from the unit */
+                user.unbind("FxEnd", fxEnd);
+                /* Check if the current unit's turn is over */
+                if(user.isTurnOver()) {
+                    /* It's time to advance to the next unit */
+                    nextUnit();
+                } else {
+                    /* Reselect the current unit */
+                    freeSelectCallback({cell: curUnit.getCell()});
+                }
+            }
+            target.bind("FxEnd", fxEnd);
+
+            /* Null the state while FX are playing */
             selectMode = null;
             selection = null;
             highlight = null;
@@ -356,18 +373,6 @@ define(['crafty', './Util'], function(Crafty, u) {
             targetUnit = null;
             selectCallback = null;
             pushState();
-
-            /* Regain control after some time */
-            window.setTimeout(function() {
-                /* Check if the unit's turn is over */
-                if(curUnit.isTurnOver()) {
-                    /* It's time to advance to the next unit */
-                    nextUnit();
-                } else {
-                    /* Reselect the current unit */
-                    freeSelectCallback({cell: curUnit.getCell()});
-                }
-            }, effectHoldTime);
         }
 
         /* Sets this GameController to active. Announces the faction that was

@@ -10,6 +10,7 @@ require(['crafty',
         './LocalInputs',
         './GameController',
         './NameGenerator',
+        './UnitFx',
         './ObjectParser',
         './Util',
     './Expires',
@@ -19,7 +20,7 @@ require(['crafty',
     './InfoDisplay',
     './HUD',
     './Unit',
-], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, ComputerInputs, LocalInputs, GameController, NameGenerator, ObjectParser, u) {
+], function(Crafty, $, GUI, VoronoiTerrain, UnitManager, CameraControls, renderTerrain, ComputerInputs, LocalInputs, GameController, NameGenerator, UnitFx, ObjectParser, u) {
     var self = this;
     var map;
 
@@ -31,8 +32,6 @@ require(['crafty',
     const unitSize = 48;
     const enemyPartyNum = 5;
     const enemyPartySize = 5;
-
-    const damageTextExpireTime = 1000;
 
     const terrainPercents = {
         water: waterPercent,
@@ -60,6 +59,7 @@ require(['crafty',
     var names = null;
     var unitInfo = null;
     var unitClasses = null;
+    var unitFx = null;
 
     var effectParser = null;
     var goodNameGenerator = null;
@@ -74,32 +74,6 @@ require(['crafty',
 
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
-
-    var createDamageNumbers = function(magnitude, color) {
-        /* Make damage numbers; we expect this func to be called with
-         * this === unit being damaged */
-        var text = Crafty.e("2D, Canvas, Text, Expires, Tween")
-            .attr({x: this.x + this.w/2, y: this.y})
-            .text(magnitude)
-            .textFont({family: 'Georgia', size: '20px', weight: '900'})
-            .expires(damageTextExpireTime);
-        if(color !== undefined) {
-            text.textColor(color);
-        }
-        text.tween({y: text.y - text.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
-    }
-
-    var checkAndHandleUnitDeath = function() {
-        /* Check if we need to kill the unit off */
-        if(this.isDead()) {
-            /* Do the deed */
-            this.addComponent("Tween");
-            this.tween({alpha: 0}, damageTextExpireTime/2, 'easeOutQuad');
-            this.bind("TweenEnd", function() {
-                this.destroy();
-            });
-        }
-    }
 
     var generateUnitCamp = function(num, faction, good) {
         var bodies = terrain.getBodies();
@@ -156,10 +130,20 @@ require(['crafty',
                         .attr({w: unitSize, h: unitSize})
                         .unit(unitName, faction, className, good, unitInfo[className])
                         .animate('idle', -1)
-                        .bind("Damaged", createDamageNumbers)
-                        .bind("Damaged", checkAndHandleUnitDeath)
-                        .bind("Healed", function(v) { createDamageNumbers.call(this, v, '#00FF00'); });
+                        .bind("EffectApplied", function(data) {
+                            /* Check for unit death upon damage */
+                            if(data.effect.type === 'damage' && this.isDead()) {
+                                /* The unit is dead - destroy it once all anims are over
+                                 * XXX: How do we know that the unit has anims pending? */
+                                this.bind("FxEnd", function() {
+                                    /* Give the unit a small amount of time to finish up */
+                                    this.addComponent("Expires");
+                                    this.expires(1000);
+                                });
+                            }
+                        });
                     unitManager.addUnit(cell, unit);
+                    unitFx.bindFx(unit);
                     placed = true;
                 }
             }
@@ -259,6 +243,8 @@ require(['crafty',
             terrainPrerender = renderTerrain(terrain, terrainSize, terrainPercents, terrainRenderOptions);
             /* Initialize effect stringifier */
             effectParser = new ObjectParser(data.strings.effects);
+            /* Initialize unit effect generator */
+            unitFx = new UnitFx(data.effectFx);
             /* Switch over to the main scene */
             Crafty.scene("Main");
         }).fail(function(jqxhr, textStatus, error) {

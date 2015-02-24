@@ -839,6 +839,46 @@
             "heal": "{magnitude} HP healing"
         }
     },
+    "effectFx": {
+        "piercing": {
+            "size": "small",
+            "anim": [[0,0],[1,0]],
+            "position": "random",
+            "loops": 3,
+            "length": 300
+        },
+        "blunt": {
+            "size": "small",
+            "anim": [[0,19],[1,19]],
+            "position": "random",
+            "loops": 3,
+            "length": 500
+        },
+        "fire": {
+            "size": "large",
+            "anim": [[6,0],[7,0]],
+            "loops": 5,
+            "length": 200
+        },
+        "holy": {
+            "size": "large",
+            "anim": [[0,2],[1,2]],
+            "loops": 5,
+            "length": 200
+        },
+        "earth": {
+            "size": "large",
+            "anim": [[4,2],[5,2]],
+            "loops": 5,
+            "length": 200
+        },
+        "heal": {
+            "size": "large",
+            "anim": [[3,3],[4,3],[5,3]],
+            "loops": 2,
+            "length": 500
+        }
+    },
     "units": {
         "Knight": {
             "health": 50,
@@ -1019,6 +1059,20 @@
                 "paddingY": 5,
                 "map": {
                     "ClassSprite": [0,0]
+                }
+            },
+            "img/oryx_16bit_fantasy_fx_trans_mod_small.png": {
+                "tile": 24,
+                "tileh": 24,
+                "map": {
+                    "FxSprite_small": [0,0]
+                }
+            },
+            "img/oryx_16bit_fantasy_fx_trans_mod_large.png": {
+                "tile": 32,
+                "tileh": 32,
+                "map": {
+                    "FxSprite_large": [0,0]
                 }
             }
         }

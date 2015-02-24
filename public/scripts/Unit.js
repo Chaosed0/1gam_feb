@@ -1,19 +1,23 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
-    var applyEffect = function(unit, effect) {
+    var applyEffect = function(target, effect) {
+        /* Damages have a different magnitude than their effect says */
+        var actual_magnitude = null;
+
         if(effect.type === undefined || effect.type === 'damage') {
             u.assert(effect.magnitude !== undefined && effect.type !== undefined);
-            var magnitude = effect.magnitude;
-            if(effect.type === 'piercing') {
-                magnitude -= unit.getArmor();
+            actual_magnitude = effect.magnitude;
+            if(effect.damage_type === 'piercing') {
+                actual_magnitude -= target.getArmor();
             }
-            unit.damage(magnitude);
+            target.damage(actual_magnitude);
         } else if(effect.type === 'heal') {
             u.assert(effect.magnitude !== undefined);
-            unit.heal(effect.magnitude);
+            target.heal(effect.magnitude);
         } else {
             console.log("WARNING: Unknown effect " + effect.type);
         }
+        target.trigger("EffectApplied", {actual_magnitude: actual_magnitude, effect: effect});
     }
 
     Crafty.c("Unit", {
@@ -74,13 +78,11 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         damage: function(magnitude) {
             this._curhealth = Math.max(0, this._curhealth - magnitude);
-            this.trigger("Damaged", magnitude);
             return magnitude;
         },
 
         heal: function(magnitude) {
             this._curhealth = Math.min(this._maxhealth, this._curhealth + magnitude);
-            this.trigger("Healed", magnitude);
             return magnitude;
         },
 
@@ -88,8 +90,8 @@ define(['crafty', './Util'], function(Crafty, u) {
             applyEffect(this, effect);
         },
 
-        /* This is a small abomination - we shouldn't be telling
-         * the unit what skill to use */
+        /* XXX: This is a slight misstep - an external source shouldn't be
+         * telling the unit what skill to use */
         useSkill: function(skill, target) {
             u.assert(skill === this._attack || skill === this._skill);
             target.applyEffect(skill.effect);
