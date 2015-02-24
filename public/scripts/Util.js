@@ -12,6 +12,14 @@ define(['seedrandom'], function(seedrandom) {
         Math.seedrandom(seed);
     }
 
+    Util.dist = function(v1, v2) {
+        this.assert(v1.x !== undefined && v1.y !== undefined);
+        this.assert(v2.x !== undefined && v2.y !== undefined);
+        var relX = v2.x - v1.x;
+        var relY = v2.y - v1.y;
+        return Math.sqrt(relX*relX + relY*relY);
+    }
+
     Util.getRandom = function(min, max) {
         if(arguments.length > 1) {
             return Math.random() * (max - min) + min;

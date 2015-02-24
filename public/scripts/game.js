@@ -30,8 +30,12 @@ require(['crafty',
     const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
     const guiRatio = 0.25;
     const unitSize = 48;
-    const enemyPartyNum = 5;
+
+    const enemyPartyNum = 20;
     const enemyPartySize = 5;
+    /* Size in cells */
+    const campSize = 3;
+    const minCampDist = 7;
 
     const terrainPercents = {
         water: waterPercent,
@@ -52,6 +56,7 @@ require(['crafty',
     var height = $(document).height();
     var gameElem = document.getElementById('game');
 
+    var campCenters = [];
     var terrainPrerender = null;
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
@@ -96,18 +101,36 @@ require(['crafty',
 
         /* Get a relatively close area to place the units in
          * that isn't too small */
-        var centerCell = null;
+        var campCenter = null;
         var campCells = [];
-        while(campCells.length < num) {
-            centerCell = u.randomElem(continent.cells);
-            terrain.bfs(centerCell, 3, function(terrain, cell) {
-                /* Can't place units on water, mountain or occupied ground */
-                return terrain.isGround(cell.site) &&
-                    !unitManager.getUnitForCell(cell);
-            }, function(cell) {
-                campCells.push(cell);
-            });
+        var goodSpawn = false;
+        while(!goodSpawn) {
+            goodSpawn = true;
+
+            campCenter = u.randomElem(continent.cells);
+            for(var i = 0; goodSpawn && i < campCenters.length; i++) {
+                if(u.dist(campCenters[i].site, campCenter.site) <
+                        terrain.getCellSize()*minCampDist) {
+                    goodSpawn = false;
+                }
+            }
+
+            if(goodSpawn) {
+                terrain.bfs(campCenter, campSize, function(terrain, cell) {
+                    /* Can't place units on water, mountain or occupied ground */
+                    return terrain.isGround(cell.site) &&
+                        !unitManager.getUnitForCell(cell);
+                }, function(cell) {
+                    campCells.push(cell);
+                });
+
+                if(campCells.length < num) {
+                    goodSpawn = false;
+                }
+            }
         }
+
+        campCenters.push(campCenter);
 
         /* Place the units */
         for(var i = 0; i < num; i++) {

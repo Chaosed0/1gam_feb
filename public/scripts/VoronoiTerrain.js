@@ -604,6 +604,11 @@ define(['crafty', './Util', 'voronoi', 'noise', 'prioq'], function(Crafty, u, Vo
         return this.diagram.cells[voronoiId];
     }
 
+    VoronoiTerrain.prototype.getCellSize = function() {
+        /* Only returns an -estimate- of a cell size. */
+        return Math.max(this.pointData.size.x, this.pointData.size.y);
+    }
+
     VoronoiTerrain.prototype.getOtherSite = function(edge, site) {
         u.assert(edge.lSite || edge.rSite);
         var lsite = edge.lSite;
