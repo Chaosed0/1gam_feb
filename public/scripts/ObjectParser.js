@@ -33,7 +33,7 @@ define(['./Util'], function(u) {
         }
     }
 
-    ObjectParser.prototype.parse = function(obj, type) {
+    ObjectParser.prototype.parse = function(obj, override, type) {
         if(type === undefined) {
             type = obj.type;
         }
@@ -41,8 +41,15 @@ define(['./Util'], function(u) {
         u.assert(type in this.map);
         var split = this.map[type];
         for(var varname in split.varToArrMap) {
-            u.assert(varname in obj);
-            split.strings[split.varToArrMap[varname]] = obj[varname];
+            var index = split.varToArrMap[varname];
+            if(varname in override) {
+                split.strings[index] = override[varname];
+            } else if(varname in obj) {
+                split.strings[index] = obj[varname];
+            } else {
+                console.log("WARNING: Couldn't find property " + varname + " when parsing " + type);
+                split.strings[index] = '<error>';
+            }
         }
         return split.strings.join('');
     }

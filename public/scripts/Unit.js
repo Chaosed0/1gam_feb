@@ -2,15 +2,10 @@
 define(['crafty', './Util'], function(Crafty, u) {
     var applyEffect = function(target, effect) {
         /* Damages have a different magnitude than their effect says */
-        var actual_magnitude = null;
 
         if(effect.type === undefined || effect.type === 'damage') {
             u.assert(effect.magnitude !== undefined && effect.type !== undefined);
-            actual_magnitude = effect.magnitude;
-            if(effect.damage_type === 'piercing') {
-                actual_magnitude -= target.getArmor();
-            }
-            target.damage(actual_magnitude);
+            target.damage(target.getActualDamageMagnitude(effect));
             /* There are a few effects that need to be applied only on
              * Damage, so make a special event for that in addition to
              * the generic EffectApplied */
@@ -90,6 +85,14 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
 
             return this;
+        },
+
+        getActualDamageMagnitude: function(effect) {
+            if(effect.damage_type === 'piercing') {
+                return effect.magnitude - this.getArmor();
+            }  else {
+                return effect.magnitude;
+            }
         },
 
         damage: function(magnitude) {

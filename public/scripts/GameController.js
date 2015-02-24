@@ -327,13 +327,18 @@ define(['crafty', './Util'], function(Crafty, u) {
         var singleTargetSelectCallback = function(data) {
             var cell = data.cell;
             var unitOnCell = unitManager.getUnitForCell(cell);
+            var addlEffectProps = {};
             if(unitOnCell) {
+                /* If the effect is 'damage', the magnitude listed is generally
+                 * not the actual damage done to the target because of armor */
+                addlEffectProps.magnitude = unitOnCell.getActualDamageMagnitude(skill.effect);
+
                 targetUnit = unitOnCell;
                 selection = cell;
                 selectMode = 'confirm';
                 highlight = null;
                 actions = [ cancelAction ];
-                centerText = effectParser.parse(skill.effect);
+                centerText = effectParser.parse(skill.effect, addlEffectProps);
                 selectCallback = singleTargetConfirmCallback;
                 pushState();
             } else {
