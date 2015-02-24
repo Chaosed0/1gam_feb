@@ -169,37 +169,24 @@ define(['crafty', './Util'], function(Crafty, u) {
         }
 
         var getMoveAndAttack = function(unit) {
-            highlightedCells = {main: [], extra: []};
+            highlightedCells = {move: [], attack: [], nomove: []};
             var totalLimit = unit.getMoveRange() + unit.getAttack().range;
             lastBFSResult = terrain.bfs(unit.getCell(), totalLimit, function(terrain, cell, num) {
-                var unitOnPoint = unitManager.getUnitForCell(cell);
-                var passable = terrain.isGround(cell.site);
-                var skip = false;
-                if (passable && unitOnPoint) {
-                    /* We want to show that we can attack units of other factions, but
-                     * not attack units of our faction; additionally, we want to move
-                     * through units of our faction, but not through units of other factions */
-                    if(num <= unit.getMoveRange()) {
-                        if((selectedUnit.getFaction() !== unitOnPoint.getFaction())) {
-                            passable = false;
-                        } else {
-                            skip = true;
-                        }
-                    } else if((selectedUnit.getFaction() === unitOnPoint.getFaction())) {
-                        skip = true;
-                    }
-                }
-
-                if(skip) {
-                    return -1;
-                } else {
-                    return passable;
-                }
+                return terrain.isGround(cell.site);
             }, function(cell, num) {
-                if(num <= unit.getMoveRange()) {
-                    highlightedCells.main.push(cell);
+                var unitOnPoint = unitManager.getUnitForCell(cell);
+                var ourFaction = selectedUnit.getFaction();
+                var theirFaction = unitOnPoint === null ? null : unitOnPoint.getFaction();
+                if(unitOnPoint !== null && ourFaction === theirFaction) {
+                    highlightedCells.nomove.push(cell);
+                } else if(num <= unit.getMoveRange()) {
+                    if(unitOnPoint !== null && ourFaction !== theirFaction) {
+                        highlightedCells.nomove.push(cell);
+                    } else {
+                        highlightedCells.move.push(cell);
+                    }
                 } else {
-                    highlightedCells.extra.push(cell);
+                    highlightedCells.attack.push(cell);
                 }
             });
             return highlightedCells;

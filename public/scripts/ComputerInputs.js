@@ -110,7 +110,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 u.assert(unitState.state && unitState.state !== 'idle');
                 if(unitState.state === 'moving') {
                     /* Assert that we have somewhere to move to */
-                    u.assert(state.highlight.main.length > 0);
+                    u.assert(state.highlight.move.length > 0);
 
                     /* Figure out the fastest way to our target */
                     var reversed_path = objects.terrain.astar(curUnit.getCell(), targetEnemyUnit.getCell(), -1,
@@ -118,7 +118,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                             return terrain.isGround(cell.site);
                         });
                     /* Find the closest cell along the path within the highlight */
-                    var index = this.findClosestIn(reversed_path, state.highlight.main);
+                    var index = this.findClosestIn(reversed_path, state.highlight.move);
 
                     if(index < 0) {
                         /* If we didn't find a path to the target unit, it's
@@ -135,14 +135,14 @@ define(['crafty', './Util'], function(Crafty, u) {
                         if(reversed_path === null) {
                             /* We are likely blocked in by units - we're going to play
                              * dumb and move to a random cell */
-                            index = u.getRandom(state.highlight.main.length);
+                            index = u.getRandom(state.highlight.move.length);
                         } else {
-                            index = this.findClosestIn(reversed_path, state.highlight.main);
+                            index = this.findClosestIn(reversed_path, state.highlight.move);
                         }
                     }
                     u.assert(index >= 0, "We didn't find a path to target unit");
                     actionCallback = function() {
-                        selectCallback({cell: state.highlight.main[index]});
+                        selectCallback({cell: state.highlight.move[index]});
                     }
                     unitState.state = 'confirming';
                 } else if(unitState.state === 'attacking') {

@@ -1,5 +1,12 @@
 
 define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerrain) {
+
+    const colorMap = {
+        "normal": 'rgba(255,255,255,0.6)',
+        "move": 'rgba(255,255,255,0.6)',
+        "attack": 'rgba(255,100,50,0.6)',
+        "nomove": 'rgba(255,0,0,0.8)'
+    }
     
     var drawCells = function(ctx, cells, color) {
         ctx.save();
@@ -23,12 +30,19 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         if(e.type == 'canvas') {
             e.ctx.drawImage(this._prerender, this.x, this.y);
 
-            if(this._highlightcells) {
-                drawCells(e.ctx, this._highlightcells, 'rgba(200, 200, 200, .25)');
-            }
+            if(this._highlightcells && this._highlightcells.constructor === Array) {
+                drawCells(e.ctx, this._highlightcells, colorMap["normal"]);
+            } else {
+                for(var type in this._highlightcells) {
+                    var color = null;
+                    if(type in colorMap) {
+                        color = colorMap[type];
+                    } else {
+                        color = colorMap["normal"];
+                    }
 
-            if(this._extrahighlightcells) {
-                drawCells(e.ctx, this._extrahighlightcells, 'rgba(200, 0, 0, .25)');
+                    drawCells(e.ctx, this._highlightcells[type], color);
+                }
             }
 
             if(this._selectedcell) {
@@ -62,7 +76,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
             var cell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
             if(cell) {
                 if(this._selectmode === 'free' ||
-                        (this._selectmode === 'highlight' && this._highlightcells.indexOf(cell) >= 0) ||
+                        (this._selectmode === 'highlight' && isHighlighted(this._highlightcells, cell)) ||
                         (this._selectmode === 'confirm' && this._selectedcell === cell)) {
                     /* Valid cell, trigger */
                     this.trigger("CellSelected", {cell: cell});
@@ -71,13 +85,22 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         }
     }
 
+    var isHighlighted = function(highlight, cell) {
+        var arr = null;
+        if(highlight.constructor === Array) {
+            arr = highlight;
+        } else {
+            arr = highlight.move;
+        }
+        return arr.indexOf(cell) >= 0;
+    }
+
     Crafty.c("TerrainVisualizer", {
         _terrain: null,
         _selectedcell: null,
         _mousedownpos: null,
         _prerender: null,
         _highlightcells: null,
-        _extrahighlightcells: null,
         _selectmode: 'free',
         ready: false,
 
@@ -106,14 +129,10 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
             if(cells === undefined) {
                 return this._highlightcells;
             } else {
-                if(cells !== null && cells.constructor === Array) {
+                if(cells !== null) {
                     this._highlightcells = cells;
-                } else if(cells !== null && cells.constructor === Object) {
-                    this._highlightcells = cells.main;
-                    this._extrahighlightcells = cells.extra;
                 } else {
                     this._highlightcells = null;
-                    this._extrahighlightcells = null;
                 }
                 this.trigger("Invalidate");
             }
