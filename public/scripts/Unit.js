@@ -5,7 +5,8 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         if(effect.type === undefined || effect.type === 'damage') {
             u.assert(effect.magnitude !== undefined && effect.type !== undefined);
-            target.damage(target.getActualDamageMagnitude(effect));
+            var actual_magnitude = target.getActualDamageMagnitude(effect);
+            target.damage(actual_magnitude);
             /* There are a few effects that need to be applied only on
              * Damage, so make a special event for that in addition to
              * the generic EffectApplied */
