@@ -237,9 +237,9 @@ define(['crafty', './Util'], function(Crafty, u) {
                 if(this._alert !== alert) {
                     this._alert = alert;
                     if(this._alert) {
-                        this.trigger("Asleep");
-                    } else {
                         this.trigger("Alerted");
+                    } else {
+                        this.trigger("Asleep");
                     }
                 }
             } else {
