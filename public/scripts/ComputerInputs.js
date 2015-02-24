@@ -90,11 +90,11 @@ define(['crafty', './Util'], function(Crafty, u) {
             return;
         }
 
-        if(!(curUnit.name in this.unitStates)) {
+        if(!(curUnit.id in this.unitStates)) {
             unitState = this.newUnitState(objects.unitManager);
-            this.unitStates[curUnit.name] = unitState;
+            this.unitStates[curUnit.id] = unitState;
         } else {
-            unitState = this.unitStates[curUnit.name];
+            unitState = this.unitStates[curUnit.id];
         }
 
         var takeAction = function() {

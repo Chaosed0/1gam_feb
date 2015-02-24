@@ -50,8 +50,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 curUnit = unitList[curUnitIndex];
 
                 var cameraAnimationDone = function() {
-                    /* Go back to initial state */
-                    rewindStates();
+                    clearStates();
                     /* Select new unit */
                     freeSelectCallback({cell: curUnit.getCell()});
                     /* Unbind us for next time */
@@ -68,9 +67,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     cameraAnimationDone();
                 }
             } else {
-                /* This faction's turn is done, we're passing off control.
-                 * Go back to initial state, but don't use it */
-                rewindStates();
+                clearStates();
                 /* Null out the current state */
                 useState({
                     selectMode: null,
@@ -153,11 +150,10 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
         }
 
-        var rewindStates = function() {
-            while(stack.length > 1) {
+        var clearStates = function() {
+            while(stack.length > 0) {
                 stack.pop();
             }
-            return stack[0];
         }
 
         /* Now that we have popState, set the cancel button callback */
@@ -286,9 +282,12 @@ define(['crafty', './Util'], function(Crafty, u) {
                 highlight = null;
                 actions = [ cancelAction ];
             }
-            /* If we had selected a different cell, we don't want to push more
-             * states onto the stack - pop the previous one */
-            popState();
+            /* If the last state was us just free-selecting a cell, we don't
+             * want to keep pushing free-select states on to the stack - pop it
+             * off before we free-select again */
+            if(stack.length > 0 && stack[stack.length-1].selectMode === 'free') {
+                popState();
+            }
             pushState();
         }
 
@@ -308,7 +307,6 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback when user confirms a cell to move a unit to. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            rewindStates();
             /* Check if the unit's turn is over */
             if(curUnit.isTurnOver()) {
                 /* It's time to advance to the next unit */
@@ -350,15 +348,15 @@ define(['crafty', './Util'], function(Crafty, u) {
              * Note that "this" within fxEnd is the target unit, not the user
              * unit. */
             var fxEnd = function() {
-                /* Unbind this from the unit */
-                user.unbind("FxEnd", fxEnd);
-                /* Check if the current unit's turn is over */
+                /* Unbind FxEnd from the *target* unit */
+                target.unbind("FxEnd", fxEnd);
+                /* Check if the *selected* unit's turn is over */
                 if(user.isTurnOver()) {
                     /* It's time to advance to the next unit */
                     nextUnit();
                 } else {
                     /* Reselect the current unit */
-                    freeSelectCallback({cell: curUnit.getCell()});
+                    freeSelectCallback({cell: user.getCell()});
                 }
             }
             target.bind("FxEnd", fxEnd);
