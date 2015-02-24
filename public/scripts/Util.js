@@ -39,10 +39,19 @@ define(['seedrandom'], function(seedrandom) {
         if (!condition) {
             message = message || "Assertion failed";
             if (typeof Error !== "undefined") {
-                throw new Error(message);
+                var error = new Error(message);
+                this.stacktrace(error);
+                throw error;
             }
             throw message; // Fallback
         }
+    }
+
+    Util.stacktrace = function(e) {
+        var stack = e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+            .replace(/^\s+at\s+/gm, '')
+            .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@');
+        console.log(stack);
     }
 
     Util.randomElem = function(arr) {
