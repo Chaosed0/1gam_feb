@@ -152,7 +152,6 @@ require(['crafty',
                     var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
                         .attr({w: unitSize, h: unitSize})
                         .unit(unitName, faction, className, good, unitInfo[className])
-                        .animate('idle', -1)
                         .bind("Died", function(data) {
                             /* The unit is dead - destroy it once all anims are over
                              * XXX: How do we know that the unit has anims pending? */

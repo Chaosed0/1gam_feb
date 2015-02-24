@@ -82,6 +82,20 @@ define(['crafty', './Util'], function(Crafty, u) {
                 }
 
                 this.reel('idle', 2000, data[this._alignment].animation)
+                this.reel('none', 100000, [data[this._alignment].animation[0]])
+                this.animate('idle', -1);
+                if(!this._alert) {
+                    this.resetAnimation();
+                    this.pauseAnimation();
+                }
+
+                this.bind("Alerted", function() {
+                    this.resumeAnimation();
+                });
+                this.bind("Asleep", function() {
+                    this.resetAnimation();
+                    this.pauseAnimation();
+                });
             }
 
             return this;
