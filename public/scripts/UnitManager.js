@@ -19,7 +19,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         unit.setCell(cell);
 
         var self = this;
-        unit.bind("Remove", function() { self.removeUnit(this) });
+        unit.bind("Died", function() { self.removeUnit(this) });
         unit.id = this.nextId++;
     }
 

@@ -409,8 +409,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
             /* Bind events occuring on unit deaths */
             for(var i = 0 ; i < unitList.length; i++) {
-                unitList[i].bind("Remove", function() {
-                    /* Remove the dead unit from our list */
+                unitList[i].bind("Dead", function() {
+                    /* "Remove" is triggered on the unit after a little bit,
+                     * but we want to remove the unit right as it has no
+                     * health. */
                     var index = unitList.indexOf(this);
                     u.assert(index >= 0);
                     unitList.splice(index, 1);

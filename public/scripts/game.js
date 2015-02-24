@@ -133,6 +133,7 @@ require(['crafty',
                         .bind("EffectApplied", function(data) {
                             /* Check for unit death upon damage */
                             if(data.effect.type === 'damage' && this.isDead()) {
+                                this.trigger("Dead");
                                 /* The unit is dead - destroy it once all anims are over
                                  * XXX: How do we know that the unit has anims pending? */
                                 this.bind("FxEnd", function() {
