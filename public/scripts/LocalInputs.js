@@ -42,13 +42,22 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
         } else if(e.key === Crafty.keys.ESC) {
             /* Find cancel and do that */
-            for(var i = 0; i < this.actions.length; i++) {
-                if(this.actions[i].name === 'Cancel') {
-                    this.actions[i].callback();
-                    break;
-                }
+            var cancel = this.findAction('Cancel');
+            if(cancel !== null) { cancel(); }
+        } else if(e.key === Crafty.keys.SPACE) {
+            var skip = this.findAction('Skip');
+            if(skip !== null) { skip(); }
+        }
+    }
+
+    LocalInputs.prototype.findAction = function(name) {
+        for(var i = 0; i < this.actions.length; i++) {
+            if(this.actions[i] !== null && 
+                    this.actions[i].name === name) {
+                return this.actions[i].callback;
             }
         }
+        return null;
     }
     
     return LocalInputs;

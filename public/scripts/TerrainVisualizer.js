@@ -38,7 +38,8 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
                     if(type in colorMap) {
                         color = colorMap[type];
                     } else {
-                        color = colorMap["normal"];
+                        /* Don't draw this layer */
+                        continue;
                     }
 
                     drawCells(e.ctx, this._highlightcells[type], color);
@@ -75,9 +76,7 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
             /* User might have selected a cell of the map */
             var cell = this._terrain.getCellForPos({x: e.realX, y: e.realY});
             if(cell) {
-                if(this._selectmode === 'free' ||
-                        (this._selectmode === 'highlight' && isHighlighted(this._highlightcells, cell)) ||
-                        (this._selectmode === 'confirm' && this._selectedcell === cell)) {
+                if(validSelection.call(this, cell)) {
                     /* Valid cell, trigger */
                     this.trigger("CellSelected", {cell: cell});
                 }
@@ -85,12 +84,38 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
         }
     }
 
-    var isHighlighted = function(highlight, cell) {
+    var validSelection = function(cell) {
+        var valid = false;
+        if(this._selectmode === 'free') {
+            /* Free select means any cell */
+            valid = true;
+        } else if(this._selectmode === 'confirm' && this._selectedcell === cell) {
+            /* Confirm means select only the selected cell */
+            valid = true;
+        } else if(this._selectmode.substring(0, 9) === 'highlight') {
+            /* 'highlight' can take two different forms */
+            if(this._selectmode[9] === '.') {
+                /* Highlight is an object and we want to take one of the arrays */
+                valid = isHighlighted(this._highlightcells, cell, this._selectmode.slice(10));
+            } else {
+                /* Highlight is an array */
+                valid = isHighlighted(this._highlightcells, cell);
+            }
+        }
+
+        return valid;
+    }
+
+    var isHighlighted = function(highlight, cell, type) {
         var arr = null;
+        if(type === undefined) {
+            type = 'move';
+        }
+
         if(highlight.constructor === Array) {
             arr = highlight;
         } else {
-            arr = highlight.move;
+            arr = highlight[type];
         }
         return arr.indexOf(cell) >= 0;
     }

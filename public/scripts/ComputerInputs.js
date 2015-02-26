@@ -150,14 +150,30 @@ define(['crafty', './Util'], function(Crafty, u) {
                     u.assert(unitState.attackTarget,
                             "Unit is in the attacking state, but it doesn't know what to attack");
                     var attackCell = unitState.attackTarget.getCell();
-                    u.assert(state.highlight !== null && state.highlight.indexOf(attackCell) >= 0,
+                    u.assert(state.highlight !== null && state.highlight.attack.indexOf(attackCell) >= 0,
                             "We thought we could attack a target, but we can't");
                     actionCallback = function() {
                         selectCallback({cell: attackCell});
                     }
+
+                    if(curUnit.hasMoved()) {
+                        unitState.state = 'confirming';
+                    } else {
+                        /* If we haven't moved, then the game expects us to
+                         * select a square to move to after selecting the unit
+                         * to attack */
+                        unitState.state = 'attackmove';
+                    }
+                } else if(unitState.state === 'attackmove') {
+                    /* We happen to know that if we are in this state, we are allowed to move
+                     * to our own current position
+                     * XXX: A smarter thing would be to move away from enemy units, so as to kite */
+                    actionCallback = function() {
+                        selectCallback({cell: curUnit.getCell()});
+                    }
                     unitState.state = 'confirming';
                 } else if(unitState.state === 'confirming') {
-                    /* Confirm our action */
+                    /* Confirm our action - we never back up */
                     actionCallback = function() {
                         selectCallback({cell: state.selection});
                     }

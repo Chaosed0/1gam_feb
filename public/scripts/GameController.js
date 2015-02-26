@@ -75,19 +75,47 @@ define(['crafty', './Util'], function(Crafty, u) {
                 /* We've run dry on units - our turn is over */
                 clearStates();
                 /* Null out the current state */
-                useState({
-                    selectMode: null,
-                    selection: null,
-                    highlight: null,
-                    actions: null,
-                    centerText: null,
-                    selectedUnit: null,
-                    targetUnit: null,
-                    skill: null,
-                    selectCallback: null,
-                });
+                nullState();
                 /* We're done */
                 doneCallback();
+            }
+        }
+
+        /* Nulls out the current state. Does not push the null state
+         * onto the stack. Optionally keeps all the state that isn't
+         * visual in nature. */
+        var nullState = function(visualOnly) {
+            if(visualOnly === undefined) {
+                /* This flag is tricky and doesn't do what it says on the tin.
+                 * Very much specifically for use when we want to clear state,
+                 * but we don't want side effects like activating the AI. */
+                visualOnly = false;
+            }
+
+            /* Since we're ostensibly nulling the state, do not trigger inputs
+             * from the AI or from the user */
+            useState({
+                selectMode: null,
+                selection: null,
+                highlight: null,
+                actions: null,
+                centerText: null,
+                selectedUnit: visualOnly ? selectedUnit : null,
+                targetUnit: visualOnly ? targetUnit : null,
+                skill: visualOnly ? skill : null,
+                selectCallback: visualOnly ? selectCallback : null,
+            }, false);
+        }
+
+        /* Advances to the next unit if the current unit's turn is over, or
+         * if it's not, re-selects the current unit. */
+        var nextUnitOrReselect = function() {
+            if(curUnit.isTurnOver()) {
+                /* It's time to advance to the next unit */
+                nextUnit();
+            } else {
+                /* Reselect the current unit */
+                freeSelectCallback({cell: curUnit.getCell()});
             }
         }
 
@@ -97,7 +125,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             callback: null
         };
 
-        var useState = function(state) {
+        var useState = function(state, triggerInputs) {
             selectMode = state.selectMode;
             selection = state.selection;
             highlight = state.highlight;
@@ -127,7 +155,9 @@ define(['crafty', './Util'], function(Crafty, u) {
                 gui.hideInfo('right');
             }
 
-            inputs.doAction(objects, state);
+            if(triggerInputs === undefined || triggerInputs) {
+                inputs.doAction(objects, state);
+            }
         }
 
         var pushState = function() {
@@ -168,9 +198,14 @@ define(['crafty', './Util'], function(Crafty, u) {
             useState(stack[stack.length-1]);
         }
 
-        var getMoveAndAttack = function(unit) {
-            highlightedCells = {move: [], attack: [], nomove: []};
+        var getMoveAndAttack = function(unit, attacking) {
+            var highlightedCells = {move: [], attack: [], nomove: []};
             var totalLimit = unit.getMoveRange() + unit.getAttack().range;
+
+            if(attacking === undefined) {
+                attacking = false;
+            }
+
             lastBFSResult = terrain.bfs(unit.getCell(), totalLimit, function(terrain, cell, num) {
                 return terrain.isGround(cell.site);
             }, function(cell, num) {
@@ -178,26 +213,48 @@ define(['crafty', './Util'], function(Crafty, u) {
                 var ourFaction = selectedUnit.getFaction();
                 var theirFaction = unitOnPoint === null ? null : unitOnPoint.getFaction();
                 if(unitOnPoint !== null && ourFaction === theirFaction) {
+                    /* Unit is on the same faction - we can neither move on nor attack it */
                     highlightedCells.nomove.push(cell);
                 } else if(num <= unit.getMoveRange()) {
+                    /* Unit is within our move range */
                     if(unitOnPoint !== null && ourFaction !== theirFaction) {
-                        highlightedCells.nomove.push(cell);
+                        /* Enemy unit - are we attacking? */
+                        if(attacking) {
+                            /* We can attack it */
+                            highlightedCells.attack.push(cell);
+                        } else {
+                            /* We're not attacking - we can't move on a unit */
+                            highlightedCells.nomove.push(cell);
+                        }
                     } else {
+                        /* No unit on this cell - are we attacking? */
+                        if(attacking) {
+                            /* We could attack this cell */
+                            highlightedCells.attack.push(cell);
+                        }
+                        /* We can still move to this cell even if we're attacking */
                         highlightedCells.move.push(cell);
                     }
                 } else {
                     highlightedCells.attack.push(cell);
                 }
             });
+
+            /* If we're attacking, we still want to save the moveable cells,
+             * but we don't want them to show up as moveable */
+            if(attacking) {
+                highlightedCells.possibleMove = highlightedCells.move;
+                delete highlightedCells.move;
+            }
+
             return highlightedCells;
         }
 
         /* Callback for when "move" button is hit in gui. Transitions to 
          * moveSelectCallback */
         var guiMoveCallback = function() {
-            highlightedCells = getMoveAndAttack(selectedUnit);
-            highlight = highlightedCells;
-            selectMode = 'highlight';
+            highlight = getMoveAndAttack(selectedUnit);
+            selectMode = 'highlight.move';
             actions = [ cancelAction ];
             selectCallback = moveSelectCallback;
 
@@ -209,18 +266,32 @@ define(['crafty', './Util'], function(Crafty, u) {
         var guiSkillCallback = function(chosenSkill) {
             u.assert(chosenSkill);
             if(chosenSkill.type === 'singletarget') {
-                /* Single target effect; get the target */
-                highlightedCells = [];
-                terrain.bfs(selectedUnit.getCell(), chosenSkill.range, function(terrain, cell) {
-                    /* Allow target to be anything passable */
-                    return terrain.isGround(cell.site);
-                }, function(cell) {
-                    highlightedCells.push(cell);
-                });
+                var highlightedCells = null;
+                if(!selectedUnit.hasMoved()) {
+                    /* We can move before attacking - do special case where we
+                     * show all cells attackable after a move */
+                    highlightedCells = getMoveAndAttack(selectedUnit, true);
+                    /* Only allow player to select attack highlighted zone */
+                    selectMode = 'highlight.attack';
+                } else {
+                    /* We can't move, so just figure out where we should use skill at */
+                    highlightedCells = { attack: [], nomove: [] };
+                    terrain.bfs(selectedUnit.getCell(), chosenSkill.range, function(terrain, cell) {
+                        /* Allow target to be anything passable */
+                        return terrain.isGround(cell.site);
+                    }, function(cell) {
+                        if(cell === selectedUnit.getCell()) {
+                            highlightedCells.nomove.push(cell);
+                        } else {
+                            highlightedCells.attack.push(cell);
+                        }
+                    });
+                    /* We can use skill at only attackable tiles */
+                    selectMode = 'highlight.attack';
+                }
 
                 actions = [cancelAction]; 
                 highlight = highlightedCells;
-                selectMode = 'highlight';
                 selectCallback = singleTargetSelectCallback;
                 skill = chosenSkill;
                 pushState();
@@ -266,8 +337,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     actions = [ moveAction, attackAction, skillAction, skipAction ];
                     highlight = null;
                 } else {
-                    highlightedCells = getMoveAndAttack(selectedUnit);
-                    highlight = highlightedCells;
+                    highlight = getMoveAndAttack(selectedUnit);
                     actions = [ cancelAction ];
                 }
             } else {
@@ -300,14 +370,8 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Callback when user confirms a cell to move a unit to. */
         var moveConfirmCallback = function(data) {
             unitManager.moveUnit(selectedUnit, data.cell);
-            /* Check if the unit's turn is over */
-            if(curUnit.isTurnOver()) {
-                /* It's time to advance to the next unit */
-                nextUnit();
-            } else {
-                /* Reselect the current unit */
-                freeSelectCallback({cell: selectedUnit.getCell()});
-            }
+            /* Advance to next unit or reselect current unit */
+            nextUnitOrReselect();
         }
 
         /* Callback to select target for a single-targeted skill. */
@@ -316,17 +380,57 @@ define(['crafty', './Util'], function(Crafty, u) {
             var unitOnCell = unitManager.getUnitForCell(cell);
             var addlEffectProps = {};
             if(unitOnCell) {
-                /* If the effect is 'damage', the magnitude listed is generally
-                 * not the actual damage done to the target because of armor */
+                /* We may have come here two ways: either by first moving, then attacking,
+                 * or just by attacking. If the former, we want to force the player to move
+                 * first before attacking the target. If the latter, then we just confirm
+                 * the attack. */
+                if(highlight.possibleMove) {
+                    /* Get the possible area in which the selectedUnit could use the skill
+                     * on the unitOnCell */
+                    var possibleMove = highlight.possibleMove;
+                    var possibleArea = [];
+                    highlight = { move: [], nomove: [] };
+                    terrain.bfs(unitOnCell.getCell(), skill.range, function(terrain, cell) {
+                        return terrain.isGround(cell.site);
+                    }, function(cell) {
+                        possibleArea.push(cell);
+                    });
+                    /* Merge the arrays */
+                    for(var i = 0; i < possibleArea.length; i++) {
+                        if(possibleMove.indexOf(possibleArea[i]) >= 0 ||
+                                possibleArea[i] === selectedUnit.getCell()) {
+                            var possibleUnit = unitManager.getUnitForCell(possibleArea[i]);
+                            if(possibleUnit !== null && possibleUnit !== selectedUnit) {
+                                /* If there's a unit on the cell that isn't the current unit
+                                 * (so that we don't have to move if we just want to stay), then
+                                 * we can't move there */
+                                highlight.nomove.push(possibleArea[i]);
+                            } else {
+                                /* We can both move to this cell and use the skill on the target
+                                 * in this cell - this is a possible cell */
+                                highlight.move.push(possibleArea[i]);
+                            }
+                        }
+                    }
+                    /* Force the unit to move or stay (if it can) */
+                    selectMode = 'highlight.move';
+                    selectCallback = singleTargetMoveSelectCallback;
+                } else {
+                    /* Uneventful - we selected an attack cell and we can't
+                     * move, so just confirm the attack */
+                    selectMode = 'confirm';
+                    selectCallback = singleTargetConfirmCallback;
+                    highlight = null;
+                }
+                /* Get the magnitude we should display to the user - if the
+                 * effect is 'damage', the magnitude listed is generally not
+                 * the actual damage done to the target because of armor */
                 addlEffectProps.magnitude = unitOnCell.getActualDamageMagnitude(skill.effect);
 
                 targetUnit = unitOnCell;
                 selection = cell;
-                selectMode = 'confirm';
-                highlight = null;
                 actions = [ cancelAction ];
                 centerText = effectParser.parse(skill.effect, addlEffectProps);
-                selectCallback = singleTargetConfirmCallback;
                 pushState();
             } else {
                 /* XXX: Actually display an error to user */
@@ -334,12 +438,50 @@ define(['crafty', './Util'], function(Crafty, u) {
             }
         }
 
+        /* Callback when the user has attacked before moving, and now the user
+         * has selected a cell to move to. */
+        var singleTargetMoveSelectCallback = function(data) {
+            var cell = data.cell;
+            var path = terrain.reconstructPath(selectedUnit.getCell(), cell, lastBFSResult);
+            /* Highlight the path and the current selection (which should be
+             * the unit that we're targeting with a skill */
+            highlight = { move: path, attack: [selection] };
+            selection = cell;
+            selectMode = 'confirm';
+            actions = [ cancelAction ];
+            selectCallback = singleTargetMoveConfirmCallback;
+            pushState();
+        }
+
+        var singleTargetMoveConfirmCallback = function(data) {
+            u.assert(data.cell === selection);
+
+            /* Move the unit, then use skill on the target */
+            var target = targetUnit;
+            unitManager.moveUnit(selectedUnit, data.cell);
+            selectedUnit.useSkill(skill, targetUnit);
+
+            /* Clear all GUI and selection while FX are playing */
+            nullState();
+
+            /* Wait for Fx to play, remember that "this" is the target unit */
+            var fxEnd = function() {
+                /* Unbind FxEnd from the *target* unit */
+                target.unbind("FxEnd", fxEnd);
+                /* Check if the *selected* unit's turn is over */
+                nextUnitOrReselect();
+            }
+            target.bind("FxEnd", fxEnd);
+        }
+
         /* Callback when user confirms the unit being targeted. */
         var singleTargetConfirmCallback = function(data) {
             u.assert(selectedUnit && targetUnit);
-            var user = selectedUnit;
             var target = targetUnit;
-            user.useSkill(skill, target);
+            selectedUnit.useSkill(skill, targetUnit);
+
+            /* Clear all GUI and selection while FX are playing */
+            nullState();
 
             /* Regain control after all fx attached to the target unit have
              * stopped playing.
@@ -349,26 +491,9 @@ define(['crafty', './Util'], function(Crafty, u) {
                 /* Unbind FxEnd from the *target* unit */
                 target.unbind("FxEnd", fxEnd);
                 /* Check if the *selected* unit's turn is over */
-                if(user.isTurnOver()) {
-                    /* It's time to advance to the next unit */
-                    nextUnit();
-                } else {
-                    /* Reselect the current unit */
-                    freeSelectCallback({cell: user.getCell()});
-                }
+                nextUnitOrReselect();
             }
             target.bind("FxEnd", fxEnd);
-
-            /* Null the state while FX are playing */
-            selectMode = null;
-            selection = null;
-            highlight = null;
-            actions = null;
-            centerText = null;
-            selectedUnit = null;
-            targetUnit = null;
-            selectCallback = null;
-            pushState();
         }
 
         /* Sets this GameController to active. Announces the faction that was
