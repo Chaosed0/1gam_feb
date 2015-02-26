@@ -210,15 +210,10 @@ define(['crafty', './Util'], function(Crafty, u) {
                 return terrain.isGround(cell.site);
             }, function(cell, num) {
                 var unitOnPoint = unitManager.getUnitForCell(cell);
-                var ourFaction = selectedUnit.getFaction();
-                var theirFaction = unitOnPoint === null ? null : unitOnPoint.getFaction();
-                if(unitOnPoint !== null && ourFaction === theirFaction) {
-                    /* Unit is on the same faction - we can neither move on nor attack it */
-                    highlightedCells.nomove.push(cell);
-                } else if(num <= unit.getMoveRange()) {
+                if(num <= unit.getMoveRange()) {
                     /* Unit is within our move range */
-                    if(unitOnPoint !== null && ourFaction !== theirFaction) {
-                        /* Enemy unit - are we attacking? */
+                    if(unitOnPoint !== null && unitOnPoint !== null) {
+                        /* Unit on the cell - are we attacking? */
                         if(attacking) {
                             /* We can attack it */
                             highlightedCells.attack.push(cell);
