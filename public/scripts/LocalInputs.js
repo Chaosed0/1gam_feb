@@ -37,8 +37,16 @@ define(['crafty', './Util'], function(Crafty, u) {
         if(e.key >= Crafty.keys['1'] && e.key <= Crafty.keys['4']) {
             var index = e.key - Crafty.keys['1'];
             var action = this.actions[index];
-            if(action) {
+            if(action && action.callback) {
                 action.callback();
+            }
+        } else if(e.key === Crafty.keys.ESC) {
+            /* Find cancel and do that */
+            for(var i = 0; i < this.actions.length; i++) {
+                if(this.actions[i].name === 'Cancel') {
+                    this.actions[i].callback();
+                    break;
+                }
             }
         }
     }
