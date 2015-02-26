@@ -108,16 +108,20 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
 
     var isHighlighted = function(highlight, cell, type) {
         var arr = null;
-        if(type === undefined) {
-            type = 'move';
-        }
 
         if(highlight.constructor === Array) {
-            arr = highlight;
+            return highlight.indexOf(cell) >= 0;
+        } else if(type === undefined) {
+            /* Search all types */
+            for(var type in highlight) {
+                if(highlight[type].indexOf(cell) >= 0) {
+                    return true;
+                }
+            }
+            return false;
         } else {
-            arr = highlight[type];
+            return highlight[type].indexOf(cell) >= 0;
         }
-        return arr.indexOf(cell) >= 0;
     }
 
     Crafty.c("TerrainVisualizer", {

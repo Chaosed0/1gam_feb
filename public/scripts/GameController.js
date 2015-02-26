@@ -388,8 +388,9 @@ define(['crafty', './Util'], function(Crafty, u) {
                     /* Get the possible area in which the selectedUnit could use the skill
                      * on the unitOnCell */
                     var possibleMove = highlight.possibleMove;
+                    var nomoveArea = highlight.nomove;
                     var possibleArea = [];
-                    highlight = { move: [], nomove: [] };
+                    highlight = { move: [], nomove: [], attack: []};
                     terrain.bfs(unitOnCell.getCell(), skill.range, function(terrain, cell) {
                         return terrain.isGround(cell.site);
                     }, function(cell) {
@@ -397,13 +398,14 @@ define(['crafty', './Util'], function(Crafty, u) {
                     });
                     /* Merge the arrays */
                     for(var i = 0; i < possibleArea.length; i++) {
+                        var possibleUnit = unitManager.getUnitForCell(possibleArea[i]);
                         if(possibleMove.indexOf(possibleArea[i]) >= 0 ||
-                                possibleArea[i] === selectedUnit.getCell()) {
-                            var possibleUnit = unitManager.getUnitForCell(possibleArea[i]);
+                                nomoveArea.indexOf(possibleArea[i]) >= 0 ||
+                                possibleUnit === selectedUnit) {
                             if(possibleUnit !== null && possibleUnit !== selectedUnit) {
-                                /* If there's a unit on the cell that isn't the current unit
-                                 * (so that we don't have to move if we just want to stay), then
-                                 * we can't move there */
+                                /* If there's a unit on the cell that isn't the current unit,
+                                 * then we can't move there and we want to show the user that
+                                 * (in case they're rather discerning and check the math) */
                                 highlight.nomove.push(possibleArea[i]);
                             } else {
                                 /* We can both move to this cell and use the skill on the target
@@ -412,8 +414,10 @@ define(['crafty', './Util'], function(Crafty, u) {
                             }
                         }
                     }
+                    /* Highlight the cell we're attacking too */
+                    highlight.attack = [cell];
                     /* Force the unit to move or stay (if it can) */
-                    selectMode = 'highlight.move';
+                    selectMode = 'highlight';
                     selectCallback = singleTargetMoveSelectCallback;
                 } else {
                     /* Uneventful - we selected an attack cell and we can't
@@ -442,15 +446,29 @@ define(['crafty', './Util'], function(Crafty, u) {
          * has selected a cell to move to. */
         var singleTargetMoveSelectCallback = function(data) {
             var cell = data.cell;
-            var path = terrain.reconstructPath(selectedUnit.getCell(), cell, lastBFSResult);
-            /* Highlight the path and the current selection (which should be
-             * the unit that we're targeting with a skill */
-            highlight = { move: path, attack: [selection] };
-            selection = cell;
-            selectMode = 'confirm';
-            actions = [ cancelAction ];
-            selectCallback = singleTargetMoveConfirmCallback;
-            pushState();
+            /* If the cell selected was the selection (which should be the cell
+             * containing the target unit), and we can attack from our current
+             * position, then do so */
+            if(cell === selection) {
+                if(highlight.move.indexOf(selectedUnit.getCell()) >= 0) {
+                    /* Confirm the attack ourselves */
+                    singleTargetConfirmCallback({cell: selectedUnit.getCell()});
+                } else {
+                    /* Change this to something that gets displayed */
+                    console.log("Can't attack from current position!");
+                }
+            } else {
+                var path = terrain.reconstructPath(selectedUnit.getCell(), cell, lastBFSResult);
+                /* Highlight the path and the current selection (which should be
+                 * the unit that we're targeting with a skill, then make the user
+                 * confirm the move and the attack both at once */
+                highlight = { move: path, attack: [selection] };
+                selection = cell;
+                selectMode = 'confirm';
+                actions = [ cancelAction ];
+                selectCallback = singleTargetMoveConfirmCallback;
+                pushState();
+            }
         }
 
         var singleTargetMoveConfirmCallback = function(data) {
