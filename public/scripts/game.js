@@ -26,12 +26,14 @@ require(['crafty',
 
     const waterPercent = 0.3;
     const groundPercent = 0.4;
-    const tileDensity = 50;
-    const terrainSize = {x: 0, y: 0, w: 10000, h: 8000};
+    const tileDensity = 30;
+    const terrainSize = {x: 0, y: 0, w: 5000, h: 4000};
     const guiRatio = 0.25;
     const unitSize = 48;
 
-    const enemyPartyNum = 20;
+    const initialAnnounceTime = 2000;
+
+    const enemyPartyNum = 10;
     const enemyPartySize = 5;
     /* Size in cells */
     const campSize = 3;
