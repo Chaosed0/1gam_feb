@@ -68,9 +68,11 @@ define(['crafty', './Util'], function(Crafty, u) {
         if(effect.type === 'damage') {
             this.makeFx(unit, effect.damage_type);
             this.createDamageNumbers(unit, magnitude);
+            this.playFx(effect.damage_type);
         } else if(effect.type == 'heal') {
             this.makeFx(unit, effect.type);
             this.createDamageNumbers(unit, magnitude, '#00FF00');
+            this.playFx(effect.type);
         } else {
             console.log("WARNING: Tried to create effect which we have no record of");
         }
@@ -178,6 +180,10 @@ define(['crafty', './Util'], function(Crafty, u) {
         var fxId = this.newFx(unit);
         alertText.tween({y: alertText.y - alertText.h - 10}, damageTextExpireTime/4, 'easeOutQuad');
         alertText.bind("TweenEnd", function() { self.removeFx(unit, fxId); });
+    }
+
+    UnitFx.prototype.playFx = function(name) {
+        Crafty.audio.play(name, 1, 0.5);
     }
 
     return UnitFx;

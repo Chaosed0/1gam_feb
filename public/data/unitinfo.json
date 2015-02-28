@@ -1152,6 +1152,41 @@
                 "audio/fs.ogg",
                 "audio/fs.mp3",
                 "audio/fs.wav"
+            ],
+            "piercing": [
+                "audio/piercing.ogg",
+                "audio/piercing.mp3",
+                "audio/piercing.wav"
+            ],
+            "blunt": [
+                "audio/blunt.ogg",
+                "audio/blunt.mp3",
+                "audio/blunt.wav"
+            ],
+            "fire": [
+                "audio/fire.ogg",
+                "audio/fire.mp3",
+                "audio/fire.wav"
+            ],
+            "holy": [
+                "audio/holy.ogg",
+                "audio/holy.mp3",
+                "audio/holy.wav"
+            ],
+            "earth": [
+                "audio/earth.ogg",
+                "audio/earth.mp3",
+                "audio/earth.wav"
+            ],
+            "drain": [
+                "audio/drain.ogg",
+                "audio/drain.mp3",
+                "audio/drain.wav"
+            ],
+            "heal": [
+                "audio/heal.ogg",
+                "audio/heal.mp3",
+                "audio/heal.wav"
             ]
         }
     }
