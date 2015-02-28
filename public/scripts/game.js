@@ -31,9 +31,9 @@ require(['crafty',
     const guiRatio = 0.25;
     const unitSize = 48;
 
-    const initialAnnounceTime = 2000;
+    const initialAnnounceTime = 4000;
 
-    const enemyPartyNum = 10;
+    const enemyPartyNum = 7;
     const enemyPartySize = 5;
     /* Size in cells */
     const campSize = 3;
@@ -61,6 +61,8 @@ require(['crafty',
     var campCenters = [];
     var bossUnit = null;
     var terrainPrerender = null;
+    var camera = null;
+    var gui = null;
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
 
@@ -78,12 +80,72 @@ require(['crafty',
     var enemyController = null;
     var playerFaction = null;
     var playerController = null;
+    
+    var turns = 0;
 
+    /* Init crafty */
     Crafty.init(width, height, gameElem);
     Crafty.pixelart(true);
 
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
+
+    /* Set seed */
+    if(window.location.search !== '') {
+        /* User has specified seed through query string - use it instead */
+        u.setSeed(window.location.search.substring(1));
+    } else {
+        u.randomSeed();
+    }
+
+    var winFx = function() {
+        var bossUnit = this;
+        var bossFaction = bossUnit.getFaction();
+
+        /* Stop everything */
+        for(var i = 0; i < unitManager.allUnits.length; i++) {
+            unitManager.allUnits[i].animate('none', -1);
+        }
+        camera.mouselook(false);
+
+        /* We know it's the player's turn right now - they just killed the boss */
+        playerController.forceStop();
+
+        /* Kill all remaining enemy units after some time */
+        window.setTimeout(function() {
+            var unitlist = unitManager.getUnitListForFaction(bossFaction);
+            while(unitlist.length > 0) {
+                /* The unitlist gets modified as this happens */
+                var unit = unitlist[unitlist.length-1];
+                unit.damage(unit._maxhealth);
+            }
+        }, 1000);
+
+        /* Announce the victory */
+        gui.announce("You have cleansed the land of evil!", 3000, true, function() {
+            gui.announce("Turns taken: " + (turns+1), 3000, true, function() {
+                gui.announce("Seed for this map: " + u.getSeed(), 1500, false, function(outTween) {
+                    /* nothing - maybe something here later */
+                });
+            });
+        });
+    }
+
+    var loseFx = function() {
+        /* Stop everything */
+        for(var i = 0; i < unitManager.allUnits.length; i++) {
+            unitManager.allUnits[i].animate('none', -1);
+        }
+        camera.mouselook(false);
+
+        /* We know it's the enemy's turn right now */
+        enemyController.forceStop();
+
+        /* Announce the loss */
+        gui.announce("Evil has triumphed...", 1500, false, function(outTween) {
+            gui.setInstructionText("Refresh to try again");
+        });
+    }
 
     var createUnit = function(name, faction, className, good, cell, boss) {
         var size = unitSize;
@@ -103,6 +165,11 @@ require(['crafty',
                     this.expires(1000);
                 });
             });
+
+        if(boss) {
+            /* Bind win con to the boss' death */
+            unit.bind("Died", winFx);
+        }
 
         /* Good units start alerted, bad ones don't */
         if(good) {
@@ -216,7 +283,7 @@ require(['crafty',
         var guiSize = {w: Crafty.viewport.width, h: Crafty.viewport.height * guiRatio};
 
         /* Initialize the camera controls, with some padding at the bottom */
-        var camera = new CameraControls({
+        camera = new CameraControls({
             x: terrainSize.x,
             y: terrainSize.y,
             w: terrainSize.w,
@@ -227,7 +294,7 @@ require(['crafty',
         camera.mouselook(true);
 
         /* Create the actual gui */
-        var gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
+        gui = new GUI(guiSize, camera, terrainPrerender, terrainSize);
 
         /* Pick a random faction name for player and enemy */
         playerFaction = u.randomElem(names.groups.good);
@@ -268,6 +335,7 @@ require(['crafty',
         enemyController = new GameController(enemyFaction, enemyInputs, stateObjects, function() {
             /* When the enemy's done, switch to the player */
             playerController.setActive();
+            turns++;
         });
 
         /* Hack - wait a bit, it's hard for us to keep up with the
@@ -275,8 +343,8 @@ require(['crafty',
         window.setTimeout(function() {
             /* Center on the boss and announce the objective */
             camera.centerOn(bossUnit.getCell().site, initialAnnounceTime/4);
-            gui.announce("Kill " + bossUnit.getName() + " of " + bossUnit.getFaction() + "!",
-                    initialAnnounceTime, function() {
+            gui.announce("Kill " + bossUnit.getName() + ", the king of " + bossUnit.getFaction() + "!",
+                    initialAnnounceTime, true, function() {
                         /* Let the player controller take over */
                         playerController.setActive();
                     });

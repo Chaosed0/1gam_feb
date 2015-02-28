@@ -86,6 +86,11 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
 
     var validSelection = function(cell) {
         var valid = false;
+
+        if(!this._selectmode) {
+            return false;
+        }
+
         if(this._selectmode === 'free') {
             /* Free select means any cell */
             valid = true;

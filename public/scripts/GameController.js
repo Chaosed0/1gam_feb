@@ -13,6 +13,8 @@ define(['crafty', './Util'], function(Crafty, u) {
         var camera = objects.camera;
         var effectParser = objects.effectParser;
 
+        var active = false;
+
         u.assert(unitManager, 'No UnitManager passed to GameController');
         u.assert(terrain, 'No Terrain passed to GameController');
         u.assert(gui, 'No GUI passed to GameController');
@@ -78,6 +80,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 /* Null out the current state */
                 nullState();
                 /* We're done */
+                active = false;
                 doneCallback();
             }
         }
@@ -394,29 +397,28 @@ define(['crafty', './Util'], function(Crafty, u) {
                      * on the unitOnCell */
                     var possibleMove = highlight.possibleMove;
                     var nomoveArea = highlight.nomove;
-                    var possibleArea = [];
+                    var skillUseArea = [];
                     var canStay = false;
                     highlight = { move: [], nomove: [], attack: []};
                     terrain.bfs(unitOnCell.getCell(), skill.range, function(terrain, cell) {
                         return terrain.isGround(cell.site);
                     }, function(cell) {
-                        possibleArea.push(cell);
+                        skillUseArea.push(cell);
                     });
                     /* Merge the arrays */
-                    for(var i = 0; i < possibleArea.length; i++) {
-                        var possibleUnit = unitManager.getUnitForCell(possibleArea[i]);
-                        if(possibleMove.indexOf(possibleArea[i]) >= 0 ||
-                                nomoveArea.indexOf(possibleArea[i]) >= 0 ||
-                                possibleUnit === selectedUnit) {
+                    for(var i = 0; i < skillUseArea.length; i++) {
+                        var possibleUnit = unitManager.getUnitForCell(skillUseArea[i]);
+                        if(possibleMove.indexOf(skillUseArea[i]) >= 0 ||
+                                (possibleUnit && skillUseArea.indexOf(possibleUnit.getCell()) >= 0)) {
                             if(possibleUnit !== null && possibleUnit !== selectedUnit) {
                                 /* If there's a unit on the cell that isn't the current unit,
                                  * then we can't move there and we want to show the user that
                                  * (in case they're rather discerning and check the math) */
-                                highlight.nomove.push(possibleArea[i]);
+                                highlight.nomove.push(skillUseArea[i]);
                             } else {
                                 /* We can both move to this cell and use the skill on the target
-                                 * in this cell - this is a possible cell */
-                                highlight.move.push(possibleArea[i]);
+                                 * from this cell - this is a possible cell */
+                                highlight.move.push(skillUseArea[i]);
                             }
                         }
                     }
@@ -510,8 +512,11 @@ define(['crafty', './Util'], function(Crafty, u) {
             var fxEnd = function() {
                 /* Unbind FxEnd from the *target* unit */
                 target.unbind("FxEnd", fxEnd);
-                /* Check if the *selected* unit's turn is over */
-                nextUnitOrReselect();
+                /* If we've force-stopped, don't go to the next unit */
+                if(active) {
+                    /* Check if the *selected* unit's turn is over */
+                    nextUnitOrReselect();
+                }
             }
             target.bind("FxEnd", fxEnd);
         }
@@ -541,6 +546,8 @@ define(['crafty', './Util'], function(Crafty, u) {
         /* Sets this GameController to active. Announces the faction that was
          * set active, then selects the first unit in the player's turn order. */
         this.setActive = function() {
+            active = true;
+
             /* Get the unit with the highest speed that isn't alerted */
             curUnitIndex = 0;
             while(curUnitIndex < unitList.length &&
@@ -562,7 +569,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 /* Turn mouselook off for the announcement */
                 camera.mouselook(false);
                 /* Announce the new faction's turn */
-                gui.announce(faction, activateAnnounceTime, function() {
+                gui.announce(faction, activateAnnounceTime, true, function() {
                     /* This is the callback when the announcement is finished
                      * Turn mouselook back on */
                     camera.mouselook(true);
@@ -571,8 +578,16 @@ define(['crafty', './Util'], function(Crafty, u) {
                 });
             } else {
                 /* No alerted units; announce that and then finish */
-                gui.announce("No units alerted!", activateAnnounceTime, doneCallback);
+                gui.announce("No enemies alerted!", activateAnnounceTime/2, true, doneCallback);
             }
+        }
+
+        this.forceStop = function() {
+            /* Null out state */
+            nullState();
+            clearStates();
+            /* Don't do anything else */
+            active = false;
         }
 
         this.init = function() {

@@ -153,7 +153,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.healthAmtText.text(unit.getHealth() + "/" + unit.getMaxHealth());
         this.healthAmtText.updateHudTextSize();
 
-        this.speedText.text(unit.getSpeed().toString());
+        this.speedText.text(unit.getMoveRange().toString());
         this.speedText.updateHudTextSize();
         this.armorText.text(unit.getArmor().toString());
         this.armorText.updateHudTextSize();
@@ -407,31 +407,45 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     }
 
     /* Announce something in the center of the screen */
-    GUI.prototype.announce = function(text, time, callback) {
+    GUI.prototype.announce = function(text, time, inout, endCallback) {
         var self = this;
         self.announceText.text(text);
         self.announceText.updateHudTextSize();
         self.announceText._clientbounds.x = Crafty.viewport.width;
         self.announceText.visible = true;
         self.announceBacking.visible = true;
-        self.announceText.tween({_clientbounds: {x: Crafty.viewport.width/2 -
-            self.announceText._clientbounds.w/2}}, time/2, 'smoothStep');
 
-        var tweenEnd2 = function() {
-            self.announceText.unbind("TweenEnd", tweenEnd2);
+        var tweenOutEnd = function(callback) {
+            self.announceText.unbind("TweenEnd");
             self.announceBacking.visible = false;
             self.announceText.visible = false;
+            /* Everything done, we have nothing to pass back */
             callback();
         }
 
-        var tweenEnd1 = function() {
-            self.announceText.unbind("TweenEnd", tweenEnd1);
+        var tweenOut = function(callback) {
             self.announceText.tween({_clientbounds: {x: -self.announceText._clientbounds._w}},
                     time/2, 'smoothStep');
-            self.announceText.bind("TweenEnd", tweenEnd2);
+            self.announceText.bind("TweenEnd", function() { tweenOutEnd(callback) });
         }
 
-        self.announceText.bind("TweenEnd", tweenEnd1);
+        var tweenInEnd = function() {
+            self.announceText.unbind("TweenEnd");
+
+            if(inout) {
+                /* Tween out, and call callback at the end of it */
+                tweenOut(endCallback);
+            } else {
+                /* Call callback with the outTween function so the caller
+                 * can tween out when they want */
+                endCallback(tweenOut);
+            }
+        }
+
+        /* Tween in */
+        self.announceText.tween({_clientbounds: {x: Crafty.viewport.width/2 -
+            self.announceText._clientbounds.w/2}}, (inout ? time/2 : time), 'smoothStep');
+        self.announceText.bind("TweenEnd", tweenInEnd);
     }
 
     return GUI;

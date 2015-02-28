@@ -18,6 +18,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         unit.bind("EffectApplied", function(data) { self.applyEffectFx(this, data) });
         unit.bind("Alerted", function() { self.alertedFx(this); });
         unit.bind("Asleep", function() { self.startAsleepFx(this); });
+        unit.bind("Damaged", function() { self.fadeUnitOnDeath(this); });
         if(unit.alert() === false) {
             this.startAsleepFx(unit);
         }
@@ -67,9 +68,6 @@ define(['crafty', './Util'], function(Crafty, u) {
         if(effect.type === 'damage') {
             this.makeFx(unit, effect.damage_type);
             this.createDamageNumbers(unit, magnitude);
-            if(unit.isDead()) {
-                this.fadeUnitOnDeath(unit);
-            }
         } else if(effect.type == 'heal') {
             this.makeFx(unit, effect.type);
             this.createDamageNumbers(unit, magnitude, '#00FF00');

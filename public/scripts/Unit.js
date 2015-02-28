@@ -1,17 +1,20 @@
 
 define(['crafty', './Util'], function(Crafty, u) {
-    var applyEffect = function(target, effect) {
+    var applyEffect = function(source, target, effect) {
         /* Damages have a different magnitude than their effect says */
 
         if(effect.type === undefined || effect.type === 'damage') {
             u.assert(effect.magnitude !== undefined && effect.type !== undefined);
             var actual_magnitude = target.getActualDamageMagnitude(effect);
             target.damage(actual_magnitude);
-            /* There are a few effects that need to be applied only on
-             * Damage, so make a special event for that in addition to
-             * the generic EffectApplied */
-            target.trigger("Damaged", {actual_magnitude: actual_magnitude, effect: effect});
-            /* Check for death */
+
+            if(effect.damage_type === 'drain') {
+                /* Heal the source */
+                applyEffect(source, source, {
+                    type: "heal",
+                    magnitude: actual_magnitude
+                });
+            }
         } else if(effect.type === 'heal') {
             u.assert(effect.magnitude !== undefined);
             target.heal(effect.magnitude);
@@ -113,6 +116,10 @@ define(['crafty', './Util'], function(Crafty, u) {
 
         damage: function(magnitude) {
             this._curhealth = Math.max(0, this._curhealth - magnitude);
+            /* There are a few effects that need to be applied only on
+             * Damage, so make a special event for that in addition to
+             * the generic EffectApplied */
+            this.trigger("Damaged");
             return magnitude;
         },
 
@@ -121,15 +128,11 @@ define(['crafty', './Util'], function(Crafty, u) {
             return magnitude;
         },
 
-        applyEffect: function(effect) {
-            applyEffect(this, effect);
-        },
-
         /* XXX: This is a slight misstep - an external source shouldn't be
          * telling the unit what skill to use */
         useSkill: function(skill, target) {
             u.assert(skill === this._attack || skill === this._skill);
-            target.applyEffect(skill.effect);
+            applyEffect(this, target, skill.effect);
             if(skill.ends_turn) {
                 this._attacked = true;
             }

@@ -38,6 +38,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         u.assert(ownerMapIndex >= 0);
         delete this.locationMap[unit.getCell().site.voronoiId];
         this.ownerMap[unit.getFaction()].splice(ownerMapIndex, 1);
+        this.allUnits.splice(this.allUnits.indexOf(unit), 1);
     }
 
     UnitManager.prototype.getUnitForCell = function(cell) {

@@ -1,15 +1,28 @@
 
 define(['seedrandom'], function(seedrandom) {
     const epsilon = 0.001;
-
-    var seed = Math.random();
-    Math.seedrandom(seed);
-    console.log(seed);
+    const randomSeedLength = 16;
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     var Util = {};
+    var seed = null;
 
-    Util.setSeed = function(seed) {
+    Util.setSeed = function(newSeed) {
+        seed = newSeed;
         Math.seedrandom(seed);
+    }
+
+    Util.randomSeed = function() {
+        var seed = "";
+        for(var i = 0; i < randomSeedLength; i++) {
+            seed += possible.charAt(Math.floor(Math.random()*possible.length));
+        }
+        this.setSeed(seed);
+        console.log(seed);
+    }
+
+    Util.getSeed = function() {
+        return seed;
     }
 
     Util.dist = function(v1, v2) {
