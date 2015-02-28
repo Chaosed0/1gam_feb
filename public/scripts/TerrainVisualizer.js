@@ -79,6 +79,9 @@ define(['crafty', './Util', './VoronoiTerrain'], function(Crafty, u, VoronoiTerr
                 if(validSelection.call(this, cell)) {
                     /* Valid cell, trigger */
                     this.trigger("CellSelected", {cell: cell});
+                } else {
+                    /* Trigger invalid cell event */
+                    this.trigger("InvalidSelection", {cell: cell});
                 }
             }
         }

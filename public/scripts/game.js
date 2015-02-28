@@ -306,6 +306,14 @@ require(['crafty',
             .attr(terrainSize)
             .terrainvisualizer(terrain, terrainPrerender);
 
+        /* Hookup some sounds to it
+         * XXX: This really isn't the right place for it, but... where is? */
+        terrainVis.bind("CellSelected", function(data) {
+            Crafty.audio.play("select", 1, 0.3);
+        }).bind("InvalidSelection", function(data) {
+            Crafty.audio.play("bad_select", 1, 0.3);
+        });
+
         /* Calculate the size of the bottom bar (GUI) */
         var guiSize = {w: Crafty.viewport.width, h: Crafty.viewport.height * guiRatio};
 

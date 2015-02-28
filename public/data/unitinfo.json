@@ -1187,6 +1187,16 @@
                 "audio/heal.ogg",
                 "audio/heal.mp3",
                 "audio/heal.wav"
+            ],
+            "select": [
+                "audio/select.ogg",
+                "audio/select.mp3",
+                "audio/select.wav"
+            ],
+            "bad_select": [
+                "audio/bad_select.ogg",
+                "audio/bad_select.mp3",
+                "audio/bad_select.wav"
             ]
         }
     }
