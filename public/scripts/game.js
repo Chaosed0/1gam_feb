@@ -57,13 +57,16 @@ require(['crafty',
     var gameElem = document.getElementById('game');
 
     var campCenters = [];
+    var bossUnit = null;
     var terrainPrerender = null;
     var terrain = new VoronoiTerrain();
     var unitManager = new UnitManager();
 
     var names = null;
-    var unitInfo = null;
     var unitClasses = null;
+    var unitClassNames = null;
+    var bossClasses = null;
+    var bossClassNames = null;
     var unitFx = null;
 
     var effectParser = null;
@@ -80,14 +83,51 @@ require(['crafty',
     /* Hack in wheel event to mouseDispatch */
     Crafty.addEvent(this, Crafty.stage.elem, "wheel", Crafty.mouseDispatch);
 
-    var generateUnitCamp = function(num, faction, good) {
+    var createUnit = function(name, faction, className, good, cell, boss) {
+        var size = unitSize;
+        if(boss) {
+            size *= 1.5;
+        }
+
+        var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
+            .attr({w: size, h: size})
+            .unit(name, faction, className, good, (boss ? bossClasses[className] : unitClasses[className]))
+            .bind("Died", function(data) {
+                /* The unit is dead - destroy it once all anims are over
+                 * XXX: How do we know that the unit has anims pending? */
+                this.bind("FxEnd", function() {
+                    /* Give the unit a small amount of time to finish up */
+                    this.addComponent("Expires");
+                    this.expires(1000);
+                });
+            });
+
+        /* Good units start alerted, bad ones don't */
+        if(good) {
+            unit.alert(true);
+        } else {
+            unit.alert(false);
+        }
+        /* Set unit alert distance
+         * XXX: We probably shouldn't be the one doing this */
+        var alertDistance = Math.max(terrain.getPointData().size.x,
+                terrain.getPointData().size.y) * 3;
+        unit.setAlertDistance(alertDistance);
+
+        unitManager.addUnit(cell, unit);
+        unitFx.bindFx(unit);
+
+        return unit;
+    }
+
+    var generateUnitCamp = function(num, faction, good, boss) {
         var bodies = terrain.getBodies();
         var cells = terrain.getDiagram().cells;
         var oneOfEach = false;
 
         if(num === null) {
             /* Special case - we're to generate one of each class */
-            num = unitClasses.length;
+            num = unitClassNames.length;
             oneOfEach = true;
         }
 
@@ -132,14 +172,23 @@ require(['crafty',
 
         campCenters.push(campCenter);
 
-        /* Place the units */
+        /* Should we put the boss here? */
+        if(boss !== undefined && boss) {
+            u.assert(!good);
+            /* Put the boss right at the camp center */
+            var bossName = badNameGenerator.generateName();
+            var className = u.randomElem(bossClassNames);
+            bossUnit = createUnit(bossName, faction, className, good, campCenter, true);
+        }
+
+        /* Place normal units */
         for(var i = 0; i < num; i++) {
             var unitName = (good ? goodNameGenerator.generateName() : badNameGenerator.generateName());
             var className = null;
             if(oneOfEach) {
-                className = unitClasses[i];
+                className = unitClassNames[i];
             } else {
-                className = u.randomElem(unitClasses);
+                className = u.randomElem(unitClassNames);
             }
 
             var placed = false;
@@ -148,34 +197,7 @@ require(['crafty',
                 var site = cell.site;
 
                 if(!unitManager.getUnitForCell(cell)) {
-                    /* Note that we're trusting in addUnit to set the unit location */
-                    var unit = Crafty.e("2D, Canvas, Unit, SpriteAnimation, UnitSprite")
-                        .attr({w: unitSize, h: unitSize})
-                        .unit(unitName, faction, className, good, unitInfo[className])
-                        .bind("Died", function(data) {
-                            /* The unit is dead - destroy it once all anims are over
-                             * XXX: How do we know that the unit has anims pending? */
-                            this.bind("FxEnd", function() {
-                                /* Give the unit a small amount of time to finish up */
-                                this.addComponent("Expires");
-                                this.expires(1000);
-                            });
-                        });
-
-                    /* Good units start alerted, bad ones don't */
-                    if(good) {
-                        unit.alert(true);
-                    } else {
-                        unit.alert(false);
-                    }
-                    /* Set unit alert distance
-                     * XXX: We probably shouldn't be the one doing this */
-                    var alertDistance = Math.max(terrain.getPointData().size.x, 
-                            terrain.getPointData().size.y) * 3;
-                    unit.setAlertDistance(alertDistance);
-
-                    unitManager.addUnit(cell, unit);
-                    unitFx.bindFx(unit);
+                    createUnit(unitName, faction, className, good, cell, false);
                     placed = true;
                 }
             }
@@ -212,9 +234,11 @@ require(['crafty',
         /* Generate one unit of each class for the player */
         generateUnitCamp(null, playerFaction, true);
         /* Generate some random units for the bad guys */
-        for(var i = 0; i < enemyPartyNum; i++) {
+        for(var i = 0; i < enemyPartyNum-1; i++) {
             generateUnitCamp(enemyPartySize, enemyFaction, false);
         }
+        /* Generate the boss camp */
+        generateUnitCamp(enemyPartySize, enemyFaction, false, true);
 
         /* Wrap up objects the GameControllers need */
         var stateObjects = {
@@ -229,7 +253,7 @@ require(['crafty',
         /* Create an input handler for the local user */
         var playerInputs = new LocalInputs(terrainVis, gui);
 
-        /* Create an input handler for the AI villains */
+        /* Create an input handler for the AI bad guys */
         var enemyInputs = new ComputerInputs(enemyFaction, playerFaction);
 
         /* Create user game controller */
@@ -244,11 +268,16 @@ require(['crafty',
             playerController.setActive();
         });
 
-        /* Fire up the player GameController and let it take over
-         * Hack - wait a bit, it's hard for us to keep up with the
-         * resulting announcement that comes on-screen otherwise */
+        /* Hack - wait a bit, it's hard for us to keep up with the
+         * announcement that comes on-screen otherwise */
         window.setTimeout(function() {
-            playerController.setActive();
+            /* Center on the boss and announce the objective */
+            camera.centerOn(bossUnit.getCell().site, initialAnnounceTime/4);
+            gui.announce("Kill " + bossUnit.getName() + " of " + bossUnit.getFaction() + "!",
+                    initialAnnounceTime, function() {
+                        /* Let the player controller take over */
+                        playerController.setActive();
+                    });
         }, 500);
     });
 
@@ -263,8 +292,10 @@ require(['crafty',
             /* Preload spritesheet */
             Crafty.load(data.preload);
             /* Save animation data */
-            unitInfo = data.units;
-            unitClasses = Object.keys(unitInfo);
+            unitClasses = data.classes;
+            unitClassNames = Object.keys(unitClasses);
+            bossClasses = data.bossClasses;
+            bossClassNames = Object.keys(bossClasses);
             names = data.names;
             /* Initialize name generator */
             goodNameGenerator = new NameGenerator(names.units.good);

@@ -879,7 +879,7 @@
             "length": 500
         }
     },
-    "units": {
+    "classes": {
         "Knight": {
             "health": 50,
             "armor": 5,
@@ -1064,6 +1064,38 @@
             "bad": {
                 "animation": [[10,7],[10,8]],
                 "classImageMap": [0,7]
+            }
+        }
+    },
+    "bossClasses": {
+        "Vampire": {
+            "health": 150,
+            "armor": 0,
+            "speed": 3,
+            "moverange": 3,
+            "attack": {
+                "range": 3,
+                "magnitude": 10,
+                "damage_type": "drain"
+            },
+            "bad": {
+                "animation": [[15,17],[15,18]],
+                "classImageMap": [2,3]
+            }
+        },
+        "Construct": {
+            "health": 100,
+            "armor": 10,
+            "speed": 1,
+            "moverange": 1,
+            "attack": {
+                "range": 1,
+                "magnitude": 25,
+                "damage_type": "blunt"
+            },
+            "bad": {
+                "animation": [[13,11],[13,12]],
+                "classImageMap": [0,2]
             }
         }
     },
