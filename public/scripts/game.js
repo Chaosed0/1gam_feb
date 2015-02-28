@@ -147,6 +147,16 @@ require(['crafty',
         });
     }
 
+    var checkLoss = function(unit) {
+        var unitList = unitManager.getUnitListForFaction(unit.getFaction());
+
+        /* Protect against the case where the unit manager's callback for "Died" is
+         * called after ours */
+        if(unitList.length === 0 || (unitList.length === 1 && unitList[0] === unit)) {
+            loseFx();
+        }
+    }
+
     var createUnit = function(name, faction, className, good, cell, boss) {
         var size = unitSize;
         if(boss) {
@@ -157,6 +167,12 @@ require(['crafty',
             .attr({w: size, h: size})
             .unit(name, faction, className, good, (boss ? bossClasses[className] : unitClasses[className]))
             .bind("Died", function(data) {
+                /* If this is a good unit, check if it was the last one and
+                 * we've now lost */
+                if(this.isGood()) {
+                    checkLoss(this);
+                }
+
                 /* The unit is dead - destroy it once all anims are over
                  * XXX: How do we know that the unit has anims pending? */
                 this.bind("FxEnd", function() {
