@@ -133,9 +133,10 @@ define(['crafty', './Util'], function(Crafty, u) {
                                     (!unitOnCell || unitOnCell === curUnit);
                             });
                         if(reversed_path === null) {
-                            /* We are likely blocked in by units - we're going to play
-                             * dumb and move to a random cell */
-                            index = u.getRandom(state.highlight.move.length);
+                            /* We stil can't move, we are likely blocked in by
+                             * units - we're going to play dumb and move to a
+                             * random cell */
+                            index = Math.floor(u.getRandom(state.highlight.move.length));
                         } else {
                             index = this.findClosestIn(reversed_path, state.highlight.move);
                         }
