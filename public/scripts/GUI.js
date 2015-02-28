@@ -232,6 +232,19 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.centerText.z = menuElemZ;
         this.centerText.visible = false;
 
+        this.instructionText = Crafty.e("2D, Canvas, HUD, Text")
+            .textFont({family: fontFamily, size: '20px'})
+            .textColor('#FFFFFF')
+            .hud(true);
+        this.instructionText.z = menuElemZ;
+        this.instructionText.visible = false;
+
+        this.instructionBacking = Crafty.e("2D, Canvas, HUD, Color")
+            .color('rgba(50,50,50,0.7)')
+            .hud(true);
+        this.instructionBacking.z = menuZ;
+        this.instructionBacking.visible = false;
+
         this.menuBounds = {
             x: Crafty.viewport.width - this.minimapBounds.w,
             y: Crafty.viewport.height - size.h,
@@ -368,6 +381,28 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             this.centerText.visible = true;
         } else {
             this.centerText.visible = false;
+        }
+    }
+
+    /* Set instructional text shown at the top of the screen. */
+    GUI.prototype.setInstructionText = function(text) {
+        if(text !== null) {
+            this.instructionText.text(text);
+            this.instructionText.updateHudTextSize();
+            this.instructionText._clientbounds.x = (Crafty.viewport.width -
+                    this.instructionText._clientbounds.w)/2;
+            this.instructionText._clientbounds.y = padding;
+            this.instructionText.visible = true;
+
+            this.instructionBacking._clientbounds.x = this.instructionText._clientbounds.x - padding;
+            this.instructionBacking._clientbounds.y = 0;
+            this.instructionBacking._clientbounds.w = this.instructionText._clientbounds.w + padding * 2;
+            this.instructionBacking._clientbounds.h = this.instructionText._clientbounds.y +
+                this.instructionText._clientbounds.h + padding;
+            this.instructionBacking.visible = true;
+        } else {
+            this.instructionText.visible = false;
+            this.instructionBacking.visible = false;
         }
     }
 

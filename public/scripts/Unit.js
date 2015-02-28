@@ -71,6 +71,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     range: data.attack.range,
                     ends_turn: true,
                     type: 'singletarget',
+                    description: "Deal damage to an enemy unit",
                     effect: {
                         type: 'damage',
                         damage_type: data.attack.damage_type,

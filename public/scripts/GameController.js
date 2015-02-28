@@ -37,6 +37,7 @@ define(['crafty', './Util'], function(Crafty, u) {
         var highlight = null;
         var actions = null;
         var centerText = null;
+        var instructionText = null;
         var selectedUnit = null;
         var targetUnit = null;
         var skill = null;
@@ -100,6 +101,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 highlight: null,
                 actions: null,
                 centerText: null,
+                instructionText: null,
                 selectedUnit: visualOnly ? selectedUnit : null,
                 targetUnit: visualOnly ? targetUnit : null,
                 skill: visualOnly ? skill : null,
@@ -131,6 +133,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             highlight = state.highlight;
             actions = state.actions;
             centerText = state.centerText;
+            instructionText = state.instructionText;
             selectedUnit = state.selectedUnit;
             targetUnit = state.targetUnit;
             selectCallback = state.selectCallback;
@@ -140,6 +143,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             vis.selection(selection);
             vis.highlight(highlight);
             gui.setCenterText(centerText);
+            gui.setInstructionText(instructionText);
             inputs.setActions(actions);
             inputs.setSelectCallback(selectCallback);
 
@@ -167,6 +171,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 highlight: highlight,
                 actions: actions,
                 centerText: centerText,
+                instructionText: instructionText,
                 selectCallback: selectCallback,
                 selectedUnit: selectedUnit,
                 targetUnit: targetUnit,
@@ -249,6 +254,7 @@ define(['crafty', './Util'], function(Crafty, u) {
          * moveSelectCallback */
         var guiMoveCallback = function() {
             highlight = getMoveAndAttack(selectedUnit);
+            instructionText = "Move to another cell";
             selectMode = 'highlight.move';
             actions = [ cancelAction ];
             selectCallback = moveSelectCallback;
@@ -285,6 +291,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     selectMode = 'highlight.attack';
                 }
 
+                instructionText = chosenSkill.description;
                 actions = [cancelAction]; 
                 highlight = highlightedCells;
                 selectCallback = singleTargetSelectCallback;
@@ -330,10 +337,12 @@ define(['crafty', './Util'], function(Crafty, u) {
                     }
 
                     actions = [ moveAction, attackAction, skillAction, skipAction ];
+                    instructionText = "Choose an action to perform";
                     highlight = null;
                 } else {
-                    highlight = getMoveAndAttack(selectedUnit);
                     actions = [ cancelAction ];
+                    instructionText = "Hit Cancel to return to the current unit.";
+                    highlight = getMoveAndAttack(selectedUnit);
                 }
             } else {
                 selectedUnit = null;
@@ -358,6 +367,7 @@ define(['crafty', './Util'], function(Crafty, u) {
             selection = data.cell;
             selectMode = 'confirm';
             actions = [ cancelAction ];
+            instructionText = "Confirm that you want to move to this cell.";
             selectCallback = moveConfirmCallback;
             pushState();
         }
@@ -385,6 +395,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                     var possibleMove = highlight.possibleMove;
                     var nomoveArea = highlight.nomove;
                     var possibleArea = [];
+                    var canStay = false;
                     highlight = { move: [], nomove: [], attack: []};
                     terrain.bfs(unitOnCell.getCell(), skill.range, function(terrain, cell) {
                         return terrain.isGround(cell.site);
@@ -409,16 +420,28 @@ define(['crafty', './Util'], function(Crafty, u) {
                             }
                         }
                     }
+
+                    /* Check if we can stay at our current cell */
+                    canStay = highlight.move.indexOf(selectedUnit.getCell()) >= 0;
+
                     /* Highlight the cell we're attacking too */
                     highlight.attack = [cell];
                     /* Force the unit to move or stay (if it can) */
                     selectMode = 'highlight';
                     selectCallback = singleTargetMoveSelectCallback;
+
+                    /* Instruction text changes depending on whether we can stay or we need to move */
+                    if(canStay) {
+                        instructionText = "Select a cell to move to, or stay at the current cell.";
+                    } else {
+                        instructionText = "Skill can't be used from current position - select a cell to move to.";
+                    }
                 } else {
                     /* Uneventful - we selected an attack cell and we can't
                      * move, so just confirm the attack */
                     selectMode = 'confirm';
                     selectCallback = singleTargetConfirmCallback;
+                    instructionText = "Confirm that you want to attack this cell.";
                     highlight = null;
                 }
                 /* Get the magnitude we should display to the user - if the
@@ -432,8 +455,8 @@ define(['crafty', './Util'], function(Crafty, u) {
                 centerText = effectParser.parse(skill.effect, addlEffectProps);
                 pushState();
             } else {
-                /* XXX: Actually display an error to user */
-                console.log('No unit!');
+                /* XXX: Slight cheating, we shouldn't be calling setInstructionText directly */
+                gui.setInstructionText("There's no unit on this cell to use the skill on!");
             }
         }
 
@@ -449,8 +472,8 @@ define(['crafty', './Util'], function(Crafty, u) {
                     /* Confirm the attack ourselves */
                     singleTargetConfirmCallback({cell: selectedUnit.getCell()});
                 } else {
-                    /* Change this to something that gets displayed */
-                    console.log("Can't attack from current position!");
+                    /* XXX: Slight cheating, we shouldn't be calling setInstructionText directly */
+                    gui.setInstructionText("You can't use the skill from that position!");
                 }
             } else {
                 var path = terrain.reconstructPath(selectedUnit.getCell(), cell, lastBFSResult);
@@ -461,6 +484,7 @@ define(['crafty', './Util'], function(Crafty, u) {
                 selection = cell;
                 selectMode = 'confirm';
                 actions = [ cancelAction ];
+                instructionText = "Confirm your movement and target.";
                 selectCallback = singleTargetMoveConfirmCallback;
                 pushState();
             }
@@ -471,7 +495,12 @@ define(['crafty', './Util'], function(Crafty, u) {
 
             /* Move the unit, then use skill on the target */
             var target = targetUnit;
-            unitManager.moveUnit(selectedUnit, data.cell);
+            
+            /* Don't expend movement if we're not moving */
+            if(data.cell !== selectedUnit.getCell()) {
+                unitManager.moveUnit(selectedUnit, data.cell);
+            }
+
             selectedUnit.useSkill(skill, targetUnit);
 
             /* Clear all GUI and selection while FX are playing */
