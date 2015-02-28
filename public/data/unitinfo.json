@@ -1197,6 +1197,11 @@
                 "audio/bad_select.ogg",
                 "audio/bad_select.mp3",
                 "audio/bad_select.wav"
+            ],
+            "death": [
+                "audio/death.ogg",
+                "audio/death.mp3",
+                "audio/death.wav"
             ]
         }
     }

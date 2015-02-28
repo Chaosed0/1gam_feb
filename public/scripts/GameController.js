@@ -204,6 +204,10 @@ define(['crafty', './Util'], function(Crafty, u) {
         cancelAction.callback = function() {
             popState();
             useState(stack[stack.length-1]);
+
+            /* Kind of a hack - trigger a global event when an action is taken,
+             * really just for playing sounds right now */
+            Crafty.trigger("ActionChosen");
         }
 
         var getMoveAndAttack = function(unit, attacking) {
@@ -262,6 +266,10 @@ define(['crafty', './Util'], function(Crafty, u) {
             actions = [ cancelAction ];
             selectCallback = moveSelectCallback;
 
+            /* Kind of a hack - trigger a global event when an action is taken,
+             * really just for playing sounds right now */
+            Crafty.trigger("ActionChosen");
+
             pushState();
         }
 
@@ -301,6 +309,10 @@ define(['crafty', './Util'], function(Crafty, u) {
                 skill = chosenSkill;
                 pushState();
             }
+
+            /* Kind of a hack - trigger a global event when an action is taken,
+             * really just for playing sounds right now */
+            Crafty.trigger("ActionChosen");
         }
 
         /* Callback when user selects any cell, during free select mode. */

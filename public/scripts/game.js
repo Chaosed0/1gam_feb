@@ -173,6 +173,9 @@ require(['crafty',
                     checkLoss(this);
                 }
 
+                /* Play a sound effect */
+                Crafty.audio.play("death", 1, 0.5);
+
                 /* The unit is dead - destroy it once all anims are over
                  * XXX: How do we know that the unit has anims pending? */
                 this.bind("FxEnd", function() {
@@ -312,6 +315,11 @@ require(['crafty',
             Crafty.audio.play("select", 1, 0.3);
         }).bind("InvalidSelection", function(data) {
             Crafty.audio.play("bad_select", 1, 0.3);
+        });
+
+        /* Play selection sound when buttons are hit too */
+        Crafty.bind("ActionChosen", function() {
+            Crafty.audio.play("select", 1, 0.3);
         });
 
         /* Calculate the size of the bottom bar (GUI) */
