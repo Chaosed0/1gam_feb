@@ -53,7 +53,7 @@ require(['crafty',
         drawEdges: false,
         drawCoasts: true,
     };
-    
+
     var width = $(document).width();
     var height = $(document).height();
     var gameElem = document.getElementById('game');
@@ -317,6 +317,6 @@ require(['crafty',
             console.log("Error requesting JSON from server: " + err);
         });
     });
-    
+
     Crafty.scene("Load");
 });
