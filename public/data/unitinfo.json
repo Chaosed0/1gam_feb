@@ -1081,7 +1081,7 @@
             "moverange": 3,
             "attack": {
                 "range": 3,
-                "magnitude": 10,
+                "magnitude": 15,
                 "damage_type": "drain"
             },
             "bad": {
@@ -1091,12 +1091,12 @@
         },
         "Construct": {
             "health": 100,
-            "armor": 10,
+            "armor": 20,
             "speed": 1,
             "moverange": 1,
             "attack": {
                 "range": 1,
-                "magnitude": 25,
+                "magnitude": 30,
                 "damage_type": "blunt"
             },
             "bad": {
