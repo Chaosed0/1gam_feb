@@ -1146,6 +1146,13 @@
                     "AttackIcon":[2,0]
                 }
             }
+        },
+        "audio": {
+            "bgmusic": [
+                "audio/fs.ogg",
+                "audio/fs.mp3",
+                "audio/fs.wav"
+            ]
         }
     }
 }

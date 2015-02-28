@@ -375,7 +375,16 @@ require(['crafty',
                         /* Let the player controller take over */
                         playerController.setActive();
                     });
+            /* Play the background music */
+            Crafty.audio.play("bgmusic", -1, 0.5);
         }, 500);
+        
+        /* Let the player mute the background music at any point */
+        Crafty.bind("KeyDown", function(e) {
+            if(e.key === Crafty.keys.M) {
+                Crafty.audio.togglePause("bgmusic");
+            }
+        });
     });
 
     Crafty.scene("Load", function() {
