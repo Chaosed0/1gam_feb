@@ -890,7 +890,7 @@
             "health": 50,
             "armor": 5,
             "speed": 2,
-            "moverange": 2,
+            "moverange": 3,
             "attack": {
                 "range": 1,
                 "magnitude": 15,
@@ -909,7 +909,7 @@
             "health": 70,
             "armor": 0,
             "speed": 2,
-            "moverange": 2,
+            "moverange": 3,
             "attack": {
                 "range": 1,
                 "magnitude": 15,
@@ -928,7 +928,7 @@
             "health": 40,
             "armor": 4,
             "speed": 2,
-            "moverange": 2,
+            "moverange": 3,
             "attack": {
                 "range": 1,
                 "magnitude": 15,
@@ -989,7 +989,7 @@
             "health": 30,
             "armor": 2,
             "speed": 3,
-            "moverange": 2,
+            "moverange": 3,
             "attack": {
                 "range": 3,
                 "magnitude": 10,
