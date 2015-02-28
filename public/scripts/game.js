@@ -33,11 +33,11 @@ require(['crafty',
 
     const initialAnnounceTime = 4000;
 
-    const enemyPartyNum = 7;
+    const enemyPartyNum = 12;
     const enemyPartySize = 5;
     /* Size in cells */
     const campSize = 3;
-    const minCampDist = 7;
+    const minCampDist = 4;
 
     const terrainPercents = {
         water: waterPercent,
@@ -229,6 +229,7 @@ require(['crafty',
         var campCenter = null;
         var campCells = [];
         var goodSpawn = false;
+        var spawnIterations = 0;
         while(!goodSpawn) {
             goodSpawn = true;
 
@@ -251,6 +252,16 @@ require(['crafty',
 
                 if(campCells.length < num) {
                     goodSpawn = false;
+                }
+            }
+
+            if(++spawnIterations > 100) {
+                /* Give up and use this camp, if it's got cells */
+                if(campCells.length >= num) {
+                    break;
+                } else {
+                    /* it was a good run, and everyone tried hard */
+                    return;
                 }
             }
         }
@@ -318,12 +329,12 @@ require(['crafty',
 
         /* Generate one unit of each class for the player */
         generateUnitCamp(null, playerFaction, true);
+        /* Generate the boss camp */
+        generateUnitCamp(enemyPartySize, enemyFaction, false, true);
         /* Generate some random units for the bad guys */
         for(var i = 0; i < enemyPartyNum-1; i++) {
             generateUnitCamp(enemyPartySize, enemyFaction, false);
         }
-        /* Generate the boss camp */
-        generateUnitCamp(enemyPartySize, enemyFaction, false, true);
 
         /* Wrap up objects the GameControllers need */
         var stateObjects = {
