@@ -1074,6 +1074,15 @@
                 "map": {
                     "FxSprite_large": [0,0]
                 }
+            },
+            "img/789_Lorc_icons.png": {
+                "tile": 40,
+                "tileh": 40,
+                "map": {
+                    "SpeedIcon": [0,0],
+                    "ArmorIcon": [1,0],
+                    "AttackIcon":[2,0]
+                }
             }
         }
     }

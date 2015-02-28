@@ -7,7 +7,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
     const padding = 10;
     const smallPadding = 5;
 
-    const meterSize = {w: 200, h: 5};
+    const meterSize = {w: 120, h: 5};
 
     var UnitInfoContainer = function(bounds, align) {
         if(align === 'left') {
@@ -62,7 +62,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .textAlign(align);
         this.positionElem(this.healthAmtText, smallPadding, true);
 
-        this.manaText = Crafty.e("2D, Canvas, HUD, Text")
+        /*this.manaText = Crafty.e("2D, Canvas, HUD, Text")
             .attr({z: menuElemZ})
             .textFont({family: fontFamily, size: '12px'})
             .text('MP')
@@ -83,7 +83,40 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             .textFont({family: fontFamily, size: '12px'})
             .text("10/10")
             .textAlign(align);
-        this.positionElem(this.manaAmtText, padding, true);
+        this.positionElem(this.manaAmtText, padding, true);*/
+
+        this.speedIcon = Crafty.e("2D, Canvas, HUD, SpeedIcon")
+            .attr({w: 20, h: 20, z: menuElemZ});
+        this.positionElem(this.speedIcon, smallPadding);
+
+        this.speedText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text("100")
+            .textAlign(align);
+        this.positionElem(this.speedText, smallPadding, true);
+
+        this.armorIcon = Crafty.e("2D, Canvas, HUD, ArmorIcon")
+            .attr({w: 20, h: 20, z: menuElemZ});
+        this.positionElem(this.armorIcon, smallPadding);
+
+        this.armorText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text("100")
+            .textAlign(align);
+        this.positionElem(this.armorText, smallPadding, true);
+
+        this.attackIcon = Crafty.e("2D, Canvas, HUD, AttackIcon")
+            .attr({w: 20, h: 20, z: menuElemZ});
+        this.positionElem(this.attackIcon, smallPadding);
+
+        this.attackText = Crafty.e("2D, Canvas, HUD, Text")
+            .attr({z: menuElemZ})
+            .textFont({family: fontFamily, size: '12px'})
+            .text("100")
+            .textAlign(align);
+        this.positionElem(this.attackText, smallPadding, true);
 
         this.visible(false);
     }
@@ -117,21 +150,17 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.updateClassImage(unit);
 
         this.healthMeter.fill(unit.getHealth() / unit.getMaxHealth());
-        this.manaMeter.fill(unit.getMana() / unit.getMaxMana());
         this.healthAmtText.text(unit.getHealth() + "/" + unit.getMaxHealth());
         this.healthAmtText.updateHudTextSize();
-        this.manaAmtText.text(unit.getMana() + "/" + unit.getMaxMana());
-        this.manaAmtText.updateHudTextSize();
 
-        this.titleText.visible = true;
-        this.subtitleText.visible = true;
-        this.classImage.visible = true;
-        this.healthText.visible = true;
-        this.healthMeter.visible = true;
-        this.healthAmtText.visible = true;
-        this.manaText.visible = true;
-        this.manaMeter.visible = true;
-        this.manaAmtText.visible = true;
+        this.speedText.text(unit.getSpeed().toString());
+        this.speedText.updateHudTextSize();
+        this.armorText.text(unit.getArmor().toString());
+        this.armorText.updateHudTextSize();
+        this.attackText.text(unit.getAttack().effect.magnitude.toString());
+        this.attackText.updateHudTextSize();
+
+        this.visible(true);
     }
 
     UnitInfoContainer.prototype.visible = function(visible) {
@@ -139,11 +168,14 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
         this.subtitleText.visible = visible;
         this.classImage.visible = visible;
         this.healthMeter.visible = visible;
-        this.manaMeter.visible = visible;
         this.healthText.visible = visible;
-        this.manaText.visible = visible;
         this.healthAmtText.visible = visible;
-        this.manaAmtText.visible = visible;
+        this.speedIcon.visible = visible;
+        this.speedText.visible = visible;
+        this.armorIcon.visible = visible;
+        this.armorText.visible = visible;
+        this.attackIcon.visible = visible;
+        this.attackText.visible = visible;
     }
 
     UnitInfoContainer.prototype.updateClassImage = function(unit) {
