@@ -328,7 +328,7 @@ define(['crafty', './Util', './Button', './HUD'], function(Crafty, u, Button) {
             if(buttons && i < buttons.length) {
                 if(buttons[i] !== null) {
                     if(buttons[i].name) {
-                        this.buttons[i].setText(buttons[i].name);
+                        this.buttons[i].setText(buttons[i].name + " (" + (i+1) + ")");
                     }
 
                     if(buttons[i].callback) {
